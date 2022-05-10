@@ -1,16 +1,11 @@
-repos:
-    -   repo: https://github.com/psf/black
-        rev: 19.3b0
-        hooks:
-        -   id: black
-    -   repo: https://github.com/pre-commit/pre-commit-hooks
-        rev: v2.4.0
-        hooks:
-        -   id: flake8
-    -   repo: https://github.com/pre-commit/mirrors-isort
-        rev: v4.3.21
-        hooks:
-        -    id: isort
+name: pre-commit
 
-    default_language_version:
-        python: python3.7
+on: [pull_request, push]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.3
