@@ -66,45 +66,35 @@ def metaregistry(owner):
 
 @pytest.fixture(scope="module")
 def stable_registry_handler(owner, metaregistry):
-    handler = StableRegistryHandler.deploy(
-        metaregistry, 0, ADDRESS_PROVIDER, {"from": owner}
-    )
+    handler = StableRegistryHandler.deploy(metaregistry, 0, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module")
 def stable_registry_handler(owner, metaregistry):
-    handler = StableRegistryHandler.deploy(
-        metaregistry, 0, ADDRESS_PROVIDER, {"from": owner}
-    )
+    handler = StableRegistryHandler.deploy(metaregistry, 0, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module")
 def stable_factory_handler(owner, metaregistry):
-    handler = StableFactoryHandler.deploy(
-        metaregistry, 3, ADDRESS_PROVIDER, {"from": owner}
-    )
+    handler = StableFactoryHandler.deploy(metaregistry, 3, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(3, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module")
 def crypto_registry_handler(owner, metaregistry):
-    handler = CryptoRegistryHandler.deploy(
-        metaregistry, 5, ADDRESS_PROVIDER, {"from": owner}
-    )
+    handler = CryptoRegistryHandler.deploy(metaregistry, 5, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(5, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module")
 def crypto_factory_handler(owner, metaregistry):
-    handler = CryptoFactoryHandler.deploy(
-        metaregistry, 6, ADDRESS_PROVIDER, {"from": owner}
-    )
+    handler = CryptoFactoryHandler.deploy(metaregistry, 6, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(6, handler, {"from": owner})
     yield handler
 
@@ -137,9 +127,7 @@ def sync_registries(
         total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
         print(f"total pools in registry {registry}: ", total_pools)
         for j in range((math.ceil(total_pools / 10))):
-            print(
-                f"Syncing {j+1} * 10 ({(j+1) * 10}) pools out of {total_pools} for registry {i}"
-            )
+            print(f"Syncing {j+1} * 10 ({(j+1) * 10}) pools out of {total_pools} for registry {i}")
             try:
                 metaregistry.sync_registry(i, 10, {"from": owner})
             except Exception as e:
