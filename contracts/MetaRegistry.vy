@@ -143,7 +143,7 @@ def _register_coin_pair(_coina: address, _coinb: address, _key: uint256):
     self.coins[_coinb].swap_for[coin_a_pos] = _coina
     self.coins[_coinb].swap_count += 1
     # register indexes (coina pos in coinb array, coinb pos in coina array)
-    if convert(_coina, uint256) < convert(_coinb, uint256): 
+    if convert(_coina, uint256) < convert(_coinb, uint256):
         self.coin_swap_indexes[_key] = shift(coin_a_pos, 128) + coin_b_pos
     else:
         self.coin_swap_indexes[_key] = shift(coin_b_pos, 128) + coin_a_pos
@@ -376,7 +376,7 @@ def update_registry_addresses() -> uint256:
     @return The number of updates applied
     """
     assert msg.sender == self.owner  # dev: only owner
-    
+
     addr: address = ZERO_ADDRESS
     is_active: bool = False
     version: uint256 = 0
@@ -610,7 +610,7 @@ def get_pool_asset_type(_pool: address) -> uint256:
 @view
 def get_pool_params(_pool: address) -> uint256[20]:
     """
-    @notice Return pool parameters for a 
+    @notice Return pool parameters for a
     @param _pool address of the pool
     @return uint256[20] zero-padded array containing pool params
     """
@@ -697,7 +697,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 @internal
 def _unregister_coin_pair(_coina: address, _coinb: address, _coinb_idx: uint256):
     """
-    @param _coinb_idx the index of _coinb in _coina's array of unique coin's 
+    @param _coinb_idx the index of _coinb in _coina's array of unique coin's
     """
     # decrement swap counts for both coins
     self.coins[_coina].swap_count -= 1

@@ -1,15 +1,20 @@
 import pytest
-import time
-from brownie import ZERO_ADDRESS
 from brownie import (
-    MetaRegistry,
-    StableFactoryHandler,
-    StableFactory,
+    ZERO_ADDRESS,
     AddressProvider,
+    MetaRegistry,
+    StableFactory,
+    StableFactoryHandler,
     TwoCoinPlainPoolNoLendingImplementation,
 )
 
-from tests.utils.constants import ADMIN_FEE_RECEIVER, sEUR, agEUR, ADDRESS_PROVIDER_STABLE_FACTORY_INDEX, METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX
+from tests.utils.constants import (
+    ADDRESS_PROVIDER_STABLE_FACTORY_INDEX,
+    ADMIN_FEE_RECEIVER,
+    METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+    agEUR,
+    sEUR,
+)
 
 
 @pytest.fixture(scope="session")
@@ -31,9 +36,7 @@ def two_coin_plain_pool_implementation(owner):
 def stable_factory(owner, address_provider):
     factory = StableFactory.deploy(ADMIN_FEE_RECEIVER, {"from": owner})
     address_provider.add_new_id(factory, "StableFactory", {"from": owner})
-    address_provider.set_address(
-        ADDRESS_PROVIDER_STABLE_FACTORY_INDEX, factory, {"from": owner}
-    )
+    address_provider.set_address(ADDRESS_PROVIDER_STABLE_FACTORY_INDEX, factory, {"from": owner})
     yield factory
 
 
@@ -102,11 +105,7 @@ def stable_factory_handler(
 
 @pytest.fixture(scope="module", autouse=True)
 def sync_stable_factory_registry(
-    address_provider,
-    metaregistry_mock,
-    stable_factory,
-    stable_factory_handler,
-    owner
+    address_provider, metaregistry_mock, stable_factory, stable_factory_handler, owner
 ):
     total_pools = stable_factory.pool_count()
     metaregistry_mock.sync_registry(

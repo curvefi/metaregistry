@@ -74,7 +74,7 @@ metaregistry: public(address)
 base_registry: public(BaseRegistry)
 registry_id: uint256
 registry_index: uint256
-total_pools: public(uint256) 
+total_pools: public(uint256)
 
 
 # ---- constructor ---- #

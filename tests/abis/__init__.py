@@ -1,23 +1,20 @@
-from brownie import Contract
 import json
 import os
 
+from brownie import Contract
+
 from ..utils.constants import (
+    CRYPTO_FACTORY,
+    CRYPTO_REGISTRY,
+    GAUGE_CONTROLLER,
     STABLE_FACTORY,
     STABLE_REGISTRY,
-    CRYPTO_REGISTRY,
-    CRYPTO_FACTORY,
-    GAUGE_CONTROLLER,
 )
 
-with open(
-    os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePool.json"), "r"
-) as fp:
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePool.json"), "r") as fp:
     CURVE_V1_ABI = json.load(fp)
 
-with open(
-    os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePoolV2.json"), "r"
-) as fp:
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePoolV2.json"), "r") as fp:
     CURVE_V2_ABI = json.load(fp)
 
 with open(
