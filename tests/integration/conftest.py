@@ -1,16 +1,16 @@
-import pytest
 import math
 import time
+
+import pytest
 from brownie import (
-    MetaRegistry,
-    StableRegistryHandler,
-    CryptoRegistryHandler,
-    StableFactoryHandler,
     CryptoFactoryHandler,
+    CryptoRegistryHandler,
+    MetaRegistry,
+    StableFactoryHandler,
+    StableRegistryHandler,
 )
 
-from tests.abis import stable_factory, stable_registry, crypto_factory, crypto_registry
-
+from tests.abis import crypto_factory, crypto_registry, stable_factory, stable_registry
 from tests.utils.constants import ADDRESS_PROVIDER
 
 
@@ -62,13 +62,6 @@ def owner(accounts):
 @pytest.fixture(scope="module")
 def metaregistry(owner):
     yield MetaRegistry.deploy(owner, ADDRESS_PROVIDER, {"from": owner})
-
-
-@pytest.fixture(scope="module")
-def stable_registry_handler(owner, metaregistry):
-    handler = StableRegistryHandler.deploy(metaregistry, 0, ADDRESS_PROVIDER, {"from": owner})
-    metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
-    yield handler
 
 
 @pytest.fixture(scope="module")

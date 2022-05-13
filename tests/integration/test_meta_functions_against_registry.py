@@ -1,10 +1,7 @@
-from brownie import interface, accounts
+from brownie import accounts, interface
+
+from tests.abis import curve_pool, curve_pool_v2, gauge_controller
 from tests.utils.constants import ADDRESS_ZERO
-from tests.abis import (
-    curve_pool,
-    curve_pool_v2,
-    gauge_controller,
-)
 
 
 def test_get_coins(metaregistry, registries, sync_limit):
@@ -147,9 +144,7 @@ def test_get_admin_balances(metaregistry, registries, sync_limit):
                     ):
                         balances[i] = accounts.at(pool).balance() - balances[i]
                     else:
-                        balances[i] = (
-                            interface.ERC20(coin).balanceOf(pool) - balances[i]
-                        )
+                        balances[i] = interface.ERC20(coin).balanceOf(pool) - balances[i]
                 actual_output = balances
             metaregistry_output = metaregistry.get_admin_balances(pool)
             for j, output in enumerate(actual_output):

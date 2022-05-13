@@ -8,23 +8,20 @@ def test_find_coins(metaregistry):
     for pool_index in range(pool_count):
         pool = metaregistry.pool_list(pool_index)
 
-        pool_coins = [
-            coin for coin in metaregistry.get_coins(pool) if coin != ADDRESS_ZERO
-        ]
+        pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ADDRESS_ZERO]
 
         base_combinations = list(itertools.combinations(pool_coins, 2))
         all_combinations = base_combinations
         if metaregistry.is_meta(pool):
             underlying_coins = [
-                coin
-                for coin in metaregistry.get_underlying_coins(pool)
-                if coin != ADDRESS_ZERO
+                coin for coin in metaregistry.get_underlying_coins(pool) if coin != ADDRESS_ZERO
             ]
             all_combinations = all_combinations + [
                 (pool_coins[0], coin) for coin in underlying_coins
             ]
         print(
-            f"Found {len(all_combinations)} combination for pool: {pool} ({pool_index}/{pool_count})"
+            f"Found {len(all_combinations)} "
+            f"combination for pool: {pool} ({pool_index}/{pool_count})"
         )
         for combination in all_combinations:
             registered = False
@@ -38,4 +35,4 @@ def test_find_coins(metaregistry):
                 if pool_for_the_pair == ADDRESS_ZERO:
                     break
 
-            assert registered == True
+            assert registered

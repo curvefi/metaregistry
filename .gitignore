@@ -134,3 +134,5 @@ reports/
 
 # pycharm
 .DS_Store
+.idea
+**/.idea

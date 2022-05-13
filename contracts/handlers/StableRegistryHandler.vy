@@ -61,7 +61,7 @@ base_registry: public(BaseRegistry)
 metaregistry: public(address)
 registry_id: uint256
 registry_index: uint256
-total_pools: public(uint256) 
+total_pools: public(uint256)
 
 
 # ---- constructor ---- #
@@ -136,7 +136,7 @@ def sync_pool_list(_limit: uint256):
             break
         _pool: address = self.base_registry.pool_list(i)
 
-        self.total_pools += 1   
+        self.total_pools += 1
         # if the pool has already been added by another registry, we leave it with the original
         if MetaRegistry(self.metaregistry).pool_to_registry(_pool).registry > 0:
             continue

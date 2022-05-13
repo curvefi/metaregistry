@@ -79,7 +79,7 @@ base_registry: public(BaseRegistry)
 metaregistry: public(address)
 registry_id: uint256
 registry_index: uint256
-total_pools: public(uint256) 
+total_pools: public(uint256)
 
 
 # ---- constructor ---- #
@@ -254,7 +254,7 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     if not (self._is_meta(_pool)):
         return self._get_balances(_pool)
     if (self.base_registry.get_pool_asset_type(_pool) == 2):
-        # some metapools (BTC) do not have a base_pool attribute so some registry functions 
+        # some metapools (BTC) do not have a base_pool attribute so some registry functions
         # will revert because the pools are not recognized as metapools.
         return self._get_btc_underlying_balances(_pool)
     return self.base_registry.get_underlying_balances(_pool)
