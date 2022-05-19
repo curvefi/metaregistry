@@ -1,24 +1,4 @@
-from dataclasses import dataclass
-from typing import Tuple
-
-
-@dataclass
-class Pool:
-    address: str
-    coins: Tuple[str, str, str, str, str, str, str, str]
-    n_coins: int
-    underlying_coins: Tuple[str, str, str, str, str, str, str, str]
-    decimals: Tuple[int, int, int, int, int, int, int, int]
-    underlying_decimals: Tuple[int, int, int, int, int, int, int, int]
-    lp_token: str
-    gauges: Tuple[
-        Tuple[str, str, str, str, str, str, str, str, str, str],
-        Tuple[int, int, int, int, int, int, int, int, int, int],
-    ]
-    is_meta: bool
-    name: str
-    asset_type: int
-
+MAX_COINS = 8
 
 ADMIN_FEE_RECEIVER = "0xeCb456EA5365865EbAb8a2661B0c503410e9B347"
 

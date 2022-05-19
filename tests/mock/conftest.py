@@ -25,6 +25,11 @@ def owner(accounts):
     yield accounts[0]
 
 
+@pytest.fixture(scope="session")
+def alice(accounts):
+    yield accounts[1]
+
+
 @pytest.fixture(scope="module")
 def address_provider(owner):
     yield AddressProvider.deploy(owner, {"from": owner})
