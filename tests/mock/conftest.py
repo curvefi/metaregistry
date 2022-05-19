@@ -5,12 +5,15 @@ from brownie import (
     MetaRegistry,
     StableFactory,
     StableFactoryHandler,
+    StableRegistry,
     TwoCoinPlainPoolNoLendingImplementation,
 )
 
 from tests.utils.constants import (
     ADDRESS_PROVIDER_STABLE_FACTORY_INDEX,
+    ADDRESS_PROVIDER_STABLE_REGISTRY_INDEX,
     ADMIN_FEE_RECEIVER,
+    GAUGE_CONTROLLER,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
     agEUR,
     sEUR,
@@ -33,6 +36,13 @@ def two_coin_plain_pool_implementation(owner):
 
 
 @pytest.fixture(scope="module")
+def stable_registry(owner, address_provider):
+    registry = StableRegistry.deploy(address_provider, GAUGE_CONTROLLER, {"from": owner})
+    address_provider.set_address(ADDRESS_PROVIDER_STABLE_REGISTRY_INDEX, registry, {"from": owner})
+    yield registry
+
+
+@pytest.fixture(scope="module")
 def stable_factory(owner, address_provider):
     factory = StableFactory.deploy(ADMIN_FEE_RECEIVER, {"from": owner})
     address_provider.add_new_id(factory, "StableFactory", {"from": owner})
@@ -42,7 +52,6 @@ def stable_factory(owner, address_provider):
 
 @pytest.fixture(scope="module")
 def euro_pool(owner, stable_factory, two_coin_plain_pool_implementation):
-
     tx = stable_factory.set_plain_implementations(
         2,
         [
