@@ -290,7 +290,7 @@ def _sync_registry(_index: uint256, _limit: uint256):
 
 @external
 def update_coin_map(_pool: address, _coin_list: address[MAX_COINS], _n_coins: uint256):
-    assert self.authorized_handlers[msg.sender]
+    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     for i in range(MAX_COINS):
         if i == _n_coins:
             break
@@ -320,7 +320,7 @@ def update_coin_map_for_underlying(_pool: address, _coins: address[MAX_COINS], _
     @param _underlying_coins Underlying coins to update in the map
     @param _n_coins todo: what's this again?
     """
-    assert self.authorized_handlers[msg.sender]
+    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     is_finished: bool = False
     base_coin_offset: uint256 = _n_coins - 1
     base_n_coins: uint256 = 0
@@ -355,7 +355,7 @@ def update_address_provider(_provider: address):
     @dev Only callable by admin
     @param _provider New provider address
     """
-    assert msg.sender == self.owner  # dev: admin-only function
+    assert msg.sender == self.owner  # dev: only owner
     assert _provider != ZERO_ADDRESS  # dev: not to zero
     self.address_provider = AddressProvider(_provider)
 
@@ -368,7 +368,7 @@ def update_lp_token_mapping(_pool: address, _token: address):
     @param _pool Address of the pool
     @param _token Address of the pool's LP token
     """
-    assert self.authorized_handlers[msg.sender]
+    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     self.get_pool_from_lp_token[_token] = _pool
 
 
@@ -381,7 +381,7 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
     @param _pool Pool to update
     @param _incremented_index Index of the associated registry incremented by 1
     """
-    assert self.authorized_handlers[msg.sender]
+    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     # if deletion
     if _incremented_index == 0:
         location: uint256 = self.pool_to_registry[_pool].location
