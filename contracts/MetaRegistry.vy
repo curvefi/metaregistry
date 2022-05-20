@@ -57,14 +57,6 @@ struct PoolInfo:
     location: uint256
 
 
-struct AddressInfo:
-    addr: address
-    is_active: bool
-    version: uint256
-    last_modified: uint256
-    description: String[64]
-
-
 struct CoinInfo:
     index: uint256
     register_count: uint256

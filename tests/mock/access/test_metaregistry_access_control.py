@@ -58,6 +58,12 @@ def test_add_registry_by_address_provider_id_non_authorized(metaregistry_mock, a
         assert tx.revert_msg == "dev: only owner"
 
 
+def test_switch_registry_active_status(metaregistry_mock, alice):
+    with brownie.reverts():
+        tx = metaregistry_mock.switch_registry_active_status(1, {"from": alice})
+        assert tx.revert_msg == "dev: only owner"
+
+
 def test_update_registry_addresses_non_authorized(metaregistry_mock, alice):
     with brownie.reverts():
         tx = metaregistry_mock.update_registry_addresses({"from": alice})
