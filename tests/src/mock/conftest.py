@@ -9,7 +9,7 @@ from brownie import (
     TwoCoinPlainPoolNoLendingImplementation,
 )
 
-from tests.utils.constants import (
+from ..utils.constants import (
     ADDRESS_PROVIDER_STABLE_FACTORY_INDEX,
     ADDRESS_PROVIDER_STABLE_REGISTRY_INDEX,
     ADMIN_FEE_RECEIVER,
@@ -18,16 +18,6 @@ from tests.utils.constants import (
     agEUR,
     sEUR,
 )
-
-
-@pytest.fixture(scope="session")
-def owner(accounts):
-    yield accounts[0]
-
-
-@pytest.fixture(scope="session")
-def alice(accounts):
-    yield accounts[1]
 
 
 @pytest.fixture(scope="module")

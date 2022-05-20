@@ -1,6 +1,6 @@
 import itertools
 
-from tests.utils.constants import ADDRESS_ZERO
+from brownie import ZERO_ADDRESS
 
 
 def test_find_coins(metaregistry):
@@ -8,13 +8,13 @@ def test_find_coins(metaregistry):
     for pool_index in range(pool_count):
         pool = metaregistry.pool_list(pool_index)
 
-        pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ADDRESS_ZERO]
+        pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ZERO_ADDRESS]
 
         base_combinations = list(itertools.combinations(pool_coins, 2))
         all_combinations = base_combinations
         if metaregistry.is_meta(pool):
             underlying_coins = [
-                coin for coin in metaregistry.get_underlying_coins(pool) if coin != ADDRESS_ZERO
+                coin for coin in metaregistry.get_underlying_coins(pool) if coin != ZERO_ADDRESS
             ]
             all_combinations = all_combinations + [
                 (pool_coins[0], coin) for coin in underlying_coins
@@ -32,7 +32,7 @@ def test_find_coins(metaregistry):
                 if pool_for_the_pair == pool:
                     registered = True
                     break
-                if pool_for_the_pair == ADDRESS_ZERO:
+                if pool_for_the_pair == ZERO_ADDRESS:
                     break
 
             assert registered

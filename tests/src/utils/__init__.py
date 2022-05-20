@@ -1,4 +1,4 @@
-from .constants import ADDRESS_ZERO
+from brownie import ZERO_ADDRESS
 
 
 def deploy_stable_factory_pool(
@@ -8,15 +8,15 @@ def deploy_stable_factory_pool(
         2,
         [
             two_coin_plain_pool_implementation,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
         ],
         {"from": owner},
     )
@@ -28,8 +28,8 @@ def deploy_stable_factory_pool(
         [
             coin_a,
             coin_b,
-            ADDRESS_ZERO,
-            ADDRESS_ZERO,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
         ],
         10000,
         4000000,

@@ -10,8 +10,8 @@ from brownie import (
     StableRegistryHandler,
 )
 
-from tests.abis import crypto_factory, crypto_registry, stable_factory, stable_registry
-from tests.utils.constants import ADDRESS_PROVIDER
+from ..abis import crypto_factory, crypto_registry, stable_factory, stable_registry
+from ..utils.constants import ADDRESS_PROVIDER
 
 
 def pytest_addoption(parser):
@@ -27,36 +27,6 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session")
 def sync_limit(request):
     return request.config.getoption("--synclimit")
-
-
-@pytest.fixture(scope="session")
-def alice(accounts):
-    yield accounts[1]
-
-
-@pytest.fixture(scope="session")
-def bob(accounts):
-    yield accounts[2]
-
-
-@pytest.fixture(scope="session")
-def charlie(accounts):
-    yield accounts[3]
-
-
-@pytest.fixture(scope="session")
-def dave(accounts):
-    yield accounts[4]
-
-
-@pytest.fixture(scope="session")
-def erin(accounts):
-    yield accounts[5]
-
-
-@pytest.fixture(scope="session")
-def owner(accounts):
-    yield accounts[0]
 
 
 @pytest.fixture(scope="module")
