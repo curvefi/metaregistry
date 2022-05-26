@@ -283,6 +283,13 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 
 
 # ---- lesser used methods go here (slightly more gas optimal) ---- #
+@internal
+def _remove_pool(_pool: address):
+    MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
+    MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
+    self.total_pools -= 1
+
+
 @external
 def remove_pool(_pool: address):
     """
@@ -292,9 +299,7 @@ def remove_pool(_pool: address):
     @dev A removed registry pool may hide a new pool
     """
     assert msg.sender == self.metaregistry  # dev: only metaregistry has access
-    MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-    MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
-    self.total_pools -= 1
+    self._remove_pool(_pool)
 
 
 @external
@@ -304,12 +309,10 @@ def reset_pool_list():
     @dev To be called from the metaregistry
     """
     assert msg.sender == self.metaregistry  # dev: only metaregistry has access
-    pool_count: uint256 = self.base_registry.pool_count()
-    last_pool: uint256 = self.total_pools
+    pool_count: uint256 = self.total_pools
     for i in range(MAX_POOLS):
         if i == pool_count:
             break
-        _pool: address = self.base_registry.pool_list(i)
-        MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-        MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
-    self.total_pools = 0
+        x: uint256 = pool_count - (i + 1)
+        _pool: address = self.base_registry.pool_list(x)
+        self._remove_pool(_pool)

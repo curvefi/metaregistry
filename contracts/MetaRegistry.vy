@@ -53,7 +53,7 @@ struct Registry:
 
 
 struct PoolInfo:
-    registry: uint256
+    registry: uint256 # index is > 1
     location: uint256
 
 
@@ -86,14 +86,14 @@ future_owner: public(address)
 
 get_coin: public(address[65536])  # unique list of registered coins
 get_pool_from_lp_token: public(HashMap[address, address])
-get_registry: public(HashMap[uint256, Registry])
+get_registry: public(HashMap[uint256, Registry]) # get registry by index, index starts at 0
 
 # -- mapping of coins -> pools for trading -- #
 # a mapping key is generated for each pair of addresses via:
 #
 #   bitwise_xor(convert(a, uint256), convert(b, uint256))
 markets: HashMap[uint256, address[65536]]
-market_counts: HashMap[uint256, uint256]
+market_counts: public(HashMap[uint256, uint256])
 
 owner: public(address)
 
@@ -277,7 +277,9 @@ def _update_single_registry(_index: uint256, _addr: address, _id: uint256, _regi
 @internal
 def _sync_registry(_index: uint256, _limit: uint256):
     registry: Registry = self.get_registry[_index]
-    RegistryHandler(registry.registry_handler).sync_pool_list(_limit)
+    # no syncing disabled registries
+    if registry.is_active:
+        RegistryHandler(registry.registry_handler).sync_pool_list(_limit)
 
 
 @external
@@ -310,7 +312,7 @@ def update_coin_map_for_underlying(_pool: address, _coins: address[MAX_COINS], _
     @param _pool Address of the pool to update the coin map for
     @param _coins Address of the coin to update
     @param _underlying_coins Underlying coins to update in the map
-    @param _n_coins todo: what's this again?
+    @param _n_coins Number of coins handled by the pool
     """
     assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     is_finished: bool = False
@@ -321,13 +323,12 @@ def update_coin_map_for_underlying(_pool: address, _coins: address[MAX_COINS], _
         if _underlying_coins[i] == ZERO_ADDRESS:
             base_n_coins = i
             break
-        else:
-            self._register_coin(_underlying_coins[i])
+        self._register_coin(_underlying_coins[i])
 
     for i in range(MAX_COINS):
         if i == base_coin_offset:
             break
-        for x in range(MAX_COINS):
+        for x in range(base_coin_offset, base_coin_offset + MAX_COINS):
             if x == base_n_coins:
                 break
             key: uint256 = bitwise_xor(convert(_coins[i], uint256), convert(_underlying_coins[x], uint256))
@@ -377,6 +378,7 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
     # if deletion
     if _incremented_index == 0:
         location: uint256 = self.pool_to_registry[_pool].location
+        registry_index: uint256 = self.pool_to_registry[_pool].registry
         length: uint256 = self.pool_count - 1
         if location < length:
             # replace _pool with final value in pool_list
@@ -385,11 +387,11 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
             self.pool_to_registry[addr].location = location
 
         # delete final pool_list value
-        self.pool_to_registry[_pool] = PoolInfo({registry: _incremented_index, location: 0})
+        self.pool_to_registry[_pool] = PoolInfo({registry: 0, location: 0})
         self.pool_list[length] = ZERO_ADDRESS
         self.pool_count = length
         # update coin mappings
-        self._update_coins_and_markets_on_deletion(_pool, _incremented_index)
+        self._update_coins_and_markets_on_deletion(_pool, registry_index)
         return
 
     self.pool_to_registry[_pool] = PoolInfo({registry: _incremented_index, location: self.pool_count})
@@ -509,7 +511,7 @@ def sync_registry(_index: uint256, _limit: uint256 = 0):
 @external
 def sync():
     """
-    @notice Gets all the pools from a registry that are not currently registered
+    @notice Gets all the pools that are not currently registered in each registry
     """
     for i in range(MAX_REGISTRIES):
         if i == self.registry_length:
@@ -806,7 +808,7 @@ def reset_registry(_index: uint256):
     @param _index Registry index
     """
     assert msg.sender == self.owner  # dev: only owner
-    assert _index < self.registry_length
+    assert _index < self.registry_length # dev: unknown registry
     self._reset_registry(_index)
 
 
