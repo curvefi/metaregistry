@@ -299,6 +299,12 @@ def is_registered(_pool: address) -> bool:
 
 
 # ---- lesser used methods go here (slightly more gas optimal) ---- #
+@internal
+def _remove_pool(_pool: address):
+    MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
+    MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
+    self.total_pools -= 1
+
 @external
 def remove_pool(_pool: address):
     """
@@ -308,9 +314,7 @@ def remove_pool(_pool: address):
     @dev A removed registry pool may hide a new pool
     """
     assert msg.sender == self.metaregistry  # dev: only metaregistry has access
-    MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-    MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
-    self.total_pools -= 1
+    self._remove_pool(_pool)
 
 
 @external
@@ -326,6 +330,4 @@ def reset_pool_list():
         if i == pool_count:
             break
         _pool: address = self.base_registry.pool_list(i)
-        MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-        MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
-    self.total_pools = 0
+        self._remove_pool(_pool)

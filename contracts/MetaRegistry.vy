@@ -33,7 +33,7 @@ interface RegistryHandler:
     def get_fees(_pool: address) -> uint256[10]: view
     def get_n_underlying_coins(_pool: address) -> uint256: view
     def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool): view
-
+    def remove_pool(_pool: address): view
 
 # ---- events ---- #
 event CommitNewAdmin:
@@ -564,6 +564,17 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 def _reset_registry(_index: uint256):
         registry: Registry = self.get_registry[_index]
         RegistryHandler(registry.registry_handler).reset_pool_list()
+
+
+@external
+def remove_pool(_pool: address):
+    """
+    @notice Remove a pool from its registry handler
+    @param _pool The address of the pool to remove
+    """
+    assert msg.sender == self.owner  # dev: only owner
+    registry: address = self._get_registry_handler_from_pool(_pool)
+    RegistryHandler(registry).remove_pool(_pool)
 
 
 @external
