@@ -33,7 +33,7 @@ interface RegistryHandler:
     def get_fees(_pool: address) -> uint256[10]: view
     def get_n_underlying_coins(_pool: address) -> uint256: view
     def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool): view
-    def remove_pool(_pool: address): view
+    def remove_pool(_pool: address): nonpayable
 
 # ---- events ---- #
 event CommitNewAdmin:
@@ -66,9 +66,9 @@ struct CoinInfo:
 
 
 # ---- constants ---- #
-ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
-MAX_COINS: constant(uint256) = 8
 MAX_REGISTRIES: constant(uint256) = 64
+MAX_COINS: constant(uint256) = 8
+ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
 
 # ---- storage variables ---- #
@@ -184,7 +184,7 @@ def _get_registry_handler_from_pool(_pool: address) -> address:
     return self.get_registry[registry_index - 1].registry_handler
 
 
-# ---- most used methods: Admin / DAO previleged methods ---- #
+# ---- most used methods: Admin / DAO privileged methods ---- #
 @external
 def update_single_registry(_index: uint256, _addr: address, _id: uint256, _registry_handler: address, _description: String[64], _is_active: bool):
     """
@@ -562,19 +562,8 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 # -- registry reset -- #
 @internal
 def _reset_registry(_index: uint256):
-        registry: Registry = self.get_registry[_index]
-        RegistryHandler(registry.registry_handler).reset_pool_list()
-
-
-@external
-def remove_pool(_pool: address):
-    """
-    @notice Remove a pool from its registry handler
-    @param _pool The address of the pool to remove
-    """
-    assert msg.sender == self.owner  # dev: only owner
-    registry: address = self._get_registry_handler_from_pool(_pool)
-    RegistryHandler(registry).remove_pool(_pool)
+    registry: Registry = self.get_registry[_index]
+    RegistryHandler(registry.registry_handler).reset_pool_list()
 
 
 @external
@@ -599,6 +588,17 @@ def reset():
         if i == self.registry_length:
             break
         self._reset_registry(i)
+
+
+@external
+def remove_pool(_pool: address):
+    """
+    @notice Remove a pool from its registry handler
+    @param _pool The address of the pool to remove
+    """
+    assert msg.sender == self.owner  # dev: only owner
+    registry: address = self._get_registry_handler_from_pool(_pool)
+    RegistryHandler(registry).remove_pool(_pool)
 
 
 # -- admin ownership transfer methods -- #
