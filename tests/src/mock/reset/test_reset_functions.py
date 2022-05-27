@@ -8,8 +8,8 @@ from ...utils.constants import (
     METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
     agEUR,
     alUSD,
-    rETH,
     sEUR,
+    stETH,
 )
 
 
@@ -21,7 +21,7 @@ def test_reset_registry_wrong_index(fn_isolation, metaregistry_mock, alice, owne
 
 def test_reset_registry(fn_isolation, metaregistry_mock, owner):
     # reth registry pool
-    assert metaregistry_mock.find_pool_for_coins(ETH, rETH, 0) != ZERO_ADDRESS
+    assert metaregistry_mock.find_pool_for_coins(ETH, stETH, 0) != ZERO_ADDRESS
     # alusd registry metapool
     assert metaregistry_mock.find_pool_for_coins(alUSD, DAI, 0) != ZERO_ADDRESS
     # ageur factory pool
@@ -30,7 +30,7 @@ def test_reset_registry(fn_isolation, metaregistry_mock, owner):
     metaregistry_mock.reset_registry(METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX)
 
     assert metaregistry_mock.find_pool_for_coins(sEUR, agEUR, 0) != ZERO_ADDRESS
-    assert metaregistry_mock.find_pool_for_coins(ETH, rETH, 0) == ZERO_ADDRESS
+    assert metaregistry_mock.find_pool_for_coins(ETH, stETH, 0) == ZERO_ADDRESS
     assert metaregistry_mock.find_pool_for_coins(alUSD, DAI, 0) == ZERO_ADDRESS
 
     metaregistry_mock.reset_registry(METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX)

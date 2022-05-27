@@ -50,15 +50,15 @@ def base_sync_setup(
     )
 
     stable_registry.add_pool_without_underlying(
-        "0xF9440930043eb3997fc70e1339dBb11F341de7A8",
+        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022",
         2,
-        "0x53a901d48795C58f485cBB38df08FA96a24669D5",
-        "0x00000000000000000000000000000000000000000000000000000000e6aa216c",
+        "0x06325440D014e39736583c165C2963BA99fAf14E",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
         4626,
-        256,
-        True,
+        0,
         False,
-        "reth",
+        False,
+        "steth",
     )
 
     total_pools = stable_registry.pool_count()

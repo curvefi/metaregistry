@@ -17,7 +17,7 @@ def test_find_coins(metaregistry):
                 coin for coin in metaregistry.get_underlying_coins(pool) if coin != ZERO_ADDRESS
             ]
             all_combinations = all_combinations + [
-                (pool_coins[0], coin) for coin in underlying_coins
+                (pool_coins[0], coin) for coin in underlying_coins if pool_coins[0] != coin
             ]
         print(
             f"Found {len(all_combinations)} "

@@ -29,40 +29,40 @@ def sync_limit(request):
     return request.config.getoption("--synclimit")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def metaregistry(owner):
     yield MetaRegistry.deploy(owner, ADDRESS_PROVIDER, {"from": owner})
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def stable_registry_handler(owner, metaregistry):
     handler = StableRegistryHandler.deploy(metaregistry, 0, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
     yield handler
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def stable_factory_handler(owner, metaregistry):
     handler = StableFactoryHandler.deploy(metaregistry, 3, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(3, handler, {"from": owner})
     yield handler
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def crypto_registry_handler(owner, metaregistry):
     handler = CryptoRegistryHandler.deploy(metaregistry, 5, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(5, handler, {"from": owner})
     yield handler
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def crypto_factory_handler(owner, metaregistry):
     handler = CryptoFactoryHandler.deploy(metaregistry, 6, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(6, handler, {"from": owner})
     yield handler
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def registries():
     yield [
         stable_factory(),
@@ -72,7 +72,7 @@ def registries():
     ]
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def sync_registries(
     metaregistry,
     registries,
