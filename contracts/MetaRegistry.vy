@@ -181,7 +181,9 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
 def _get_registry_handler_from_pool(_pool: address) -> address:
     registry_index: uint256 = self.pool_to_registry[_pool].registry
     assert registry_index > 0, "no registry"
-    return self.get_registry[registry_index - 1].registry_handler
+    registry: Registry = self.get_registry[registry_index - 1]
+    assert registry.is_active, "no active registry"
+    return registry.registry_handler
 
 
 # ---- most used methods: Admin / DAO privileged methods ---- #
