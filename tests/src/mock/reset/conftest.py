@@ -1,11 +1,18 @@
 import pytest
 
-from ...utils import deploy_stable_factory_pool
 from ...utils.constants import (
+    ALUSD_METAPOOL,
+    METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
+    METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
     METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-    agEUR,
-    sEUR,
+    MIM_METAPOOL,
+    STETH_POOL,
+    STETH_POOL_LPTOKEN,
+    TRICRYPTO_POOL,
+    TRICRYPTO_POOL_LP_TOKEN,
+    TRIPOOL,
+    TRIPOOL_LPTOKEN,
 )
 
 
@@ -13,16 +20,19 @@ from ...utils.constants import (
 def base_sync_setup(
     metaregistry_mock,
     stable_factory,
-    two_coin_plain_pool_implementation,
+    euro_pool,
+    toke_pool,
     stable_registry,
+    crypto_registry,
+    crypto_factory,
     alice,
     owner,
 ):
 
     stable_registry.add_pool_without_underlying(
-        "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
+        TRIPOOL,
         3,
-        "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490",
+        TRIPOOL_LPTOKEN,
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         394770,
         0,
@@ -32,27 +42,27 @@ def base_sync_setup(
     )
 
     stable_registry.add_metapool(
-        "0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c",
+        ALUSD_METAPOOL,
         2,
-        "0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c",
+        ALUSD_METAPOOL,
         4626,
         "alusd",
-        "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
+        TRIPOOL,
     )
 
     stable_registry.add_metapool(
-        "0x5a6A4D54456819380173272A5E8E9B9904BdF41B",
+        MIM_METAPOOL,
         2,
-        "0x5a6A4D54456819380173272A5E8E9B9904BdF41B",
+        MIM_METAPOOL,
         4626,
         "mim",
-        "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
+        TRIPOOL,
     )
 
     stable_registry.add_pool_without_underlying(
-        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022",
+        STETH_POOL,
         2,
-        "0x06325440D014e39736583c165C2963BA99fAf14E",
+        STETH_POOL_LPTOKEN,
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         4626,
         0,
@@ -66,10 +76,20 @@ def base_sync_setup(
         METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX, total_pools, {"from": owner}
     )
 
-    deploy_stable_factory_pool(
-        stable_factory, two_coin_plain_pool_implementation, sEUR, agEUR, owner
-    )
-    total_pools = stable_factory.pool_count()
     metaregistry_mock.sync_registry(
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX, total_pools, {"from": owner}
     )
+
+    crypto_registry.add_pool(
+        TRICRYPTO_POOL,
+        3,
+        TRICRYPTO_POOL_LP_TOKEN,
+        "0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168",
+        "0x3993d34e7e99Abf6B6f367309975d1360222D446",
+        1181702,
+        "tricrypto2",
+    )
+
+    metaregistry_mock.sync_registry(METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX, 1, {"from": owner})
+
+    metaregistry_mock.sync_registry(METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX, 1, {"from": owner})

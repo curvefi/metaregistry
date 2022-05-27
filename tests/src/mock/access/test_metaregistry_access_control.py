@@ -1,24 +1,6 @@
 import brownie
 from brownie import ZERO_ADDRESS, chain
 
-from ...utils.constants import MAX_COINS
-
-
-def test_update_coin_map_non_authorized(metaregistry_mock, alice):
-    with brownie.reverts():
-        tx = metaregistry_mock.update_coin_map(
-            ZERO_ADDRESS, [ZERO_ADDRESS] * MAX_COINS, 2, {"from": alice}
-        )
-        assert tx.revert_msg == "dev: authorized handlers only"
-
-
-def test_update_coin_map_for_underlying_non_authorized(metaregistry_mock, alice):
-    with brownie.reverts():
-        tx = metaregistry_mock.update_coin_map_for_underlying(
-            ZERO_ADDRESS, [ZERO_ADDRESS] * MAX_COINS, [ZERO_ADDRESS] * MAX_COINS, 2, {"from": alice}
-        )
-        assert tx.revert_msg == "dev: authorized handlers only"
-
 
 def test_update_address_provider_non_authorized(metaregistry_mock, alice):
     with brownie.reverts():
@@ -79,6 +61,12 @@ def test_reset_registry_non_authorized(metaregistry_mock, alice):
 def test_reset_non_authorized(metaregistry_mock, alice):
     with brownie.reverts():
         tx = metaregistry_mock.reset({"from": alice})
+        assert tx.revert_msg == "dev: only owner"
+
+
+def test_remove_pool_non_authorized(metaregistry_mock, alice):
+    with brownie.reverts():
+        tx = metaregistry_mock.remove_pool(ZERO_ADDRESS, {"from": alice})
         assert tx.revert_msg == "dev: only owner"
 
 

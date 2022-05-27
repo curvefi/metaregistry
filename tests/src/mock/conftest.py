@@ -25,6 +25,7 @@ from ..utils.constants import (
     CRYPTO_TOKEN_IMPLEMENTATION,
     GAUGE_CONTROLLER,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+    TOKE,
     WETH,
     agEUR,
     sEUR,
@@ -114,6 +115,27 @@ def euro_pool(owner, stable_factory, two_coin_plain_pool_implementation):
         {"from": owner},
     )
     yield tx.new_contracts[0]
+
+
+@pytest.fixture(scope="module")
+def toke_pool(owner, crypto_factory):
+    crypto_factory.deploy_pool(
+        "TOKE/ETH",
+        "TOKEETH",
+        [WETH, TOKE],
+        400000,
+        145000000000000,
+        26000000,
+        45000000,
+        2000000000000,
+        230000000000000,
+        146000000000000,
+        5000000000,
+        600,
+        5245142388549224,
+        {"from": owner},
+    )
+    yield crypto_factory.pool_list(crypto_factory.pool_count() - 1)
 
 
 @pytest.fixture(scope="module")
