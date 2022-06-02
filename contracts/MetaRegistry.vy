@@ -13,6 +13,7 @@ interface AddressProvider:
 interface RegistryHandler:
     def sync_pool_list(_limit: uint256): nonpayable
     def reset_pool_list(): nonpayable
+    def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_coins(_pool: address) -> address[MAX_COINS]: view
     def get_base_pool(_pool: address) -> address: view
     def get_pool_params(_pool: address) -> uint256[20]: view
@@ -32,7 +33,7 @@ interface RegistryHandler:
     def get_fees(_pool: address) -> uint256[10]: view
     def get_n_underlying_coins(_pool: address) -> uint256: view
     def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool): view
-
+    def remove_pool(_pool: address): nonpayable
 
 # ---- events ---- #
 event CommitNewAdmin:
@@ -53,16 +54,8 @@ struct Registry:
 
 
 struct PoolInfo:
-    registry: uint256
+    registry: uint256 # index is > 1
     location: uint256
-
-
-struct AddressInfo:
-    addr: address
-    is_active: bool
-    version: uint256
-    last_modified: uint256
-    description: String[64]
 
 
 struct CoinInfo:
@@ -73,37 +66,22 @@ struct CoinInfo:
 
 
 # ---- constants ---- #
-ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
-MAX_COINS: constant(uint256) = 8
 MAX_REGISTRIES: constant(uint256) = 64
+MAX_COINS: constant(uint256) = 8
+ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
 
 # ---- storage variables ---- #
 address_provider: public(AddressProvider)
 admin_actions_deadline: public(uint256)
-authorized_registries: HashMap[address, bool]
+authorized_handlers: HashMap[address, bool]
 
-coins: HashMap[address, CoinInfo]
-coin_count: public(uint256)  # total unique coins registered
-
-# bitwise_xor(coina, coinb) -> (coina_pos, coinb_pos) sorted
-# stored as uint128[2]
-coin_swap_indexes: HashMap[uint256, uint256]
-
+owner: public(address)
 future_owner: public(address)
 
 get_coin: public(address[65536])  # unique list of registered coins
 get_pool_from_lp_token: public(HashMap[address, address])
-get_registry: public(HashMap[uint256, Registry])
-
-# -- mapping of coins -> pools for trading -- #
-# a mapping key is generated for each pair of addresses via:
-#
-#   bitwise_xor(convert(a, uint256), convert(b, uint256))
-markets: HashMap[uint256, address[65536]]
-market_counts: HashMap[uint256, uint256]
-
-owner: public(address)
+get_registry: public(HashMap[uint256, Registry]) # get registry by index, index starts at 0
 
 pool_count: public(uint256)
 pool_list: public(address[65536])
@@ -123,51 +101,6 @@ def __init__(_owner: address, address_provider: address):
 
 # ---- most used Methods: authorised registry callback methods ---- #
 @internal
-def _register_coin(_coin: address):
-    if self.coins[_coin].register_count == 0:
-        coin_count: uint256 = self.coin_count
-        self.coins[_coin].index = coin_count
-        self.get_coin[coin_count] = _coin
-        self.coin_count += 1
-    self.coins[_coin].register_count += 1
-
-
-@internal
-def _register_coin_pair(_coina: address, _coinb: address, _key: uint256):
-    # register _coinb in _coina's array of coins
-    coin_b_pos: uint256 = self.coins[_coina].swap_count
-    self.coins[_coina].swap_for[coin_b_pos] = _coinb
-    self.coins[_coina].swap_count += 1
-    # register _coina in _coinb's array of coins
-    coin_a_pos: uint256 = self.coins[_coinb].swap_count
-    self.coins[_coinb].swap_for[coin_a_pos] = _coina
-    self.coins[_coinb].swap_count += 1
-    # register indexes (coina pos in coinb array, coinb pos in coina array)
-    if convert(_coina, uint256) < convert(_coinb, uint256):
-        self.coin_swap_indexes[_key] = shift(coin_a_pos, 128) + coin_b_pos
-    else:
-        self.coin_swap_indexes[_key] = shift(coin_b_pos, 128) + coin_a_pos
-
-
-@internal
-def _unregister_coin(_coin: address):
-    self.coins[_coin].register_count -= 1
-
-    if self.coins[_coin].register_count == 0:
-        self.coin_count -= 1
-        coin_count: uint256 = self.coin_count
-        location: uint256 = self.coins[_coin].index
-
-        if location < coin_count:
-            coin_b: address = self.get_coin[coin_count]
-            self.get_coin[location] = coin_b
-            self.coins[coin_b].index = location
-
-        self.coins[_coin].index = 0
-        self.get_coin[coin_count] = ZERO_ADDRESS
-
-
-@internal
 def _update_single_registry(_index: uint256, _addr: address, _id: uint256, _registry_handler: address, _description: String[64], _is_active: bool):
     assert _index <= self.registry_length
 
@@ -175,73 +108,16 @@ def _update_single_registry(_index: uint256, _addr: address, _id: uint256, _regi
         self.registry_length += 1
 
     self.get_registry[_index] = Registry({addr: _addr, id: _id, registry_handler: _registry_handler, description: _description, is_active: _is_active})
-    if (self.authorized_registries[_registry_handler] != _is_active):
-        self.authorized_registries[_registry_handler] = _is_active
+    if (self.authorized_handlers[_registry_handler] != _is_active):
+        self.authorized_handlers[_registry_handler] = _is_active
 
 
 @internal
 def _sync_registry(_index: uint256, _limit: uint256):
     registry: Registry = self.get_registry[_index]
-    RegistryHandler(registry.registry_handler).sync_pool_list(_limit)
-
-
-@external
-def update_coin_map(_pool: address, _coin_list: address[MAX_COINS], _n_coins: uint256):
-    assert self.authorized_registries[msg.sender]
-    for i in range(MAX_COINS):
-        if i == _n_coins:
-            break
-
-        self._register_coin(_coin_list[i])
-        # add pool to markets
-        i2: uint256 = i + 1
-        for x in range(i2, i2 + MAX_COINS):
-            if x == _n_coins:
-                break
-
-            key: uint256 = bitwise_xor(convert(_coin_list[i], uint256), convert(_coin_list[x], uint256))
-            length: uint256 = self.market_counts[key]
-            self.markets[key][length] = _pool
-            self.market_counts[key] = length + 1
-
-            # register the coin pair
-            if length == 0:
-                self._register_coin_pair(_coin_list[x], _coin_list[i], key)
-
-
-@external
-def update_coin_map_for_underlying(_pool: address, _coins: address[MAX_COINS], _underlying_coins: address[MAX_COINS], _n_coins: uint256):
-    """
-    @param _pool Address of the pool to update the coin map for
-    @param _coins Address of the coin to update
-    @param _underlying_coins Underlying coins to update in the map
-    @param _n_coins todo: what's this again?
-    """
-    is_finished: bool = False
-    base_coin_offset: uint256 = _n_coins - 1
-    base_n_coins: uint256 = 0
-
-    for i in range(base_coin_offset, base_coin_offset + MAX_COINS):
-        if _underlying_coins[i] == ZERO_ADDRESS:
-            base_n_coins = i
-            break
-        else:
-            self._register_coin(_underlying_coins[i])
-
-    for i in range(MAX_COINS):
-        if i == base_coin_offset:
-            break
-        for x in range(MAX_COINS):
-            if x == base_n_coins:
-                break
-            key: uint256 = bitwise_xor(convert(_coins[i], uint256), convert(_underlying_coins[x], uint256))
-            length: uint256 = self.market_counts[key]
-            self.markets[key][length] = _pool
-            self.market_counts[key] = length + 1
-
-            # register the coin pair
-            if length == 0:
-                self._register_coin_pair(_coins[i], _underlying_coins[x], key)
+    # no syncing disabled registries
+    if registry.is_active:
+        RegistryHandler(registry.registry_handler).sync_pool_list(_limit)
 
 
 @external
@@ -251,7 +127,7 @@ def update_address_provider(_provider: address):
     @dev Only callable by admin
     @param _provider New provider address
     """
-    assert msg.sender == self.owner  # dev: admin-only function
+    assert msg.sender == self.owner  # dev: only owner
     assert _provider != ZERO_ADDRESS  # dev: not to zero
     self.address_provider = AddressProvider(_provider)
 
@@ -264,7 +140,7 @@ def update_lp_token_mapping(_pool: address, _token: address):
     @param _pool Address of the pool
     @param _token Address of the pool's LP token
     """
-    assert self.authorized_registries[msg.sender]
+    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     self.get_pool_from_lp_token[_token] = _pool
 
 
@@ -273,13 +149,15 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
     """
     @notice Update the registry associated with a pool
     @dev Callback function used by the registry handlers when syncing
+    @dev _incremented_index of value 0 means pool will be deleted
     @param _pool Pool to update
     @param _incremented_index Index of the associated registry incremented by 1
     """
-    assert self.authorized_registries[msg.sender]
+    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
     # if deletion
     if _incremented_index == 0:
         location: uint256 = self.pool_to_registry[_pool].location
+        registry_index: uint256 = self.pool_to_registry[_pool].registry
         length: uint256 = self.pool_count - 1
         if location < length:
             # replace _pool with final value in pool_list
@@ -288,7 +166,7 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
             self.pool_to_registry[addr].location = location
 
         # delete final pool_list value
-        self.pool_to_registry[_pool] = PoolInfo({registry: _incremented_index, location: 0})
+        self.pool_to_registry[_pool] = PoolInfo({registry: 0, location: 0})
         self.pool_list[length] = ZERO_ADDRESS
         self.pool_count = length
         return
@@ -303,10 +181,12 @@ def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
 def _get_registry_handler_from_pool(_pool: address) -> address:
     registry_index: uint256 = self.pool_to_registry[_pool].registry
     assert registry_index > 0, "no registry"
-    return self.get_registry[registry_index - 1].registry_handler
+    registry: Registry = self.get_registry[registry_index - 1]
+    assert registry.is_active, "no active registry"
+    return registry.registry_handler
 
 
-# ---- most used methods: Admin / DAO previleged methods ---- #
+# ---- most used methods: Admin / DAO privileged methods ---- #
 @external
 def update_single_registry(_index: uint256, _addr: address, _id: uint256, _registry_handler: address, _description: String[64], _is_active: bool):
     """
@@ -410,7 +290,7 @@ def sync_registry(_index: uint256, _limit: uint256 = 0):
 @external
 def sync():
     """
-    @notice Gets all the pools from a registry that are not currently registered
+    @notice Gets all the pools that are not currently registered in each registry
     """
     for i in range(MAX_REGISTRIES):
         if i == self.registry_length:
@@ -639,8 +519,20 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
             this value is used to return the n'th address.
     @return Pool address
     """
-    key: uint256 = bitwise_xor(convert(_from, uint256), convert(_to, uint256))
-    return self.markets[key][i]
+    local_index: uint256 = 0
+    pool: address = ZERO_ADDRESS
+    for registry_index in range(MAX_REGISTRIES):
+        if registry_index == self.registry_length:
+            break
+        registry: RegistryHandler = RegistryHandler(self.get_registry[registry_index].registry_handler)
+        for j in range(0, 65536):
+            pool = registry.find_pool_for_coins(_from, _to, j)
+            if pool == ZERO_ADDRESS:
+                break
+            local_index += 1
+            if local_index > i:
+                return pool
+    return pool
 
 
 @external
@@ -653,30 +545,6 @@ def get_base_pool(_pool: address) -> address:
     @return Address of base pool
     """
     return RegistryHandler(self._get_registry_handler_from_pool(_pool)).get_base_pool(_pool)
-
-
-@view
-@external
-def get_coin_swap_count(_coin: address) -> uint256:
-    """
-    @notice Get the number of unique coins available to swap `_coin` against
-    @param _coin Coin address
-    @return The number of unique coins available to swap for
-    """
-    return self.coins[_coin].swap_count
-
-
-@view
-@external
-def get_coin_swap_complement(_coin: address, _index: uint256) -> address:
-    """
-    @notice Get the coin available to swap against `_coin` at `_index`
-    @param _coin Coin address
-    @param _index An index in the `_coin`'s set of available counter
-        coin's
-    @return Address of a coin available to swap against `_coin`
-    """
-    return self.coins[_coin].swap_for[_index]
 
 
 @view
@@ -695,41 +563,9 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 # ---- lesser used methods go here (slightly more gas optimal) ---- #
 # -- registry reset -- #
 @internal
-def _unregister_coin_pair(_coina: address, _coinb: address, _coinb_idx: uint256):
-    """
-    @param _coinb_idx the index of _coinb in _coina's array of unique coin's
-    """
-    # decrement swap counts for both coins
-    self.coins[_coina].swap_count -= 1
-
-    # retrieve the last currently occupied index in coina's array
-    coina_arr_last_idx: uint256 = self.coins[_coina].swap_count
-
-    # if coinb's index in coina's array is less than the last
-    # overwrite it's position with the last coin
-    if _coinb_idx < coina_arr_last_idx:
-        # here's our last coin in coina's array
-        coin_c: address = self.coins[_coina].swap_for[coina_arr_last_idx]
-        # get the bitwise_xor of the pair to retrieve their indexes
-        key: uint256 = bitwise_xor(convert(_coina, uint256), convert(coin_c, uint256))
-        indexes: uint256 = self.coin_swap_indexes[key]
-
-        # update the pairing's indexes
-        if convert(_coina, uint256) < convert(coin_c, uint256):
-            # least complicated most readable way of shifting twice to remove the lower order bits
-            self.coin_swap_indexes[key] = shift(shift(indexes, -128), 128) + _coinb_idx
-        else:
-            self.coin_swap_indexes[key] = shift(_coinb_idx, 128) + indexes % 2 ** 128
-        # set _coinb_idx in coina's array to coin_c
-        self.coins[_coina].swap_for[_coinb_idx] = coin_c
-
-    self.coins[_coina].swap_for[coina_arr_last_idx] = ZERO_ADDRESS
-
-
-@internal
 def _reset_registry(_index: uint256):
-        registry: Registry = self.get_registry[_index]
-        RegistryHandler(registry.registry_handler).reset_pool_list()
+    registry: Registry = self.get_registry[_index]
+    RegistryHandler(registry.registry_handler).reset_pool_list()
 
 
 @external
@@ -739,7 +575,7 @@ def reset_registry(_index: uint256):
     @param _index Registry index
     """
     assert msg.sender == self.owner  # dev: only owner
-    assert _index < self.registry_length
+    assert _index < self.registry_length # dev: unknown registry
     self._reset_registry(_index)
 
 
@@ -754,6 +590,17 @@ def reset():
         if i == self.registry_length:
             break
         self._reset_registry(i)
+
+
+@external
+def remove_pool(_pool: address):
+    """
+    @notice Remove a pool from its registry handler
+    @param _pool The address of the pool to remove
+    """
+    assert msg.sender == self.owner  # dev: only owner
+    registry: address = self._get_registry_handler_from_pool(_pool)
+    RegistryHandler(registry).remove_pool(_pool)
 
 
 # -- admin ownership transfer methods -- #

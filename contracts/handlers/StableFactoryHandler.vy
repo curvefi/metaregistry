@@ -6,6 +6,7 @@
 
 # ---- interfaces ---- #
 interface BaseRegistry:
+    def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_coins(_pool: address) -> address[MAX_COINS]: view
     def get_A(_pool: address) -> uint256: view
     def get_underlying_coins(_pool: address) -> address[MAX_COINS]: view
@@ -31,8 +32,6 @@ interface MetaRegistry:
     def update_internal_pool_registry(_pool: address, _incremented_index: uint256): nonpayable
     def registry_length() -> uint256: view
     def update_lp_token_mapping(_pool: address, _token: address): nonpayable
-    def update_coin_map(_pool: address, _coin_list: address[MAX_METAREGISTRY_COINS], _n_coins: uint256): nonpayable
-    def update_coin_map_for_underlying(_pool: address, _coins: address[MAX_METAREGISTRY_COINS], _underlying_coins: address[MAX_METAREGISTRY_COINS], _n_coins: uint256): nonpayable
     def pool_to_registry(_pool: address) -> PoolInfo: view
 
 
@@ -186,10 +185,6 @@ def sync_pool_list(_limit: uint256):
 
         MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, self.registry_index + 1)
         MetaRegistry(self.metaregistry).update_lp_token_mapping(_pool, _pool)
-        MetaRegistry(self.metaregistry).update_coin_map(_pool, self._get_coins(_pool), self._get_n_coins(_pool))
-
-        if self._is_meta(_pool):
-            MetaRegistry(self.metaregistry).update_coin_map_for_underlying(_pool, self._get_coins(_pool), self._get_underlying_coins(_pool), self._get_n_coins(_pool))
 
 
 # ---- view methods (API) of the contract ---- #
@@ -228,6 +223,12 @@ def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
     if not (self._is_meta(_pool)):
         return self._get_coins(_pool)
     return self._get_underlying_coins(_pool)
+
+
+@external
+@view
+def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address:
+    return self.base_registry.find_pool_for_coins(_from, _to, i)
 
 
 @external

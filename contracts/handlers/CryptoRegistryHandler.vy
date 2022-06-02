@@ -10,6 +10,7 @@ interface AddressProvider:
 
 
 interface BaseRegistry:
+    def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_coins(_pool: address) -> address[MAX_COINS]: view
     def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
     def get_balances(_pool: address) -> uint256[MAX_COINS]: view
@@ -45,7 +46,6 @@ interface MetaRegistry:
     def update_internal_pool_registry(_pool: address, _incremented_index: uint256): nonpayable
     def registry_length() -> uint256: view
     def update_lp_token_mapping(_pool: address, _token: address): nonpayable
-    def update_coin_map(_pool: address, _coin_list: address[MAX_COINS], _n_coins: uint256): nonpayable
     def pool_to_registry(_pool: address) -> PoolInfo: view
 
 
@@ -127,7 +127,6 @@ def sync_pool_list(_limit: uint256):
 
         MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, self.registry_index + 1)
         MetaRegistry(self.metaregistry).update_lp_token_mapping(_pool, self._get_lp_token(_pool))
-        MetaRegistry(self.metaregistry).update_coin_map(_pool, self._get_coins(_pool), self._get_n_coins(_pool))
 
 
 @external
@@ -159,9 +158,6 @@ def get_n_coins(_pool: address) -> uint256:
 @external
 @view
 def get_n_underlying_coins(_pool: address) -> uint256:
-    """
-    todo: what if it is a crypto metapool?
-    """
     return self._get_n_coins(_pool)
 
 
@@ -169,6 +165,12 @@ def get_n_underlying_coins(_pool: address) -> uint256:
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
     return self._get_coins(_pool)
+
+
+@external
+@view
+def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address:
+    return self.base_registry.find_pool_for_coins(_from, _to, i)
 
 
 @external
@@ -297,6 +299,12 @@ def is_registered(_pool: address) -> bool:
 
 
 # ---- lesser used methods go here (slightly more gas optimal) ---- #
+@internal
+def _remove_pool(_pool: address):
+    MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
+    MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
+    self.total_pools -= 1
+
 @external
 def remove_pool(_pool: address):
     """
@@ -306,9 +314,7 @@ def remove_pool(_pool: address):
     @dev A removed registry pool may hide a new pool
     """
     assert msg.sender == self.metaregistry  # dev: only metaregistry has access
-    MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-    MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
-    self.total_pools -= 1
+    self._remove_pool(_pool)
 
 
 @external
@@ -324,6 +330,4 @@ def reset_pool_list():
         if i == pool_count:
             break
         _pool: address = self.base_registry.pool_list(i)
-        MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-        MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, self._get_lp_token(_pool))
-    self.total_pools = 0
+        self._remove_pool(_pool)

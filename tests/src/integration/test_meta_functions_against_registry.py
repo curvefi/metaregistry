@@ -1,7 +1,6 @@
-from brownie import accounts, interface
+from brownie import ZERO_ADDRESS, accounts, interface
 
-from tests.abis import curve_pool, curve_pool_v2, gauge_controller
-from tests.utils.constants import ADDRESS_ZERO
+from ..abis import curve_pool, curve_pool_v2, gauge_controller
 
 
 def test_get_coins(metaregistry, registries, sync_limit):
@@ -74,17 +73,17 @@ def test_get_base_pool(metaregistry, registries, sync_limit):
 
             # get_base_pool
             if i >= 2:
-                actual_output = ADDRESS_ZERO
+                actual_output = ZERO_ADDRESS
             elif i == 0:
                 if not registry.is_meta(pool):
-                    actual_output = ADDRESS_ZERO
+                    actual_output = ZERO_ADDRESS
                 elif registry.get_pool_asset_type(pool) == 2:
                     actual_output = "0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714"
                 else:
                     actual_output = registry.get_base_pool(pool)
             else:
                 if not registry.is_meta(pool):
-                    actual_output = ADDRESS_ZERO
+                    actual_output = ZERO_ADDRESS
                 else:
                     actual_output = curve_pool(pool).base_pool()
 
@@ -241,7 +240,7 @@ def test_get_gauges(metaregistry, registries, sync_limit):
             else:
                 gauge = registry.get_gauge(pool)
                 actual_output = (
-                    [gauge] + [ADDRESS_ZERO] * 9,
+                    [gauge] + [ZERO_ADDRESS] * 9,
                     [gauge_controller().gauge_types(gauge)] + [0] * 9,
                 )
             metaregistry_output = metaregistry.get_gauges(pool)
