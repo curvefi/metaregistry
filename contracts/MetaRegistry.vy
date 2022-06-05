@@ -11,8 +11,6 @@ interface AddressProvider:
     def get_id_info(_id: uint256) -> ((address, bool, uint256, uint256, String[64])): view
 
 interface RegistryHandler:
-    def sync_pool_list(_limit: uint256): nonpayable
-    def reset_pool_list(): nonpayable
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_coins(_pool: address) -> address[MAX_COINS]: view
     def get_base_pool(_pool: address) -> address: view
@@ -26,14 +24,20 @@ interface RegistryHandler:
     def get_admin_balances(_pool: address) -> uint256[MAX_COINS]: view
     def get_pool_asset_type(_pool: address) -> uint256: view
     def get_lp_token(_pool: address) -> address: view
-    def get_virtual_price_from_lp_token(_token: address) -> uint256: view
+    def get_pool_from_lp_token(_lp_token: address) -> address: view
     def get_gauges(_pool: address) -> (address[10], int128[10]): view
-    def is_meta(_pool: address) -> bool: view
     def get_pool_name(_pool: address) -> String[64]: view
     def get_fees(_pool: address) -> uint256[10]: view
     def get_n_underlying_coins(_pool: address) -> uint256: view
     def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool): view
-    def remove_pool(_pool: address): nonpayable
+    def is_meta(_pool: address) -> bool: view
+    def is_registered(_pool: address) -> bool: view
+    def pool_count() -> uint256: view
+    def pool_list(_index: uint256) -> address: view
+
+
+interface CurvePool:
+    def get_virtual_price() -> uint256: view
 
 # ---- events ---- #
 event CommitNewAdmin:
@@ -79,13 +83,8 @@ authorized_handlers: HashMap[address, bool]
 owner: public(address)
 future_owner: public(address)
 
-get_coin: public(address[65536])  # unique list of registered coins
-get_pool_from_lp_token: public(HashMap[address, address])
 get_registry: public(HashMap[uint256, Registry]) # get registry by index, index starts at 0
 
-pool_count: public(uint256)
-pool_list: public(address[65536])
-pool_to_registry: public(HashMap[address, PoolInfo])
 
 registry_length: public(uint256)
 
@@ -112,14 +111,6 @@ def _update_single_registry(_index: uint256, _addr: address, _id: uint256, _regi
         self.authorized_handlers[_registry_handler] = _is_active
 
 
-@internal
-def _sync_registry(_index: uint256, _limit: uint256):
-    registry: Registry = self.get_registry[_index]
-    # no syncing disabled registries
-    if registry.is_active:
-        RegistryHandler(registry.registry_handler).sync_pool_list(_limit)
-
-
 @external
 def update_address_provider(_provider: address):
     """
@@ -132,58 +123,29 @@ def update_address_provider(_provider: address):
     self.address_provider = AddressProvider(_provider)
 
 
-@external
-def update_lp_token_mapping(_pool: address, _token: address):
-    """
-    @notice Associate an LP token with a pool for reverse lookup
-    @dev Callback function used by the registry handlers when syncing
-    @param _pool Address of the pool
-    @param _token Address of the pool's LP token
-    """
-    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
-    self.get_pool_from_lp_token[_token] = _pool
-
-
-@external
-def update_internal_pool_registry(_pool: address, _incremented_index: uint256):
-    """
-    @notice Update the registry associated with a pool
-    @dev Callback function used by the registry handlers when syncing
-    @dev _incremented_index of value 0 means pool will be deleted
-    @param _pool Pool to update
-    @param _incremented_index Index of the associated registry incremented by 1
-    """
-    assert self.authorized_handlers[msg.sender] # dev: authorized handlers only
-    # if deletion
-    if _incremented_index == 0:
-        location: uint256 = self.pool_to_registry[_pool].location
-        registry_index: uint256 = self.pool_to_registry[_pool].registry
-        length: uint256 = self.pool_count - 1
-        if location < length:
-            # replace _pool with final value in pool_list
-            addr: address = self.pool_list[length]
-            self.pool_list[location] = addr
-            self.pool_to_registry[addr].location = location
-
-        # delete final pool_list value
-        self.pool_to_registry[_pool] = PoolInfo({registry: 0, location: 0})
-        self.pool_list[length] = ZERO_ADDRESS
-        self.pool_count = length
-        return
-
-    self.pool_to_registry[_pool] = PoolInfo({registry: _incremented_index, location: self.pool_count})
-    self.pool_list[self.pool_count] = _pool
-    self.pool_count += 1
+@internal
+@view
+def _get_pool_from_lp_token(_token: address) -> address:
+    for i in range(MAX_REGISTRIES):
+        if i == self.registry_length:
+            break
+        handler: address = self.get_registry[i].registry_handler
+        pool: address = RegistryHandler(handler).get_pool_from_lp_token(_token)
+        if pool != ZERO_ADDRESS:
+            return pool
+    return ZERO_ADDRESS
 
 
 @internal
 @view
 def _get_registry_handler_from_pool(_pool: address) -> address:
-    registry_index: uint256 = self.pool_to_registry[_pool].registry
-    assert registry_index > 0, "no registry"
-    registry: Registry = self.get_registry[registry_index - 1]
-    assert registry.is_active, "no active registry"
-    return registry.registry_handler
+    for i in range(MAX_REGISTRIES):
+        if i == self.registry_length:
+            break
+        handler: address = self.get_registry[i].registry_handler
+        if RegistryHandler(handler).is_registered(_pool):
+            return handler
+    raise("no registry")
 
 
 # ---- most used methods: Admin / DAO privileged methods ---- #
@@ -275,29 +237,6 @@ def update_registry_addresses() -> uint256:
     return count
 
 
-@external
-def sync_registry(_index: uint256, _limit: uint256 = 0):
-    """
-    @notice Sync a particular registry
-    @dev Use _limit to split syncs to avoid hitting gas limit
-    @param _index Registry index
-    @param _limit Max number of pools to sync
-    """
-    assert _index < self.registry_length
-    self._sync_registry(_index, _limit)
-
-
-@external
-def sync():
-    """
-    @notice Gets all the pools that are not currently registered in each registry
-    """
-    for i in range(MAX_REGISTRIES):
-        if i == self.registry_length:
-            break
-        self._sync_registry(i, 0)
-
-
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -355,7 +294,7 @@ def is_registered(_pool: address) -> bool:
     @param _pool The address of the pool
     @return A bool corresponding to whether the pool belongs or not
     """
-    return RegistryHandler(self._get_registry_handler_from_pool(_pool)).get_n_coins(_pool) > 0
+    return self._get_registry_handler_from_pool(_pool) != ZERO_ADDRESS
 
 
 @external
@@ -476,6 +415,39 @@ def get_admin_balances(_pool: address) -> uint256[MAX_COINS]:
 
 @external
 @view
+def pool_count() -> uint256:
+    """
+    @notice Return the total number of pools tracked by the metaregistry
+    """
+    total_pools: uint256 = 0
+    for i in range(MAX_REGISTRIES):
+        if i == self.registry_length:
+            break
+        handler: address = self.get_registry[i].registry_handler
+        total_pools += RegistryHandler(handler).pool_count()
+    return total_pools
+
+
+@external
+@view
+def pool_list(_index: uint256) -> address:
+    """
+    @notice Return the pool at a given index in the metaregistry
+    """
+    pools_skip: uint256 = 0
+    for i in range(MAX_REGISTRIES):
+        if i == self.registry_length:
+            break
+        handler: address = self.get_registry[i].registry_handler
+        count: uint256 = RegistryHandler(handler).pool_count()
+        if _index - pools_skip < count:
+            return RegistryHandler(handler).pool_list(_index - pools_skip)
+        pools_skip += count
+    return ZERO_ADDRESS
+
+
+@external
+@view
 def get_pool_asset_type(_pool: address) -> uint256:
     """
     @notice Query the asset type of `_pool`
@@ -505,7 +477,18 @@ def get_virtual_price_from_lp_token(_token: address) -> uint256:
     @param _token LP token address
     @return uint256 Virtual price
     """
-    return RegistryHandler(self._get_registry_handler_from_pool(self.get_pool_from_lp_token[_token])).get_virtual_price_from_lp_token(_token)
+    return CurvePool(self._get_pool_from_lp_token(_token)).get_virtual_price()
+
+
+@external
+@view
+def get_pool_from_lp_token(_token: address) -> address:
+    """
+    @notice Get the pool associated with an LP token
+    @param _token LP token address
+    @return Pool address
+    """
+    return self._get_pool_from_lp_token(_token)
 
 
 @view
@@ -559,50 +542,13 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     """
     return RegistryHandler(self._get_registry_handler_from_pool(_pool)).get_coin_indices(_pool, _from, _to)
 
+@external
+@view
+def get_registry_handler_from_pool(_pool: address) -> address:
+    return self._get_registry_handler_from_pool(_pool)
+
 
 # ---- lesser used methods go here (slightly more gas optimal) ---- #
-# -- registry reset -- #
-@internal
-def _reset_registry(_index: uint256):
-    registry: Registry = self.get_registry[_index]
-    RegistryHandler(registry.registry_handler).reset_pool_list()
-
-
-@external
-def reset_registry(_index: uint256):
-    """
-    @notice Reset a particular registry
-    @param _index Registry index
-    """
-    assert msg.sender == self.owner  # dev: only owner
-    assert _index < self.registry_length # dev: unknown registry
-    self._reset_registry(_index)
-
-
-@external
-def reset():
-    """
-    @notice Resets all registries
-    """
-    assert msg.sender == self.owner  # dev: only owner
-
-    for i in range(MAX_REGISTRIES):
-        if i == self.registry_length:
-            break
-        self._reset_registry(i)
-
-
-@external
-def remove_pool(_pool: address):
-    """
-    @notice Remove a pool from its registry handler
-    @param _pool The address of the pool to remove
-    """
-    assert msg.sender == self.owner  # dev: only owner
-    registry: address = self._get_registry_handler_from_pool(_pool)
-    RegistryHandler(registry).remove_pool(_pool)
-
-
 # -- admin ownership transfer methods -- #
 @external
 def commit_transfer_ownership(_owner: address):

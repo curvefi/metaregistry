@@ -28,11 +28,7 @@ interface BaseRegistry:
 
 
 interface MetaRegistry:
-    def admin() -> address: view
-    def update_internal_pool_registry(_pool: address, _incremented_index: uint256): nonpayable
     def registry_length() -> uint256: view
-    def update_lp_token_mapping(_pool: address, _token: address): nonpayable
-    def pool_to_registry(_pool: address) -> PoolInfo: view
 
 
 interface AddressProvider:
@@ -41,7 +37,6 @@ interface AddressProvider:
 
 interface CurvePool:
     def balances(i: uint256) -> uint256: view
-    def get_virtual_price() -> uint256: view
 
 
 interface CurveLegacyPool:
@@ -70,12 +65,11 @@ BTC_BASE_POOL: constant(address) = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714
 GAUGE_CONTROLLER: constant(address) = 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB
 MAX_COINS: constant(uint256) = 4
 MAX_METAREGISTRY_COINS: constant(uint256) = 8
-MAX_POOLS: constant(uint256) = 128
+MAX_POOLS: constant(uint256) = 512
 
 
 # ---- storage variables ---- #
 base_registry: public(BaseRegistry)
-metaregistry: public(address)
 registry_id: uint256
 registry_index: uint256
 total_pools: public(uint256)
@@ -84,7 +78,6 @@ total_pools: public(uint256)
 # ---- constructor ---- #
 @external
 def __init__(_metaregistry: address, _id: uint256, address_provider: address):
-    self.metaregistry = _metaregistry
     self.base_registry = BaseRegistry(AddressProvider(address_provider).get_address(_id))
     self.registry_id = _id
     self.registry_index = MetaRegistry(_metaregistry).registry_length()
@@ -160,33 +153,6 @@ def _get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     return self._pad_uint_array(self.base_registry.get_balances(_pool))
 
 
-# ---- most used Methods: MetaRegistry append / add to registry ---- #
-@external
-def sync_pool_list(_limit: uint256):
-    """
-    @notice Records any newly added pool on the metaregistry
-    @dev To be called from the metaregistry
-    @param _limit Maximum number of pool to sync (avoid hitting gas limit), 0 = no limits
-    """
-    assert msg.sender == self.metaregistry  # dev: only metaregistry has access
-    last_pool: uint256 = self.total_pools
-    pool_cap: uint256 = self.base_registry.pool_count()
-    if (_limit > 0):
-        pool_cap = min((last_pool + _limit), pool_cap)
-    for i in range(last_pool, last_pool + MAX_POOLS):
-        if i == pool_cap:
-            break
-        _pool: address = self.base_registry.pool_list(i)
-
-        self.total_pools += 1
-        # if the pool has already been added by another registry, we leave it with the original
-        if MetaRegistry(self.metaregistry).pool_to_registry(_pool).registry > 0:
-            continue
-
-        MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, self.registry_index + 1)
-        MetaRegistry(self.metaregistry).update_lp_token_mapping(_pool, _pool)
-
-
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -196,7 +162,7 @@ def is_registered(_pool: address) -> bool:
     @param _pool The address of the pool
     @return A bool corresponding to whether the pool belongs or not
     """
-    return self.base_registry.get_n_coins(_pool) > 0
+    return self._get_n_coins(_pool) > 0
 
 
 @external
@@ -215,6 +181,12 @@ def get_n_coins(_pool: address) -> uint256:
 @view
 def get_n_underlying_coins(_pool: address) -> uint256:
     return self.base_registry.get_meta_n_coins(_pool)[1]
+
+
+@external
+@view
+def get_pool_from_lp_token(_lp_token: address) -> address:
+    return _lp_token
 
 
 @external
@@ -315,6 +287,18 @@ def get_pool_asset_type(_pool: address) -> uint256:
 
 @external
 @view
+def pool_count() -> uint256:
+    return self.base_registry.pool_count()
+
+
+@external
+@view
+def pool_list(_index: uint256) -> address:
+    return self.base_registry.pool_list(_index)
+
+
+@external
+@view
 def get_pool_params(_pool: address) -> uint256[20]:
     stableswap_pool_params: uint256[20] = empty(uint256[20])
     stableswap_pool_params[0] = self.base_registry.get_A(_pool)
@@ -331,12 +315,6 @@ def get_base_pool(_pool: address) -> address:
     return self.base_registry.get_base_pool(_pool)
 
 
-@external
-@view
-def get_virtual_price_from_lp_token(_token: address) -> uint256:
-    return CurvePool(_token).get_virtual_price()
-
-
 @view
 @external
 def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool):
@@ -345,22 +323,3 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     (coin1, coin2) = self.base_registry.get_coin_indices(_pool, _from, _to)
     # we discard is_underlying as it's always true due to a bug in original factory contract
     return (coin1, coin2, not self._is_meta(_pool))
-
-
-# ---- lesser used methods go here (slightly more gas optimal) ---- #
-@external
-def reset_pool_list():
-    """
-    @notice Removes all pools from the metaregistry
-    @dev To be called from the metaregistry
-    """
-    assert msg.sender == self.metaregistry  # dev: only metaregistry has access
-    pool_count: uint256 = self.base_registry.pool_count()
-    last_pool: uint256 = self.total_pools
-    for i in range(MAX_POOLS):
-        if i == pool_count:
-            break
-        _pool: address = self.base_registry.pool_list(i)
-        MetaRegistry(self.metaregistry).update_internal_pool_registry(_pool, 0)
-        MetaRegistry(self.metaregistry).update_lp_token_mapping(ZERO_ADDRESS, _pool)
-    self.total_pools = 0
