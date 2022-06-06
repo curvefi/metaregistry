@@ -1,9 +1,11 @@
 # Curve Metaregistry
 
-### TODO:
-- Fix the pool removal logic to account for when a factory pool is removed from a registry (and therefore not from factory registry)
-- Handle de-registering coins when a pool is removed
-- Add categorization scheme and query for pools
-- Add `get_coin_indices`
-- Speed up test set up (cache full sync somehow)
-- Fix / improve the `is_active` logic for registries
+### Tests
+
+To run the tests:
+
+`brownie test tests`
+
+The `--pools` flag allow to limit the numbers of pools tested on each registry to speed up test execution. To only test with the first pool on each registry:
+
+`brownie test tests --pools 1`

@@ -3,8 +3,13 @@ import itertools
 from brownie import ZERO_ADDRESS
 
 
-def test_find_coins(metaregistry):
-    pool_count = metaregistry.pool_count()
+def test_find_coins(metaregistry, max_pools):
+    registry_count = metaregistry.registry_length()
+    pool_count = (
+        metaregistry.pool_count()
+        if max_pools == 0
+        else min(max_pools * registry_count, metaregistry.pool_count())
+    )
     for pool_index in range(pool_count):
         pool = metaregistry.pool_list(pool_index)
 
