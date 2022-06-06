@@ -5,59 +5,53 @@
 """
 
 # ---- interfaces ---- #
-interface BaseRegistry:
-    def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
-    def get_coins(_pool: address) -> address[MAX_COINS]: view
-    def get_A(_pool: address) -> uint256: view
-    def get_underlying_coins(_pool: address) -> address[MAX_COINS]: view
-    def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
-    def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]: view
-    def get_balances(_pool: address) -> uint256[MAX_COINS]: view
-    def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]: view
-    def get_admin_balances(_pool: address) -> uint256[MAX_COINS]: view
-    def get_pool_asset_type(_pool: address) -> uint256: view
-    def get_gauge(_pool: address) -> address: view
-    def get_n_coins(_pool: address) -> uint256: view
-    def get_fees(_pool: address) -> uint256[2]: view
-    def is_meta(_pool: address) -> bool: view
-    def pool_count() -> uint256: view
-    def pool_list(pool_id: uint256) -> address: view
-    def get_base_pool(_pool: address) -> address: view
-    def get_meta_n_coins(_pool: address) -> (uint256, uint256): view
-    def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128): view
-
-
-interface MetaRegistry:
-    def registry_length() -> uint256: view
-
-
 interface AddressProvider:
     def get_address(_id: uint256) -> address: view
 
 
-interface CurvePool:
-    def balances(i: uint256) -> uint256: view
+interface BaseRegistry:
+    def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
+    def get_admin_balances(_pool: address) -> uint256[MAX_COINS]: view
+    def get_A(_pool: address) -> uint256: view
+    def get_balances(_pool: address) -> uint256[MAX_COINS]: view
+    def get_base_pool(_pool: address) -> address: view
+    def get_coins(_pool: address) -> address[MAX_COINS]: view
+    def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128): view
+    def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
+    def get_fees(_pool: address) -> uint256[2]: view
+    def get_gauge(_pool: address) -> address: view
+    def get_meta_n_coins(_pool: address) -> (uint256, uint256): view
+    def get_n_coins(_pool: address) -> uint256: view
+    def get_pool_asset_type(_pool: address) -> uint256: view
+    def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]: view
+    def get_underlying_coins(_pool: address) -> address[MAX_COINS]: view
+    def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]: view
+    def is_meta(_pool: address) -> bool: view
+    def pool_count() -> uint256: view
+    def pool_list(pool_id: uint256) -> address: view
 
 
 interface CurveLegacyPool:
     def balances(i: int128) -> uint256: view
 
 
+interface CurvePool:
+    def balances(i: uint256) -> uint256: view
+
+
 interface ERC20:
     def balanceOf(_addr: address) -> uint256: view
     def decimals() -> uint256: view
-    def totalSupply() -> uint256: view
     def name() -> String[64]: view
+    def totalSupply() -> uint256: view
 
 
 interface GaugeController:
     def gauge_types(gauge: address) -> int128: view
 
 
-# ---- structs ---- #
-struct PoolInfo:
-    registry: uint256
-    location: uint256
+interface MetaRegistry:
+    def registry_length() -> uint256: view
 
 
 # ---- constants ---- #
@@ -65,14 +59,12 @@ BTC_BASE_POOL: constant(address) = 0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714
 GAUGE_CONTROLLER: constant(address) = 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB
 MAX_COINS: constant(uint256) = 4
 MAX_METAREGISTRY_COINS: constant(uint256) = 8
-MAX_POOLS: constant(uint256) = 512
 
 
 # ---- storage variables ---- #
 base_registry: public(BaseRegistry)
 registry_id: uint256
 registry_index: uint256
-total_pools: public(uint256)
 
 
 # ---- constructor ---- #
@@ -156,121 +148,8 @@ def _get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 # ---- view methods (API) of the contract ---- #
 @external
 @view
-def is_registered(_pool: address) -> bool:
-    """
-    @notice Check if a pool belongs to the registry using get_n_coins
-    @param _pool The address of the pool
-    @return A bool corresponding to whether the pool belongs or not
-    """
-    return self._get_n_coins(_pool) > 0
-
-
-@external
-@view
-def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
-    return self._get_coins(_pool)
-
-
-@external
-@view
-def get_n_coins(_pool: address) -> uint256:
-    return self._get_n_coins(_pool)
-
-
-@external
-@view
-def get_n_underlying_coins(_pool: address) -> uint256:
-    return self.base_registry.get_meta_n_coins(_pool)[1]
-
-
-@external
-@view
-def get_pool_from_lp_token(_lp_token: address) -> address:
-    return _lp_token
-
-
-@external
-@view
-def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
-    if not (self._is_meta(_pool)):
-        return self._get_coins(_pool)
-    return self._get_underlying_coins(_pool)
-
-
-@external
-@view
 def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address:
     return self.base_registry.find_pool_for_coins(_from, _to, i)
-
-
-@external
-@view
-def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self._pad_uint_array(self.base_registry.get_decimals(_pool))
-
-
-@external
-@view
-def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self.base_registry.get_underlying_decimals(_pool)
-
-
-@external
-@view
-def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self._get_balances(_pool)
-
-
-@external
-@view
-def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    if not (self._is_meta(_pool)):
-        return self._get_balances(_pool)
-    if (self.base_registry.get_pool_asset_type(_pool) == 2):
-        # some metapools (BTC) do not have a base_pool attribute so some registry functions
-        # will revert because the pools are not recognized as metapools.
-        return self._get_btc_underlying_balances(_pool)
-    return self.base_registry.get_underlying_balances(_pool)
-
-
-@external
-@view
-def get_lp_token(_pool: address) -> address:
-    return _pool
-
-
-@external
-@view
-def get_gauges(_pool: address) -> (address[10], int128[10]):
-    gauges: address[10] = empty(address[10])
-    types: int128[10] = empty(int128[10])
-    gauges[0] = self.base_registry.get_gauge(_pool)
-    types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
-    return (gauges, types)
-
-
-@external
-@view
-def is_meta(_pool: address) -> bool:
-    return self._is_meta(_pool)
-
-
-@external
-@view
-def get_pool_name(_pool: address) -> String[64]:
-    if self.base_registry.get_n_coins(_pool) == 0:
-        return ""
-    return ERC20(_pool).name()
-
-
-@external
-@view
-def get_fees(_pool: address) -> uint256[10]:
-    fees: uint256[10] = empty(uint256[10])
-    pool_fees: uint256[2] = self.base_registry.get_fees(_pool)
-    for i in range(2):
-        fees[i] = pool_fees[i]
-    return fees
 
 
 @external
@@ -281,28 +160,8 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 
 @external
 @view
-def get_pool_asset_type(_pool: address) -> uint256:
-    return self.base_registry.get_pool_asset_type(_pool)
-
-
-@external
-@view
-def pool_count() -> uint256:
-    return self.base_registry.pool_count()
-
-
-@external
-@view
-def pool_list(_index: uint256) -> address:
-    return self.base_registry.pool_list(_index)
-
-
-@external
-@view
-def get_pool_params(_pool: address) -> uint256[20]:
-    stableswap_pool_params: uint256[20] = empty(uint256[20])
-    stableswap_pool_params[0] = self.base_registry.get_A(_pool)
-    return stableswap_pool_params
+def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    return self._get_balances(_pool)
 
 
 @external
@@ -323,3 +182,138 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     (coin1, coin2) = self.base_registry.get_coin_indices(_pool, _from, _to)
     # we discard is_underlying as it's always true due to a bug in original factory contract
     return (coin1, coin2, not self._is_meta(_pool))
+
+
+@external
+@view
+def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
+    return self._get_coins(_pool)
+
+
+@external
+@view
+def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    return self._pad_uint_array(self.base_registry.get_decimals(_pool))
+
+
+@external
+@view
+def get_fees(_pool: address) -> uint256[10]:
+    fees: uint256[10] = empty(uint256[10])
+    pool_fees: uint256[2] = self.base_registry.get_fees(_pool)
+    for i in range(2):
+        fees[i] = pool_fees[i]
+    return fees
+
+
+@external
+@view
+def get_gauges(_pool: address) -> (address[10], int128[10]):
+    gauges: address[10] = empty(address[10])
+    types: int128[10] = empty(int128[10])
+    gauges[0] = self.base_registry.get_gauge(_pool)
+    types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
+    return (gauges, types)
+
+
+@external
+@view
+def get_lp_token(_pool: address) -> address:
+    return _pool
+
+
+@external
+@view
+def get_n_coins(_pool: address) -> uint256:
+    return self._get_n_coins(_pool)
+
+
+@external
+@view
+def get_n_underlying_coins(_pool: address) -> uint256:
+    return self.base_registry.get_meta_n_coins(_pool)[1]
+
+
+@external
+@view
+def get_pool_asset_type(_pool: address) -> uint256:
+    return self.base_registry.get_pool_asset_type(_pool)
+
+
+@external
+@view
+def get_pool_from_lp_token(_lp_token: address) -> address:
+    if self._get_n_coins(_lp_token) > 0:
+        return _lp_token
+    return ZERO_ADDRESS
+
+
+@external
+@view
+def get_pool_name(_pool: address) -> String[64]:
+    if self.base_registry.get_n_coins(_pool) == 0:
+        return ""
+    return ERC20(_pool).name()
+
+
+@external
+@view
+def get_pool_params(_pool: address) -> uint256[20]:
+    stableswap_pool_params: uint256[20] = empty(uint256[20])
+    stableswap_pool_params[0] = self.base_registry.get_A(_pool)
+    return stableswap_pool_params
+
+
+@external
+@view
+def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    if not (self._is_meta(_pool)):
+        return self._get_balances(_pool)
+    if (self.base_registry.get_pool_asset_type(_pool) == 2):
+        # some metapools (BTC) do not have a base_pool attribute so some registry functions
+        # will revert because the pools are not recognized as metapools.
+        return self._get_btc_underlying_balances(_pool)
+    return self.base_registry.get_underlying_balances(_pool)
+
+
+@external
+@view
+def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
+    if not (self._is_meta(_pool)):
+        return self._get_coins(_pool)
+    return self._get_underlying_coins(_pool)
+
+
+@external
+@view
+def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    return self.base_registry.get_underlying_decimals(_pool)
+
+
+@external
+@view
+def is_meta(_pool: address) -> bool:
+    return self._is_meta(_pool)
+
+
+@external
+@view
+def is_registered(_pool: address) -> bool:
+    """
+    @notice Check if a pool belongs to the registry using get_n_coins
+    @param _pool The address of the pool
+    @return A bool corresponding to whether the pool belongs or not
+    """
+    return self._get_n_coins(_pool) > 0
+
+
+@external
+@view
+def pool_count() -> uint256:
+    return self.base_registry.pool_count()
+
+
+@external
+@view
+def pool_list(_index: uint256) -> address:
+    return self.base_registry.pool_list(_index)

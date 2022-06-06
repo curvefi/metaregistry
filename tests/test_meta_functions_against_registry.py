@@ -1,11 +1,11 @@
 from brownie import ZERO_ADDRESS, accounts, interface
 
-from ..abis import curve_pool, curve_pool_v2, gauge_controller
+from .abis import curve_pool, curve_pool_v2, gauge_controller
 
 
-def test_get_coins(metaregistry, registries, sync_limit):
+def test_get_coins(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -16,10 +16,10 @@ def test_get_coins(metaregistry, registries, sync_limit):
                 assert coin == metaregistry_output[j]
 
 
-def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries, sync_limit):
+def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries):
     """This test is only for stableswap and cryptoswap amms"""
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
             print(f"testing get_pool_params for pool: {pool}")
@@ -57,18 +57,20 @@ def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries, sync_li
             print(f"passed for pool: {pool}.")
 
 
-def test_get_base_pool(metaregistry, registries, sync_limit):
+def test_get_base_pool(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # check that the pool was not previously entered in another registry
-            registry_in_meta_registry = metaregistry.pool_to_registry(pool)
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
             print(
-                f"Pool: {pool}, registry: {i}, metaregistered registry: {registry_in_meta_registry}"
+                f"Pool: {pool}, "
+                f"registry: {registry}, "
+                f"metaregistered registry: {registry_in_meta_registry}"
             )
-            if i + 1 != registry_in_meta_registry:
+            if registry != registry_in_meta_registry:
                 continue
 
             # get_base_pool
@@ -91,18 +93,20 @@ def test_get_base_pool(metaregistry, registries, sync_limit):
             assert actual_output == metaregistry_output
 
 
-def test_get_pool_asset_type(metaregistry, registries, sync_limit):
+def test_get_pool_asset_type(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # check that the pool was not previously entered in another registry
-            registry_in_meta_registry = metaregistry.pool_to_registry(pool)
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
             print(
-                f"Pool: {pool}, registry: {i}, metaregistered registry: {registry_in_meta_registry}"
+                f"Pool: {pool}, "
+                f"registry: {registry}, "
+                f"metaregistered registry: {registry_in_meta_registry}"
             )
-            if i + 1 != registry_in_meta_registry:
+            if registry != registry_in_meta_registry:
                 continue
 
             # get_pool_asset_type
@@ -115,18 +119,20 @@ def test_get_pool_asset_type(metaregistry, registries, sync_limit):
             assert actual_output == metaregistry_output
 
 
-def test_get_admin_balances(metaregistry, registries, sync_limit):
+def test_get_admin_balances(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # check that the pool was not previously entered in another registry
-            registry_in_meta_registry = metaregistry.pool_to_registry(pool)
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
             print(
-                f"Pool: {pool}, registry: {i}, metaregistered registry: {registry_in_meta_registry}"
+                f"Pool: {pool}, "
+                f"registry: {registry}, "
+                f"metaregistered registry: {registry_in_meta_registry}"
             )
-            if i + 1 != registry_in_meta_registry:
+            if registry != registry_in_meta_registry:
                 continue
 
             # get_admin_balances
@@ -150,18 +156,20 @@ def test_get_admin_balances(metaregistry, registries, sync_limit):
                 assert output == metaregistry_output[j]
 
 
-def test_get_fees(metaregistry, registries, sync_limit):
+def test_get_fees(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # check that the pool was not previously entered in another registry
-            registry_in_meta_registry = metaregistry.pool_to_registry(pool)
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
             print(
-                f"Pool: {pool}, registry: {i}, metaregistered registry: {registry_in_meta_registry}"
+                f"Pool: {pool}, "
+                f"registry: {registry}, "
+                f"metaregistered registry: {registry_in_meta_registry}"
             )
-            if i + 1 != registry_in_meta_registry:
+            if registry != registry_in_meta_registry:
                 continue
 
             # get_fees
@@ -180,18 +188,20 @@ def test_get_fees(metaregistry, registries, sync_limit):
                 assert output == metaregistry_output[j]
 
 
-def test_get_pool_name(metaregistry, registries, sync_limit):
+def test_get_pool_name(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # check that the pool was not previously entered in another registry
-            registry_in_meta_registry = metaregistry.pool_to_registry(pool)
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
             print(
-                f"Pool: {pool}, registry: {i}, metaregistered registry: {registry_in_meta_registry}"
+                f"Pool: {pool}, "
+                f"registry: {registry}, "
+                f"metaregistered registry: {registry_in_meta_registry}"
             )
-            if i + 1 != registry_in_meta_registry:
+            if registry != registry_in_meta_registry:
                 continue
 
             # get_pool_name
@@ -205,9 +215,9 @@ def test_get_pool_name(metaregistry, registries, sync_limit):
             assert actual_output == metaregistry_output
 
 
-def test_is_meta(metaregistry, registries, sync_limit):
+def test_is_meta(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
             # get_is_meta
@@ -220,18 +230,20 @@ def test_is_meta(metaregistry, registries, sync_limit):
             assert actual_output == metaregistry_output
 
 
-def test_get_gauges(metaregistry, registries, sync_limit):
+def test_get_gauges(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # check that the pool was not previously entered in another registry
-            registry_in_meta_registry = metaregistry.pool_to_registry(pool)
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
             print(
-                f"Pool: {pool}, registry: {i}, metaregistered registry: {registry_in_meta_registry}"
+                f"Pool: {pool}, "
+                f"registry: {registry}, "
+                f"metaregistered registry: {registry_in_meta_registry}"
             )
-            if i + 1 != registry_in_meta_registry:
+            if registry != registry_in_meta_registry:
                 continue
 
             # get_gauges
@@ -247,9 +259,9 @@ def test_get_gauges(metaregistry, registries, sync_limit):
             assert actual_output == metaregistry_output
 
 
-def test_get_lp_token(metaregistry, registries, sync_limit):
+def test_get_lp_token(metaregistry, registries):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count() if sync_limit == 0 else sync_limit
+        total_pools = registry.pool_count()
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
