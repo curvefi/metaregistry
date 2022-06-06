@@ -11,6 +11,21 @@ from .abis import crypto_factory, crypto_registry, stable_factory, stable_regist
 from .utils.constants import ADDRESS_PROVIDER
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--pools",
+        type=int,
+        action="store",
+        default=0,
+        help="Only syncs up to the specified number of pools on each registry",
+    )
+
+
+@pytest.fixture(scope="session")
+def max_pools(request):
+    return request.config.getoption("--pools")
+
+
 @pytest.fixture(scope="session")
 def alice(accounts):
     yield accounts[1]

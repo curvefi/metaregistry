@@ -3,13 +3,15 @@ import itertools
 from brownie import ZERO_ADDRESS
 
 
-def test_get_coin_indices(metaregistry, registries, stable_factory_handler):
+def test_get_coin_indices(metaregistry, registries, stable_factory_handler, max_pools):
 
     print("MetaRegistry registry_length(): ", metaregistry.registry_length())
 
     for i, registry in enumerate(registries):
 
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
 
         for pool_index in range(total_pools):
 

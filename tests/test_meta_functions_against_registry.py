@@ -1,11 +1,17 @@
 from brownie import ZERO_ADDRESS, accounts, interface
 
 from .abis import curve_pool, curve_pool_v2, gauge_controller
+from .utils.constants import (
+    METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
+    METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+    METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+    METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+)
 
 
-def test_get_coins(metaregistry, registries):
+def test_get_coins(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -16,10 +22,12 @@ def test_get_coins(metaregistry, registries):
                 assert coin == metaregistry_output[j]
 
 
-def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries):
+def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries, max_pools):
     """This test is only for stableswap and cryptoswap amms"""
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
             print(f"testing get_pool_params for pool: {pool}")
@@ -28,25 +36,28 @@ def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries):
             actual_pool_params = [0] * 20
 
             # A
-            if i != 2:
+            if i != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
                 actual_pool_params[0] = registry.get_A(pool)
             else:
                 actual_pool_params[0] = curve_pool_v2(pool).A()
 
             # D
-            if i == 3:
+            if i == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
                 actual_pool_params[1] = registry.get_D(pool)
-            elif i == 2:
+            elif i == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
                 actual_pool_params[1] = curve_pool_v2(pool).D()
 
             # gamma
-            if i == 3:
+            if i == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
                 actual_pool_params[2] = registry.get_gamma(pool)
-            elif i == 2:
+            elif i == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
                 actual_pool_params[2] = curve_pool_v2(pool).gamma()
 
             # allowed_extra_profit
-            if i in [2, 3]:
+            if i in [
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
+            ]:
                 actual_pool_params[3] = curve_pool_v2(pool).allowed_extra_profit()
                 actual_pool_params[4] = curve_pool_v2(pool).fee_gamma()
                 actual_pool_params[5] = curve_pool_v2(pool).adjustment_step()
@@ -57,9 +68,11 @@ def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries):
             print(f"passed for pool: {pool}.")
 
 
-def test_get_base_pool(metaregistry, registries):
+def test_get_base_pool(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -74,9 +87,12 @@ def test_get_base_pool(metaregistry, registries):
                 continue
 
             # get_base_pool
-            if i >= 2:
+            if i in [
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
+            ]:
                 actual_output = ZERO_ADDRESS
-            elif i == 0:
+            elif i == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX:
                 if not registry.is_meta(pool):
                     actual_output = ZERO_ADDRESS
                 elif registry.get_pool_asset_type(pool) == 2:
@@ -93,9 +109,11 @@ def test_get_base_pool(metaregistry, registries):
             assert actual_output == metaregistry_output
 
 
-def test_get_pool_asset_type(metaregistry, registries):
+def test_get_pool_asset_type(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -110,7 +128,10 @@ def test_get_pool_asset_type(metaregistry, registries):
                 continue
 
             # get_pool_asset_type
-            if i >= 2:
+            if i in [
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
+            ]:
                 actual_output = 4
             else:
                 actual_output = registry.get_pool_asset_type(pool)
@@ -119,9 +140,11 @@ def test_get_pool_asset_type(metaregistry, registries):
             assert actual_output == metaregistry_output
 
 
-def test_get_admin_balances(metaregistry, registries):
+def test_get_admin_balances(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -136,7 +159,7 @@ def test_get_admin_balances(metaregistry, registries):
                 continue
 
             # get_admin_balances
-            if i != 2:
+            if i != METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
                 actual_output = registry.get_admin_balances(pool)
             else:
                 balances = registry.get_balances(pool)
@@ -156,9 +179,11 @@ def test_get_admin_balances(metaregistry, registries):
                 assert output == metaregistry_output[j]
 
 
-def test_get_fees(metaregistry, registries):
+def test_get_fees(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -173,7 +198,7 @@ def test_get_fees(metaregistry, registries):
                 continue
 
             # get_fees
-            if i != 2:
+            if i != METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
                 actual_output = registry.get_fees(pool)
             else:
                 curve_contract = curve_pool_v2(pool)
@@ -188,9 +213,11 @@ def test_get_fees(metaregistry, registries):
                 assert output == metaregistry_output[j]
 
 
-def test_get_pool_name(metaregistry, registries):
+def test_get_pool_name(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -205,9 +232,12 @@ def test_get_pool_name(metaregistry, registries):
                 continue
 
             # get_pool_name
-            if i == 1 or i == 3:
+            if (
+                i == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX
+                or i == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX
+            ):
                 actual_output = registry.get_pool_name(pool)
-            elif i == 2:
+            elif i == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
                 actual_output = interface.ERC20(registry.get_token(pool)).name()
             else:
                 actual_output = interface.ERC20(pool).name()
@@ -215,13 +245,18 @@ def test_get_pool_name(metaregistry, registries):
             assert actual_output == metaregistry_output
 
 
-def test_is_meta(metaregistry, registries):
+def test_is_meta(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
             # get_is_meta
-            if i >= 2:
+            if i in [
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
+            ]:
                 actual_output = False
             else:
                 actual_output = registry.is_meta(pool)
@@ -230,9 +265,11 @@ def test_is_meta(metaregistry, registries):
             assert actual_output == metaregistry_output
 
 
-def test_get_gauges(metaregistry, registries):
+def test_get_gauges(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
@@ -247,7 +284,10 @@ def test_get_gauges(metaregistry, registries):
                 continue
 
             # get_gauges
-            if i == 1 or i == 3:
+            if (
+                i == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX
+                or i == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX
+            ):
                 actual_output = registry.get_gauges(pool)
             else:
                 gauge = registry.get_gauge(pool)
@@ -259,16 +299,21 @@ def test_get_gauges(metaregistry, registries):
             assert actual_output == metaregistry_output
 
 
-def test_get_lp_token(metaregistry, registries):
+def test_get_lp_token(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
-        total_pools = registry.pool_count()
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
 
             # get_lp_token
-            if i == 1 or i == 3:
+            if (
+                i == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX
+                or i == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX
+            ):
                 actual_output = registry.get_lp_token(pool)
-            elif i == 0:
+            elif i == METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX:
                 actual_output = pool
             else:
                 actual_output = registry.get_token(pool)
