@@ -2,5 +2,5 @@ autofetch_sources: true
 networks:
   default: mainnet-fork
 reports:
-    exclude_paths:
-        - contracts/mocks/**/*.*
+  exclude_paths:
+    - contracts/mocks/**/*.*

@@ -19,6 +19,7 @@ interface MetaRegistry:
     def get_coins(_pool: address) -> address[8]: view
     def get_coin_indices(pool: address, _from: address, _to: address) -> (int128, int128, bool): view
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
+    def get_balances(_pool: address) -> uint256[8]: view
 
 
 interface RegistrySwap:
@@ -110,15 +111,72 @@ def _get_swap_into_synth(_from: address, _synth: address, _amount: uint256) -> u
 
 @view
 @internal
-def _get_registry_swap(_synth: address, _to: address, _amount: uint256) -> uint256:
-    pool: address = self.synth_pool[_synth]
+def _get_registry_swap_amount(_pool: address, _from: address, _to: address, _amount: uint256) -> uint256:
 
     i: int128 = 0
     j: int128 = 0
     is_meta: bool = False
-    i, j, is_meta = MetaRegistry(METAREGISTRY).get_coin_indices(pool, _synth, _to)
+    i, j, is_meta = MetaRegistry(METAREGISTRY).get_coin_indices(_pool, _from, _to)
 
-    return Curve(pool).get_dy(i, j, _amount)
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        _pool, 
+        concat(
+            method_id("get_dy(uint256,uint256,uint256)"),
+            convert(i, bytes32),
+            convert(j, bytes32),
+            convert(_amount, bytes32)
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+
+    if success:
+        return convert(response, uint256)
+    
+    return Curve(_pool).get_dy(i, j, _amount)
+
+
+@view
+@external
+def get_registry_swap_amount(_pool: address, _from: address, _to: address, _amount: uint256) -> uint256:
+    return self._get_registry_swap_amount(_pool, _from, _to, _amount)
+
+
+@view
+@internal
+def _find_best_pool_for_coins(_coin_in: address, _coin_out: address, _amount: uint256) -> address:
+
+    _max_expected: uint256 = 0
+    _expected: uint256 = 0
+    _pool_balance_coin_0: uint256 = 0
+    _pool: address = ZERO_ADDRESS
+    _intermediate_pool: address = ZERO_ADDRESS
+
+    for i in range(256):
+        _intermediate_pool = MetaRegistry(METAREGISTRY).find_pool_for_coins(_coin_in, _coin_out, i)
+        if _intermediate_pool == ZERO_ADDRESS:
+            break
+
+        _pool_balance_coin_0 = MetaRegistry(METAREGISTRY).get_balances(_intermediate_pool)[0]
+        if _pool_balance_coin_0 == 0:
+            continue
+
+        _expected = self._get_registry_swap_amount(_intermediate_pool, _coin_in, _coin_out, _amount)
+
+        if _expected >= _max_expected:
+            _max_expected = _expected
+            _pool = _intermediate_pool
+
+    return _pool
+
+
+@view
+@external
+def find_best_pool_for_coins(_coin_in: address, _coin_out: address, _amount: uint256) -> address:
+    return self._find_best_pool_for_coins(_coin_in, _coin_out, _amount)
 
 
 @view
@@ -133,7 +191,8 @@ def _get_swap_from_synth(_synth: address, _to: address, _amount: uint256) -> uin
         self.currency_keys[_intermediate_synth],
     )[0]
 
-    return self._get_registry_swap(_intermediate_synth, _to, synth_amount)
+    _pool: address = self._find_best_pool_for_coins(_synth, _to, _amount)
+    return self._get_registry_swap_amount(_pool, _intermediate_synth, _to, synth_amount)
 
 
 @view
@@ -150,6 +209,13 @@ def _is_registered_asset(_asset: address) -> bool:
 
 @view
 @external
+def get_best_registry_swap_amount(_from: address, _to: address, _amount: uint256) -> uint256:
+    _pool: address = self._find_best_pool_for_coins(_from, _to, _amount)
+    return self._get_registry_swap_amount(_pool, _from, _to, _amount)
+
+
+@view
+@external
 def get_estimated_swap_amount(_coin_in: address, _coin_out: address, _amount: uint256) -> uint256:
     """
     @notice Estimate the final amount received when swapping between `_coin_in` and `_coin_out`
@@ -159,16 +225,21 @@ def get_estimated_swap_amount(_coin_in: address, _coin_out: address, _amount: ui
     @return uint256 Estimated amount of `_coin_out` received
     """
     _expected: uint256 = 0
+    _pool: address = self._find_best_pool_for_coins(_coin_in, _coin_out, _amount)
+
+    # if _coin_in and _coin_out already have a Curve pool:
+    if _pool != ZERO_ADDRESS:
+        _expected = self._get_registry_swap_amount(_pool, _coin_in, _coin_out, _amount)
 
     # if `_from` is a synth, `_to` is a synth, the just perform exchangeAtomically:
-    if self._is_registered_synth(_coin_in) and self._is_registered_synth(_coin_out):
+    elif self._is_registered_synth(_coin_in) and self._is_registered_synth(_coin_out):
         _expected = SynthetixExchanger(EXCHANGER).getAmountsForAtomicExchange(
             _amount,
             self.currency_keys[_coin_in],
             self.currency_keys[_coin_out]
         )[0]
 
-    # if `_from` is asset, `_to` is, then _swap_asset_into_synth
+    # if `_from` is asset, `_to` is synth, then _swap_asset_into_synth
     elif self._is_registered_asset(_coin_in) and self._is_registered_synth(_coin_out):
         _expected = self._get_swap_into_synth(_coin_in, _coin_out, _amount)
     
@@ -181,7 +252,8 @@ def get_estimated_swap_amount(_coin_in: address, _coin_out: address, _amount: ui
     elif self._is_registered_asset(_coin_in) and self._is_registered_asset(_coin_out):
         _intermediate_synth: address = self.swappable_synth[_coin_out]
         _expected =  self._get_swap_into_synth(_coin_in, _intermediate_synth, _amount)
-        _expected = self._get_registry_swap(_intermediate_synth, _coin_out, _expected)
+        _pool = self._find_best_pool_for_coins(_intermediate_synth, _coin_out, _amount)
+        _expected = self._get_registry_swap_amount(_pool, _intermediate_synth, _coin_out, _expected)
 
     return _expected
 
@@ -324,6 +396,7 @@ def exchange(
     @return uint256 Amount received by `msg.sender`
     """
     _received: uint256 = 0
+    _pool: address = MetaRegistry(METAREGISTRY).find_pool_for_coins(_coin_in, _coin_out, 0)
 
     # transfer `_coin_in` to `self`:
     if _coin_in != 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
@@ -342,8 +415,20 @@ def exchange(
             assert convert(response, bool)
 
 
-    # 1. if `_from` is a synth, `_to` is a synth, the just perform exchangeAtomically:
-    if self._is_registered_synth(_coin_in) and self._is_registered_synth(_coin_out):
+    # if _coin_in and _coin_out already have a Curve pool:
+    if _pool != ZERO_ADDRESS:
+        registry_swap: address = AddressProvider(ADDRESS_PROVIDER).get_address(2)
+        _received = RegistrySwap(registry_swap).exchange(
+            _pool,
+            _coin_in,
+            _coin_out,
+            _received,
+            _expected,
+            msg.sender,
+        )
+
+    # if `_from` is a synth, `_to` is a synth, the just perform exchangeAtomically:
+    elif self._is_registered_synth(_coin_in) and self._is_registered_synth(_coin_out):
         _received = SynthetixExchanger(EXCHANGER).exchangeAtomically(
             self.currency_keys[_coin_in],
             _amount,
@@ -353,7 +438,7 @@ def exchange(
             _expected,
         )
 
-    # 2. if `_from` is asset, `_to` is, then _swap_asset_into_synth
+    # if `_from` is asset, `_to` is, then _swap_asset_into_synth
     elif self._is_registered_asset(_coin_in) and self._is_registered_synth(_coin_out):
         _received = self._swap_asset_into_synth(
             _coin_in,
@@ -363,7 +448,7 @@ def exchange(
             msg.sender,
         )
     
-    # 3. if `_from` is synth and not `_to`, then _swap_synth_into_asset
+    # if `_from` is synth and not `_to`, then _swap_synth_into_asset
     elif self._is_registered_synth(_coin_in) and self._is_registered_asset(_coin_out):
         _received = self._swap_synth_into_asset(
             _coin_in,
@@ -373,7 +458,7 @@ def exchange(
             msg.sender,
         )
 
-    # 4. if both `_from` and `_to` are assets, then _swap_asset_into_synth and then registry_swap to `_coin_out`
+    # if both `_from` and `_to` are assets, then _swap_asset_into_synth and then registry_swap to `_coin_out`
     elif self._is_registered_asset(_coin_in) and self._is_registered_asset(_coin_out):
         _intermediate_synth: address = self.swappable_synth[_coin_out]
         registry_swap: address = AddressProvider(ADDRESS_PROVIDER).get_address(2)
@@ -394,6 +479,7 @@ def exchange(
             msg.sender,
         )
 
+    assert _received != 0, "Could not find swap"
     return _received
 
 
