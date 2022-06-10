@@ -119,6 +119,11 @@ def sEUR():
     yield MintableForkToken("0xD71eCFF9342A5Ced620049e616c5035F1dB98620")
 
 
+@pytest.fixture(scope="module")
+def sLINK():
+    yield MintableForkToken("0xbBC455cb4F1B9e4bFC4B73970d360c8f032EfEE6")
+
+
 # swappable coins
 @pytest.fixture(scope="module")
 def DAI():
@@ -135,10 +140,20 @@ def WBTC():
     yield MintableForkToken("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599")
 
 
+@pytest.fixture(scope="module")
+def LINK():
+    yield MintableForkToken("0x514910771AF9Ca656af840dff83E8264EcF986CA")
+
+
 # curve pools
 @pytest.fixture(scope="module")
 def curve_susd(Contract):
     yield Contract("0xA5407eAE9Ba41422680e2e00537571bcC53efBfD")
+
+
+@pytest.fixture(scope="module")
+def curve_slink(Contract):
+    yield Contract("0xF178C0b5Bb7e7aBF4e12A4838C7b7c5bA2C623c0")
 
 
 @pytest.fixture(scope="module")
@@ -163,15 +178,8 @@ def tracking_code():
 
 
 @pytest.fixture(scope="module")
-def snx_exchanger_addr():
-    yield "0xD64D83829D92B5bdA881f6f61A4e4E27Fc185387"
-
-
-@pytest.fixture(scope="module")
-def atomic_swap(alice, metaregistry, tracking_code, snx_exchanger_addr):
-    yield MetaAtomicSynthSwap.deploy(
-        snx_exchanger_addr, tracking_code, metaregistry, {"from": alice}
-    )
+def atomic_swap(alice, metaregistry, tracking_code):
+    yield MetaAtomicSynthSwap.deploy(tracking_code, metaregistry, {"from": alice})
 
 
 @pytest.fixture(scope="module")
@@ -182,12 +190,15 @@ def add_atomic_swap_synths(
     sBTC,
     sETH,
     sEUR,
+    sLINK,
     curve_susd,
     curve_sbtc,
     curve_seth,
     curve_seur,
+    curve_slink,
 ):
     atomic_swap.add_synth(sUSD, curve_susd, {"from": alice})
     atomic_swap.add_synth(sBTC, curve_sbtc, {"from": alice})
     atomic_swap.add_synth(sETH, curve_seth, {"from": alice})
     atomic_swap.add_synth(sEUR, curve_seur, {"from": alice})
+    atomic_swap.add_synth(sLINK, curve_slink, {"from": alice})

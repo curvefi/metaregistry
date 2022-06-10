@@ -33,11 +33,15 @@ interface RegistrySwap:
     ) -> uint256: payable
 
 
+interface SNXAddressResolver:
+    def getAddress(name: bytes32) -> address: view
+
+
 interface Synth:
     def currencyKey() -> bytes32: nonpayable
 
 
-interface SynthetixExchanger:
+interface Exchanger:
     def getAmountsForAtomicExchange(
         sourceAmount: uint256,
         sourceCurrencyKey: bytes32,
@@ -58,11 +62,13 @@ event NewSynth:
     pool: address
 
 
+# the following registries will never change:
 ADDRESS_PROVIDER: constant(address) = 0x0000000022D53366457F9d5E68Ec105046FC4383
+SNX_ADDRESS_RESOLVER: constant(address) = 0x4E3b31eB0E5CB73641EE1E65E7dCEFe520bA3ef2
+EXCHANGER_KEY: constant(bytes32) = 0x45786368616e6765720000000000000000000000000000000000000000000000
+
 # affiliate program tracking code:
 TRACKING_CODE: immutable(bytes32)
-# Synthetix exchanger contract address
-EXCHANGER: immutable(address)
 # Curve MetaRegistry
 METAREGISTRY: immutable(address)
 
@@ -73,17 +79,20 @@ synth_pool: public(HashMap[address, address])
 # coin -> spender -> is approved to transfer from this contract?
 is_approved: HashMap[address, HashMap[address, bool]]
 # synth -> currency key
-currency_keys: HashMap[address, bytes32]
+currency_keys: public(HashMap[address, bytes32])
+# synthetix exchanger:
+exchanger: Exchanger
 
 
 
 @external
-def __init__(_synthetix_exchanger: address, tracking_code: bytes32, metaregistry: address):
+def __init__(tracking_code: bytes32, metaregistry: address):
     """
     @notice Contract constructor
-    @param _synthetix_exchanger Synthetix ExchangerWithFeeRecAlternatives
+    @param tracking_code tracking code for affiliate program
+    @param metaregistry Curvefi MetaRegistry
     """
-    EXCHANGER = _synthetix_exchanger
+    self.exchanger = Exchanger(SNXAddressResolver(SNX_ADDRESS_RESOLVER).getAddress(EXCHANGER_KEY))
     TRACKING_CODE = tracking_code
     METAREGISTRY = metaregistry
     
@@ -102,7 +111,7 @@ def _get_swap_into_synth(_from: address, _synth: address, _amount: uint256) -> u
         i, j, is_meta = MetaRegistry(METAREGISTRY).get_coin_indices(pool, _from, intermediate_synth)
         synth_amount = Curve(pool).get_dy(i, j, _amount)
 
-    return SynthetixExchanger(EXCHANGER).getAmountsForAtomicExchange(
+    return self.exchanger.getAmountsForAtomicExchange(
         synth_amount,
         self.currency_keys[intermediate_synth],
         self.currency_keys[_synth],
@@ -174,18 +183,12 @@ def _find_best_pool_for_coins(_coin_in: address, _coin_out: address, _amount: ui
 
 
 @view
-@external
-def find_best_pool_for_coins(_coin_in: address, _coin_out: address, _amount: uint256) -> address:
-    return self._find_best_pool_for_coins(_coin_in, _coin_out, _amount)
-
-
-@view
 @internal
 def _get_swap_from_synth(_synth: address, _to: address, _amount: uint256) -> uint256:
     _intermediate_synth: address = self.swappable_synth[_to]
     synth_amount: uint256 = _amount
 
-    synth_amount = SynthetixExchanger(EXCHANGER).getAmountsForAtomicExchange(
+    synth_amount = self.exchanger.getAmountsForAtomicExchange(
         synth_amount,
         self.currency_keys[_synth],
         self.currency_keys[_intermediate_synth],
@@ -216,6 +219,22 @@ def get_best_registry_swap_amount(_from: address, _to: address, _amount: uint256
 
 @view
 @external
+def get_atomic_swap_amount(_coin_in: address, _coin_out: address, _amount: uint256) -> uint256:   
+    return self.exchanger.getAmountsForAtomicExchange(
+        _amount, 
+        self.currency_keys[self.swappable_synth[_coin_in]], 
+        self.currency_keys[self.swappable_synth[_coin_out]]
+    )[0]
+
+
+@view
+@external
+def find_best_pool_for_coins(_coin_in: address, _coin_out: address, _amount: uint256) -> address:
+    return self._find_best_pool_for_coins(_coin_in, _coin_out, _amount)
+
+
+@view
+@external
 def get_estimated_swap_amount(_coin_in: address, _coin_out: address, _amount: uint256) -> uint256:
     """
     @notice Estimate the final amount received when swapping between `_coin_in` and `_coin_out`
@@ -231,9 +250,9 @@ def get_estimated_swap_amount(_coin_in: address, _coin_out: address, _amount: ui
     if _pool != ZERO_ADDRESS:
         _expected = self._get_registry_swap_amount(_pool, _coin_in, _coin_out, _amount)
 
-    # if `_from` is a synth, `_to` is a synth, the just perform exchangeAtomically:
+    # if `_from` is a synth, `_to` are synths, the just perform exchangeAtomically:
     elif self._is_registered_synth(_coin_in) and self._is_registered_synth(_coin_out):
-        _expected = SynthetixExchanger(EXCHANGER).getAmountsForAtomicExchange(
+        _expected = self.exchanger.getAmountsForAtomicExchange(
             _amount,
             self.currency_keys[_coin_in],
             self.currency_keys[_coin_out]
@@ -314,8 +333,8 @@ def _swap_asset_into_synth(
     )
 
     # notice: swapped amount goes to `_receiver`
-    self._approve(intermediate_synth, EXCHANGER)
-    swap_out: uint256 = SynthetixExchanger(EXCHANGER).exchangeAtomically(
+    self._approve(intermediate_synth, self.exchanger.address)
+    swap_out: uint256 = self.exchanger.exchangeAtomically(
         self.currency_keys[intermediate_synth],
         synth_amount,
         self.currency_keys[_synth],
@@ -349,10 +368,10 @@ def _swap_synth_into_asset(
     @return uint256 Amount received by `self`
     """
     intermediate_synth: address = self.swappable_synth[_asset]
-    self._approve(_synth, EXCHANGER)
+    self._approve(_synth, self.exchanger.address)
     
     # swap _synth to intermediate synth:
-    swap_out: uint256 = SynthetixExchanger(EXCHANGER).exchangeAtomically(
+    swap_out: uint256 = self.exchanger.exchangeAtomically(
         self.currency_keys[_synth],
         _amount,
         self.currency_keys[intermediate_synth],
@@ -429,7 +448,7 @@ def exchange(
 
     # if `_from` is a synth, `_to` is a synth, the just perform exchangeAtomically:
     elif self._is_registered_synth(_coin_in) and self._is_registered_synth(_coin_out):
-        _received = SynthetixExchanger(EXCHANGER).exchangeAtomically(
+        _received = self.exchanger.exchangeAtomically(
             self.currency_keys[_coin_in],
             _amount,
             self.currency_keys[_coin_out],
@@ -483,6 +502,64 @@ def exchange(
     return _received
 
 
+@payable
+@external
+def exchange_through_synth(
+    _coin_in: address, 
+    _coin_out: address, 
+    _amount: uint256, 
+    _expected: uint256, 
+    _receiver: address
+) -> uint256:
+    """
+    @notice Perform a cross asset swap through Synthetix between `_coin_out` and `_coin_out`
+    @param _coin_in Address of the initial asset being exchanged
+    @param _coin_out Address of the final asset being swapped into
+    @param _amount Amount of `_coin_out` to swap
+    @param _expected Minimum amount of `_coin_out` to receive
+    @param _receiver Address of the recipient of `_coin_out`, if not given 
+                    defaults to `msg.sender`
+    @return uint256 Amount received by `msg.sender`
+    """
+    # transfer `_coin_in` to `self`:
+    if _coin_in != 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+        # Vyper equivalent of SafeERC20Transfer, handles most ERC20 return values
+        response: Bytes[32] = raw_call(
+            _coin_in,
+            concat(
+                method_id("transferFrom(address,address,uint256)"),
+                convert(msg.sender, bytes32),
+                convert(self, bytes32),
+                convert(_amount, bytes32),
+            ),
+            max_outsize=32,
+        )
+        if len(response) != 0:
+            assert convert(response, bool)
+
+    _intermediate_synth: address = self.swappable_synth[_coin_out]
+    registry_swap: address = AddressProvider(ADDRESS_PROVIDER).get_address(2)
+    _received: uint256 = self._swap_asset_into_synth(
+        _coin_in,
+        _intermediate_synth,
+        _amount,
+        0,
+        self,
+    )
+    self._approve(_intermediate_synth, registry_swap)
+    _received = RegistrySwap(registry_swap).exchange(
+        self.synth_pool[_intermediate_synth],
+        _intermediate_synth,
+        _coin_out,
+        _received,
+        _expected,
+        msg.sender,
+    )
+
+    assert _received != 0, "Could not find swap"
+    return _received
+
+
 @external
 def add_synth(_synth: address, _pool: address):
     """
@@ -509,3 +586,11 @@ def add_synth(_synth: address, _pool: address):
         self.swappable_synth[coin] = _synth
 
     log NewSynth(_synth, _pool)
+
+
+@external
+def rebuildCache():
+    """
+    @notice Update the current address of the SNX Exchanger contract
+    """
+    self.exchanger = Exchanger(SNXAddressResolver(SNX_ADDRESS_RESOLVER).getAddress(EXCHANGER_KEY))
