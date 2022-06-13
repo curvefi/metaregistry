@@ -3,6 +3,7 @@ from brownie import MetaRegistry, interface
 
 def main():
     meta_selectors = set(MetaRegistry.selectors)
+    print(meta_selectors)
 
     for registry_name in [f"{a}{b}" for a in ["Crypto", "Stable"] for b in ["Factory", "Registry"]]:
         registry = getattr(interface, registry_name)
