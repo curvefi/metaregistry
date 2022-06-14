@@ -1,11 +1,4 @@
 import pytest
-from brownie import (
-    CryptoFactoryHandler,
-    CryptoRegistryHandler,
-    MetaRegistry,
-    StableFactoryHandler,
-    StableRegistryHandler,
-)
 
 from .abis import crypto_factory, crypto_registry, stable_factory, stable_registry
 from .utils.constants import ADDRESS_PROVIDER
@@ -47,12 +40,12 @@ def owner(accounts):
 
 
 @pytest.fixture(scope="module")
-def metaregistry(owner):
+def metaregistry(MetaRegistry, owner):
     yield MetaRegistry.deploy(owner, ADDRESS_PROVIDER, {"from": owner})
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_registry_handler(owner, metaregistry):
+def stable_registry_handler(StableRegistryHandler, owner, metaregistry):
     handler = StableRegistryHandler.deploy(metaregistry, 0, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
     yield handler
@@ -60,7 +53,7 @@ def stable_registry_handler(owner, metaregistry):
 
 @pytest.fixture(scope="module", autouse=True)
 def stable_factory_handler(
-    owner, metaregistry, stable_registry_handler
+    StableFactoryHandler, owner, metaregistry, stable_registry_handler
 ):  # ensure registry fixtures exec order
     handler = StableFactoryHandler.deploy(metaregistry, 3, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(3, handler, {"from": owner})
@@ -68,14 +61,14 @@ def stable_factory_handler(
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_handler(owner, metaregistry, stable_factory_handler):
+def crypto_registry_handler(CryptoRegistryHandler, owner, metaregistry, stable_factory_handler):
     handler = CryptoRegistryHandler.deploy(metaregistry, 5, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(5, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_factory_handler(owner, metaregistry, crypto_registry_handler):
+def crypto_factory_handler(CryptoFactoryHandler, owner, metaregistry, crypto_registry_handler):
     handler = CryptoFactoryHandler.deploy(metaregistry, 6, ADDRESS_PROVIDER, {"from": owner})
     metaregistry.add_registry_by_address_provider_id(6, handler, {"from": owner})
     yield handler
@@ -89,3 +82,8 @@ def registries():
         crypto_registry(),
         crypto_factory(),
     ]
+
+
+@pytest.fixture(scope="module")
+def curve_api(CurveAPI, alice):
+    yield CurveAPI.deploy({"from": alice})
