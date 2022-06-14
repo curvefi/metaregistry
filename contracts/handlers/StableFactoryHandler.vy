@@ -145,6 +145,12 @@ def _get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     return self._pad_uint_array(self.base_registry.get_balances(_pool))
 
 
+@internal
+@view
+def _get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    return self._pad_uint_array(self.base_registry.get_decimals(_pool))
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -193,7 +199,7 @@ def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self._pad_uint_array(self.base_registry.get_decimals(_pool))
+    return self._get_decimals(_pool)
 
 
 @external
@@ -287,7 +293,16 @@ def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self.base_registry.get_underlying_decimals(_pool)
+    """
+    @notice If it is a metapool, method uses the base registry. Else it uses a
+    custom getter. This is because the base registry cannot unpack decimals 
+    (stored as a bitmap) if there is no metapool. So it returns the decimals of
+    only the first coin.
+    @param _pool Address of the pool
+    """
+    if self._is_meta(_pool):
+        return self.base_registry.get_underlying_decimals(_pool)
+    return self._get_decimals(_pool)
 
 
 @external
