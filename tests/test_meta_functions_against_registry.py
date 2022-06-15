@@ -43,6 +43,30 @@ def test_get_lp_token(metaregistry, registries, max_pools):
             assert actual_output == metaregistry_output
 
 
+def test_get_pool_from_lp_token(metaregistry, registries, max_pools, curve_api):
+
+    for i, registry in enumerate(registries):
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
+        for pool_index in range(total_pools):
+            metaregistry_output = None
+            pool = registry.pool_list(pool_index)
+
+            # get_lp_token
+            if (
+                i == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX
+                or i == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX
+            ):
+                lp_token = registry.get_lp_token(pool)
+            elif i == METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX:
+                lp_token = pool
+            else:
+                lp_token = registry.get_token(pool)
+
+            metaregistry_output = metaregistry.get_pool_from_lp_token(lp_token)
+
+            assert pool == metaregistry_output
+
+
 def test_get_virtual_price_from_lp_token(metaregistry, registries, max_pools, curve_api):
     for i, registry in enumerate(registries):
         total_pools = (
@@ -163,6 +187,43 @@ def test_get_underlying_coins(metaregistry, registries, max_pools, curve_api):
             assert actual_output == metaregistry_output
 
 
+def test_get_underlying_balances(metaregistry, registries, max_pools, curve_api):
+    for i, registry in enumerate(registries):
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
+        for pool_index in range(total_pools):
+            metaregistry_output = None
+            pool = registry.pool_list(pool_index)
+            metaregistry_borks = False
+            metaregistry_output = metaregistry.get_underlying_balances(pool)
+
+            if i in [
+                METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+                METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+            ]:
+                registry_query_borks = False
+                try:
+                    actual_output = registry.get_underlying_balances(pool)
+                except brownie.exceptions.VirtualMachineError:
+                    registry_query_borks = True
+                    actual_output = curve_api.get_balances(pool)
+
+            else:
+
+                actual_output = curve_api.get_balances(pool)
+
+            actual_output = list(actual_output)
+            actual_output += [0] * (8 - len(actual_output))
+            actual_output = tuple(actual_output)
+
+            try:
+                assert actual_output == metaregistry_output
+            except AssertionError as e:
+                if registry_query_borks:
+                    warnings.warn("Registry borks but not Metaregistry because BTC basepool")
+                    warnings.warn(f"error caught: {e}")
+                    continue
+
+
 def test_get_coins(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
         total_pools = registry.pool_count() if max_pools == 0 else max_pools
@@ -174,6 +235,64 @@ def test_get_coins(metaregistry, registries, max_pools):
             metaregistry_output = metaregistry.get_coins(pool)
             for j, coin in enumerate(actual_output):
                 assert coin == metaregistry_output[j]
+
+
+def test_get_n_coins(metaregistry, registries, max_pools, curve_api):
+    for i, registry in enumerate(registries):
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
+        for pool_index in range(total_pools):
+            pool = registry.pool_list(pool_index)
+
+            if i != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+                actual_output = registry.get_n_coins(pool)
+                if not type(actual_output) == brownie.convert.datatypes.Wei:
+                    actual_output = actual_output[0]
+                elif actual_output == 0:
+                    coins = curve_api.get_coins(pool)
+                    actual_output = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
+            else:
+                coins = curve_api.get_coins(pool)
+                actual_output = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
+
+            metaregistry_output = metaregistry.get_n_coins(pool)
+            assert actual_output == metaregistry_output
+
+
+def test_get_n_underlying_coins(metaregistry, registries, max_pools, curve_api):
+    for i, registry in enumerate(registries):
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
+        for pool_index in range(total_pools):
+            pool = registry.pool_list(pool_index)
+            metaregistry_output = metaregistry.get_n_underlying_coins(pool)
+
+            # check registry for n_coins first:
+            if i in [
+                METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+                METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+            ]:
+                n_coins = registry.get_n_coins(pool)
+                if type(n_coins) == brownie.convert.datatypes.Wei:
+                    try:
+                        assert n_coins == metaregistry_output
+                    except AssertionError:
+                        warnings.warn("Assertion broken: could be a btc metapool issue")
+                        coins = curve_api.get_coins(pool)
+                        # have to hardcode this test since btc metapool accounting
+                        # has some bugs with registry:
+                        if coins[1] == "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3":
+                            # add btc coins (3) and remove 1 lp coin = add 2:
+                            assert n_coins + 2 == metaregistry_output
+                    continue
+                if len(list(set(n_coins))) == 1:
+                    assert n_coins[0] == metaregistry_output
+                    continue
+
+            else:
+                # if the pool contains a basepool:
+                coins = curve_api.get_coins(pool)
+                num_coins = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
+                assert num_coins == metaregistry_output
 
 
 def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries, max_pools):

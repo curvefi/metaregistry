@@ -237,7 +237,10 @@ def get_n_coins(_pool: address) -> uint256:
 @external
 @view
 def get_n_underlying_coins(_pool: address) -> uint256:
-    return self.base_registry.get_meta_n_coins(_pool)[1]
+    if self._is_meta(_pool):
+        return self.base_registry.get_meta_n_coins(_pool)[1]
+    else:
+        return self.base_registry.get_n_coins(_pool)
 
 
 @external
