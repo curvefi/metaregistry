@@ -3,7 +3,7 @@ import os
 
 from brownie import Contract
 
-from tests.utils.constants import (
+from ..utils.constants import (
     CRYPTO_FACTORY,
     CRYPTO_REGISTRY,
     GAUGE_CONTROLLER,

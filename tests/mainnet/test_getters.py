@@ -1,4 +1,5 @@
 import brownie
+import itertools
 import warnings
 
 from .abis import curve_pool, curve_pool_v2, gauge_controller
@@ -10,12 +11,21 @@ from .utils.constants import (
 )
 
 
+def get_coin_decimals_from_pool(pool, curve_api):
+    coin_decimals = []
+    for i in range(4):
+        try:
+            coin_decimals.append(curve_api.get_decimals_for_coin_in_pool(pool, i))
+        except brownie.exceptions.VirtualMachineError:
+            break
+    return coin_decimals
+
+
 def test_is_registered(metaregistry, registries, max_pools):
     for i, registry in enumerate(registries):
         total_pools = registry.pool_count() if max_pools == 0 else max_pools
         for pool_index in range(total_pools):
             pool = registry.pool_list(pool_index)
-            print(pool)
             if pool != brownie.ZERO_ADDRESS:
                 assert metaregistry.is_registered(pool)
 
@@ -80,7 +90,7 @@ def test_get_virtual_price_from_lp_token(metaregistry, registries, max_pools, cu
             metaregistry_revert = False
             try:
                 metaregistry_output = metaregistry.get_virtual_price_from_lp_token(lp_token)
-            except:
+            except brownie.exceptions.VirtualMachineError:
                 metaregistry_revert = True
 
             # virtual price from underlying registries (or query chain):
@@ -93,7 +103,7 @@ def test_get_virtual_price_from_lp_token(metaregistry, registries, max_pools, cu
                     actual_output = registry.get_virtual_price_from_lp_token(lp_token)
                 else:
                     actual_output = curve_api.get_virtual_price(pool)
-            except:
+            except brownie.exceptions.VirtualMachineError:
                 actual_output_revert = True
 
             if not (metaregistry_revert and actual_output_revert):
@@ -103,16 +113,29 @@ def test_get_virtual_price_from_lp_token(metaregistry, registries, max_pools, cu
                 assert metaregistry_revert and actual_output_revert
 
 
+def test_get_decimals(metaregistry, registries, max_pools):
+
+    for i, registry in enumerate(registries):
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
+        for pool_index in range(total_pools):
+            pool = registry.pool_list(pool_index)
+            metaregistry_output = metaregistry.get_decimals(pool)
+            actual_output = registry.get_decimals(pool)
+
+            # convert to list, pad zeros and convert to tuple:
+            actual_output = list(actual_output)
+            actual_output += [0] * (len(metaregistry_output) - len(actual_output))
+            actual_output = list(actual_output)
+
+            # check if there are more than 1 decimals:
+            assert metaregistry_output[1] != 0
+            assert actual_output[1] != 0
+
+            # check if they match:
+            assert actual_output == metaregistry_output
+
+
 def test_get_underlying_decimals(metaregistry, registries, max_pools, curve_api):
-    def get_coin_decimals_from_pool(pool):
-        coin_decimals = []
-        for i in range(4):
-            try:
-                coin_decimals.append(curve_api.get_decimals_for_coin_in_pool(pool, i))
-            except brownie.exceptions.VirtualMachineError:
-                break
-        coin_decimals += [0] * (8 - len(coin_decimals))
-        return tuple(coin_decimals)
 
     for i, registry in enumerate(registries):
 
@@ -121,35 +144,44 @@ def test_get_underlying_decimals(metaregistry, registries, max_pools, curve_api)
             pool = registry.pool_list(pool_index)
             metaregistry_output = metaregistry.get_underlying_decimals(pool)
 
+            assert metaregistry_output[1] != 0  # there has to be a second coin!
+
             if (
                 i == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX
                 or i == METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX
             ):
                 try:
                     actual_output = registry.get_underlying_decimals(pool)
-                    if not actual_output:
-                        continue
                     assert actual_output == metaregistry_output
                 except AssertionError:
-                    print(f"metaregistry_output: {metaregistry_output}")
-                    print(f"child registry output: {actual_output}")
-                    print(
-                        "registry and metaregistry don't match. "
-                        "Checking if MetaRegistry is truly at fault here..."
-                    )
-                    # If a pool is in the stable factory, the underlying_decimals
-                    # method in the factory or registry only works correctly
-                    # for metapools. Otherwise, it returns a 0 if it isn't paired with
-                    # a basepool. So, get the correct coin decimals in case a factory
-                    # pool is not a metapool:
-                    actual_output = get_coin_decimals_from_pool(pool)
-                    assert actual_output == metaregistry_output
+                    # something wrong happened. check again using another approach:
+                    actual_output = get_coin_decimals_from_pool(pool, curve_api)
+                    # something wrong happened so do it the slower way
+                    if len(actual_output) == 0 or actual_output[0] == 0:
+                        pool_contract = brownie.Contract(pool)
+                        actual_output = []
+                        for i in range(4):
+                            try:
+                                actual_output.append(
+                                    brownie.Contract(pool_contract.coins(i)).decimals()
+                                )
+                            except brownie.exceptions.VirtualMachineError:
+                                break
+                    actual_output += [0] * (len(metaregistry_output) - len(actual_output))
+                    assert tuple(actual_output) == metaregistry_output
 
             else:
                 # Crypto Registries on mainnet do not have get_underlying_decimals,
                 # so check each coin's decimals with Metaregistry's output:
-                actual_output = get_coin_decimals_from_pool(pool)
-                assert actual_output == metaregistry_output
+                actual_output = []
+                for i in range(4):
+                    pool_contract = brownie.contract(pool)
+                    try:
+                        actual_output.append(brownie.Contract(pool_contract.coins(i)))
+                    except brownie.exceptions.VirtualMachineError:
+                        break
+                actual_output += [0] * (len(metaregistry_output) - len(actual_output))
+                assert tuple(actual_output) == metaregistry_output
 
 
 def test_get_underlying_coins(metaregistry, registries, max_pools, curve_api):
@@ -181,19 +213,30 @@ def test_get_underlying_coins(metaregistry, registries, max_pools, curve_api):
                 actual_output = curve_api.get_coins(pool)
 
             actual_output = list(actual_output)
-            actual_output += [brownie.ZERO_ADDRESS] * (8 - len(actual_output))
+            actual_output += [brownie.ZERO_ADDRESS] * (
+                len(metaregistry_output) - len(actual_output)
+            )
             actual_output = tuple(actual_output)
 
             assert actual_output == metaregistry_output
+
+
+def test_get_balances(metaregistry, registries, max_pools):
+    for i, registry in enumerate(registries):
+        total_pools = registry.pool_count() if max_pools == 0 else max_pools
+        for pool_index in range(total_pools):
+            pool = registry.pool_list(pool_index)
+            metaregistry_output = metaregistry.get_balances(pool)
+            actual_output = list(registry.get_balances(pool))
+            actual_output += [0] * (len(metaregistry_output) - len(actual_output))
+            assert tuple(actual_output) == metaregistry_output
 
 
 def test_get_underlying_balances(metaregistry, registries, max_pools, curve_api):
     for i, registry in enumerate(registries):
         total_pools = registry.pool_count() if max_pools == 0 else max_pools
         for pool_index in range(total_pools):
-            metaregistry_output = None
             pool = registry.pool_list(pool_index)
-            metaregistry_borks = False
             metaregistry_output = metaregistry.get_underlying_balances(pool)
 
             if i in [
@@ -212,7 +255,7 @@ def test_get_underlying_balances(metaregistry, registries, max_pools, curve_api)
                 actual_output = curve_api.get_balances(pool)
 
             actual_output = list(actual_output)
-            actual_output += [0] * (8 - len(actual_output))
+            actual_output += [0] * (len(metaregistry_output) - len(actual_output))
             actual_output = tuple(actual_output)
 
             try:
@@ -293,6 +336,64 @@ def test_get_n_underlying_coins(metaregistry, registries, max_pools, curve_api):
                 coins = curve_api.get_coins(pool)
                 num_coins = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
                 assert num_coins == metaregistry_output
+
+
+def test_get_coin_indices(metaregistry, registries, stable_factory_handler, max_pools):
+
+    print("MetaRegistry registry_length(): ", metaregistry.registry_length())
+
+    for i, registry in enumerate(registries):
+
+        total_pools = (
+            registry.pool_count() if max_pools == 0 else min(max_pools, registry.pool_count())
+        )
+
+        for pool_index in range(total_pools):
+
+            pool = registry.pool_list(pool_index)
+
+            # check that the pool was not previously entered in another registry
+            registry_in_meta_registry = metaregistry.get_registry_handler_from_pool(pool)
+            if registry != registry_in_meta_registry:
+                continue
+
+            print(f"Checking if pool {pool} is a metapool, in registry {registry}")
+            is_meta = metaregistry.is_meta(pool)
+            pool_coins = [
+                coin for coin in metaregistry.get_coins(pool) if coin != brownie.ZERO_ADDRESS
+            ]
+
+            base_combinations = list(itertools.combinations(pool_coins, 2))
+            all_combinations = base_combinations
+            if is_meta:
+                underlying_coins = [
+                    coin
+                    for coin in metaregistry.get_underlying_coins(pool)
+                    if coin != brownie.ZERO_ADDRESS
+                ]
+                all_combinations = all_combinations + [
+                    (pool_coins[0], coin) for coin in underlying_coins
+                ]
+
+            for combination in all_combinations:
+                if combination[0] == combination[1]:
+                    continue
+                metaregistry_output = metaregistry.get_coin_indices(
+                    pool, combination[0], combination[1]
+                )
+                if i >= 2:
+                    indices = registry.get_coin_indices(pool, combination[0], combination[1])
+                    actual_output = (indices[0], indices[1], False)
+                else:
+                    actual_output = registry.get_coin_indices(pool, combination[0], combination[1])
+                # fix bug with stable registry & is_underlying always true
+                if (
+                    metaregistry.get_registry_handler_from_pool(pool)
+                    == stable_factory_handler.address
+                ):
+                    actual_output = list(actual_output)
+                    actual_output[-1] = not registry.is_meta(pool)
+                assert actual_output == metaregistry_output
 
 
 def test_get_pool_params_stableswap_cryptoswap(metaregistry, registries, max_pools):
@@ -570,3 +671,45 @@ def test_get_gauges(metaregistry, registries, max_pools):
                 )
             metaregistry_output = metaregistry.get_gauges(pool)
             assert actual_output == metaregistry_output
+
+
+def test_find_coins(metaregistry, max_pools):
+    registry_count = metaregistry.registry_length()
+    pool_count = (
+        metaregistry.pool_count()
+        if max_pools == 0
+        else min(max_pools * registry_count, metaregistry.pool_count())
+    )
+    for pool_index in range(pool_count):
+        pool = metaregistry.pool_list(pool_index)
+
+        pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != brownie.ZERO_ADDRESS]
+
+        base_combinations = list(itertools.combinations(pool_coins, 2))
+        all_combinations = base_combinations
+        if metaregistry.is_meta(pool):
+            underlying_coins = [
+                coin
+                for coin in metaregistry.get_underlying_coins(pool)
+                if coin != brownie.ZERO_ADDRESS
+            ]
+            all_combinations = all_combinations + [
+                (pool_coins[0], coin) for coin in underlying_coins if pool_coins[0] != coin
+            ]
+        print(
+            f"Found {len(all_combinations)} "
+            f"combination for pool: {pool} ({pool_index}/{pool_count})"
+        )
+        for combination in all_combinations:
+            registered = False
+            for j in range(pool_count):
+                pool_for_the_pair = metaregistry.find_pool_for_coins(
+                    combination[0], combination[1], j
+                )
+                if pool_for_the_pair == pool:
+                    registered = True
+                    break
+                if pool_for_the_pair == brownie.ZERO_ADDRESS:
+                    break
+
+            assert registered

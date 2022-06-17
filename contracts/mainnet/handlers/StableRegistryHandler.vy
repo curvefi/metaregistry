@@ -210,7 +210,9 @@ def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
-    return self.base_registry.get_underlying_decimals(_pool)
+    if self._is_meta(_pool):
+        return self.base_registry.get_underlying_decimals(_pool)
+    return self.base_registry.get_decimals(_pool)
 
 
 @external

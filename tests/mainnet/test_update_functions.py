@@ -1,12 +1,11 @@
 import brownie
-from brownie import ZERO_ADDRESS
 
 from .utils.constants import DAI, METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX, TRIPOOL
 
 
 def test_update_address_provider_not_to_address_zero(metaregistry, owner, fn_isolation):
     with brownie.reverts():
-        tx = metaregistry.update_address_provider(ZERO_ADDRESS, {"from": owner})
+        tx = metaregistry.update_address_provider(brownie.ZERO_ADDRESS, {"from": owner})
         tx.revert_msg == "dev: not to zero"
 
 
