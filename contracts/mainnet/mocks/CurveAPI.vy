@@ -49,9 +49,9 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
     success: bool = False
     response: Bytes[32] = b""
     for i in range(MAX_COINS):
-        
+
         success, response = raw_call(
-            _pool, 
+            _pool,
             concat(
                 method_id("coins(uint256)"),
                 convert(i, bytes32),
@@ -76,9 +76,9 @@ def get_balances(_pool: address) -> uint256[MAX_COINS]:
     success: bool = False
     response: Bytes[32] = b""
     for i in range(MAX_COINS):
-        
+
         success, response = raw_call(
-            _pool, 
+            _pool,
             concat(
                 method_id("balances(uint256)"),
                 convert(i, bytes32),

@@ -1,6 +1,7 @@
-import brownie
 import itertools
 import warnings
+
+import brownie
 import pytest
 
 from .abis import curve_pool, curve_pool_v2, gauge_controller
@@ -276,18 +277,7 @@ def test_get_underlying_coins(
     registry, pool = get_registry_and_pool(
         registries, registry_id, max_pools, pool_index, registry_pool_count
     )
-
-    metaregistry_output = None
-    attempt = 0
-    while attempt <= 10:
-        attempt += 1
-        try:
-            metaregistry_output = metaregistry.get_underlying_coins(pool)
-            break
-        except:
-            continue
-
-    assert metaregistry_output
+    metaregistry_output = metaregistry.get_underlying_coins(pool)
 
     if registry_id in [
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
@@ -354,7 +344,7 @@ def test_get_underlying_balances(
 
     try:
         assert actual_output == metaregistry_output
-    except AssertionError as e:
+    except AssertionError:
         if registry_query_borks:
             warnings.warn("Registry borks but not Metaregistry because BTC basepool")
 

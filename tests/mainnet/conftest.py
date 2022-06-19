@@ -1,4 +1,3 @@
-from email.mime import base
 import pytest
 
 from .abis import crypto_factory, crypto_registry, stable_factory, stable_registry

@@ -298,7 +298,7 @@ def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
     @notice If it is a metapool, method uses the base registry. Else it uses a
-    custom getter. This is because the base registry cannot unpack decimals 
+    custom getter. This is because the base registry cannot unpack decimals
     (stored as a bitmap) if there is no metapool. So it returns the decimals of
     only the first coin.
     @param _pool Address of the pool
