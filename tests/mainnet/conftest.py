@@ -1,3 +1,4 @@
+from email.mime import base
 import pytest
 
 from .abis import crypto_factory, crypto_registry, stable_factory, stable_registry
@@ -82,6 +83,12 @@ def registries():
         crypto_registry(),
         crypto_factory(),
     ]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def registry_pool_count(registries):
+    pool_count = [registry.pool_count() for registry in registries]
+    return {registry: pool_count[idx] for idx, registry in enumerate(registries)}
 
 
 @pytest.fixture(scope="module")
