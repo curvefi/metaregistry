@@ -4,3 +4,4 @@ flake8==3.9.2
 isort
 pip-tools
 pre-commit
+tabulate==0.8.9
