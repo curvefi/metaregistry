@@ -1,7 +1,4 @@
-import itertools
 import pytest
-import pytest_cases
-
 
 from .abis import crypto_factory, crypto_registry, stable_factory, stable_registry
 from .utils.constants import ADDRESS_PROVIDER
@@ -85,6 +82,30 @@ def registries():
         crypto_registry(),
         crypto_factory(),
     ]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def registry_pool_index_iterator(registries, max_pools):
+
+    pool_count = [registry.pool_count() for registry in registries]
+    registry_indices = list(range(len(registries)))
+
+    iterable = []
+    for registry_id in registry_indices:
+
+        registry = registries[registry_id]
+        pool_indices = list(range(pool_count[registry_id]))
+
+        for pool_index in pool_indices:
+
+            # limit pools if max_pools is specified (>0)
+            if pool_index > max_pools - 1 and max_pools > 0:
+                break
+
+            pool = registry.pool_list(pool_index)
+            iterable.append((registry_id, registry, pool))
+
+    return iterable
 
 
 @pytest.fixture(scope="module", autouse=True)

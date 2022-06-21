@@ -63,7 +63,7 @@ def __init__(_metaregistry: address, _id: uint256, address_provider: address):
 @internal
 @view
 def _get_n_coins(_pool: address) -> uint256:
-    return self.base_registry.get_n_coins(_pool)[0]   
+    return self.base_registry.get_n_coins(_pool)[0]
 
 
 @internal
