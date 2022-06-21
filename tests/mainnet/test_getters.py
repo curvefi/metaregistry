@@ -345,7 +345,7 @@ def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator):
                         # add btc coins (3) and remove 1 lp coin = add 2:
                         assert n_coins + 2 == metaregistry_output
 
-            elif len(list(set(n_coins))) == 1:
+            elif len(set(n_coins)) == 1:
                 # the registry returns a tuple with the same value, e.g. (3, 3)
                 # such that length of the output's set is 1.
                 # so we take the first one:
