@@ -173,9 +173,9 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_base_pool(_pool: address) -> address:
-    if not (self._is_meta(_pool)):
+    if not self._is_meta(_pool):
         return ZERO_ADDRESS
-    if (self.base_registry.get_pool_asset_type(_pool) == 2):
+    if self.base_registry.get_pool_asset_type(_pool) == 2:
         return BTC_BASE_POOL
     return self.base_registry.get_base_pool(_pool)
 
@@ -276,9 +276,9 @@ def get_pool_params(_pool: address) -> uint256[20]:
 @external
 @view
 def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    if not (self._is_meta(_pool)):
+    if not self._is_meta(_pool):
         return self._get_balances(_pool)
-    if (self.base_registry.get_pool_asset_type(_pool) == 2):
+    if self.base_registry.get_pool_asset_type(_pool) == 2:
         # some metapools (BTC) do not have a base_pool attribute so some registry functions
         # will revert because the pools are not recognized as metapools.
         return self._get_btc_underlying_balances(_pool)
@@ -288,7 +288,7 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
-    if not (self._is_meta(_pool)):
+    if not self._is_meta(_pool):
         return self._get_coins(_pool)
     return self._get_underlying_coins(_pool)
 
@@ -303,9 +303,9 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     only the first coin.
     @param _pool Address of the pool
     """
-    if self._is_meta(_pool):
-        return self.base_registry.get_underlying_decimals(_pool)
-    return self._get_decimals(_pool)
+    if not self._is_meta(_pool):
+        return self._get_decimals(_pool)
+    return self.base_registry.get_underlying_decimals(_pool)
 
 
 @external

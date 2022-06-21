@@ -1,4 +1,7 @@
+import itertools
 import pytest
+import pytest_cases
+
 
 from .abis import crypto_factory, crypto_registry, stable_factory, stable_registry
 from .utils.constants import ADDRESS_PROVIDER
@@ -86,10 +89,5 @@ def registries():
 
 @pytest.fixture(scope="module", autouse=True)
 def registry_pool_count(registries):
-    pool_count = [registry.pool_count() for registry in registries]
-    return {registry: pool_count[idx] for idx, registry in enumerate(registries)}
-
-
-@pytest.fixture(scope="module")
-def curve_api(CurveAPI, alice):
-    yield CurveAPI.deploy({"from": alice})
+    pool_count_per_registry = [registry.pool_count() for registry in registries]
+    return {registries[i]: max_pools for i, max_pools in enumerate(pool_count_per_registry)}

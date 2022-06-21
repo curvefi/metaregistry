@@ -62,26 +62,8 @@ def __init__(_metaregistry: address, _id: uint256, address_provider: address):
 # ---- internal methods ---- #
 @internal
 @view
-def _get_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_registry.get_coins(_pool)
-
-
-@internal
-@view
-def _get_lp_token(_pool: address) -> address:
-    return self.base_registry.get_lp_token(_pool)
-
-
-@internal
-@view
 def _get_n_coins(_pool: address) -> uint256:
-    return self.base_registry.get_n_coins(_pool)[0]
-
-
-@internal
-@view
-def _get_underlying_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_registry.get_underlying_coins(_pool)
+    return self.base_registry.get_n_coins(_pool)[0]   
 
 
 @internal
@@ -126,7 +108,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
-    return self._get_coins(_pool)
+    return self.base_registry.get_coins(_pool)
 
 
 @external
@@ -154,7 +136,7 @@ def get_gauges(_pool: address) -> (address[10], int128[10]):
 @external
 @view
 def get_lp_token(_pool: address) -> address:
-    return self._get_lp_token(_pool)
+    return self.base_registry.get_lp_token(_pool)
 
 
 @external
@@ -198,21 +180,25 @@ def get_pool_params(_pool: address) -> uint256[20]:
 @external
 @view
 def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
+    if not self._is_meta(_pool):
+        return self.base_registry.get_balances(_pool)
     return self.base_registry.get_underlying_balances(_pool)
 
 
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
-    return self._get_underlying_coins(_pool)
+    if not self._is_meta(_pool):
+        return self.base_registry.get_coins(_pool)
+    return self.base_registry.get_underlying_coins(_pool)
 
 
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
-    if self._is_meta(_pool):
-        return self.base_registry.get_underlying_decimals(_pool)
-    return self.base_registry.get_decimals(_pool)
+    if not self._is_meta(_pool):
+        return self.base_registry.get_decimals(_pool)
+    return self.base_registry.get_underlying_decimals(_pool)
 
 
 @external

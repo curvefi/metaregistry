@@ -183,7 +183,7 @@ def update_registry_addresses() -> uint256:
         if i == self.registry_length:
             break
         registry: Registry = self.get_registry[i]
-        if (registry.is_active and registry.addr != self.address_provider.get_address(registry.id)):
+        if registry.is_active and registry.addr != self.address_provider.get_address(registry.id):
             (addr, is_active, version, last_modified, description) = self.address_provider.get_id_info(i)
             self._update_single_registry(i, addr, registry.id, registry.registry_handler, description, is_active)
             count += 1
