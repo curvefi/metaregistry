@@ -302,13 +302,13 @@ def test_get_n_coins(metaregistry, registry_pool_index_iterator):
             elif actual_output == 0:
 
                 coins = registry.get_coins(pool)
-                actual_output = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
+                actual_output = sum([1 for coin in coins if coin != brownie.ZERO_ADDRESS])
 
         else:
 
             # do get_coins for crypto factory:
             coins = registry.get_coins(pool)
-            actual_output = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
+            actual_output = sum([1 for coin in coins if coin != brownie.ZERO_ADDRESS])
 
         assert actual_output == metaregistry_output
 
@@ -354,7 +354,7 @@ def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator):
         else:
             # if the pool contains a basepool:
             coins = registry.get_coins(pool)
-            num_coins = sum([1 for i in coins if i != brownie.ZERO_ADDRESS])
+            num_coins = sum([1 for coin in coins if coin != brownie.ZERO_ADDRESS])
             assert num_coins == metaregistry_output
 
 
