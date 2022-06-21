@@ -188,8 +188,13 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
-    if not self._is_meta(_pool):
-        return self.base_registry.get_coins(_pool)
+    """
+    @dev does't do 
+        `if not self._is_meta(_pool)`
+        `    return self.base_registry.get_coins(_pool)`
+        because that will exclude lending pools which have
+        underlying coins.
+    """
     return self.base_registry.get_underlying_coins(_pool)
 
 
