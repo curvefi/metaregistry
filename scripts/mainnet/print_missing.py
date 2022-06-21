@@ -1,15 +1,37 @@
 from brownie import MetaRegistry, interface
+from tabulate import tabulate
+
+MISSING = "\033[33m✖\033[0m"
+PRESENT = "\033[32m✓\033[0m"
 
 
 def main():
-    meta_selectors = set(MetaRegistry.selectors)
-    print(meta_selectors)
+    def get_non_indexed_view_functions(registry_selectors, registry_abi, fn_index):
+        view_fns = {d["name"] for d in registry_abi if d.get("stateMutability") == "view"}
+        non_indexed_fns = dict(registry_selectors.items() - fn_index.items())
+        return {
+            k: registry_selectors[k]
+            for k, v in non_indexed_fns.items()
+            if registry_selectors[k] in view_fns
+        }
 
-    for registry_name in [f"{a}{b}" for a in ["Crypto", "Stable"] for b in ["Factory", "Registry"]]:
+    function_index = get_non_indexed_view_functions(MetaRegistry.selectors, MetaRegistry.abi, {})
+    registry_coverage = [[PRESENT] * len(function_index)]
+    registry_names = [f"{a}{b}" for a in ["Crypto", "Stable"] for b in ["Factory", "Registry"]]
+
+    for registry_name in registry_names:
         registry = getattr(interface, registry_name)
-        print(registry_name, "*" * len(registry_name), sep="\n")
+        non_indexed_view_fns = get_non_indexed_view_functions(
+            registry.selectors, registry.abi, function_index
+        )
+        function_index.update(non_indexed_view_fns)
+        registry_coverage.append(
+            [PRESENT if fn in registry.selectors else MISSING for fn in function_index.keys()]
+        )
 
-        view_fns = {d["name"] for d in registry.abi if d.get("stateMutability") == "view"}
-        missing_fns = {registry.selectors[k] for k in (set(registry.selectors) - meta_selectors)}
-
-        print("\n".join(sorted(missing_fns & view_fns)), "\n")
+    registry_coverage = [
+        coverage + [MISSING] * (len(function_index) - len(coverage))
+        for coverage in registry_coverage
+    ]
+    res = sorted(zip(function_index.values(), *registry_coverage))
+    print(tabulate(res, headers=["Functions", "MetaRegistry"] + registry_names))
