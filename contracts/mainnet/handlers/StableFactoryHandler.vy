@@ -279,8 +279,8 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
 @external
 @view
 def get_pool_name(_pool: address) -> String[64]:
-    if self.base_registry.get_n_coins(_pool) == 0:
-        return ""
+    # if self.base_registry.get_n_coins(_pool) == 0:
+    #     return ""
     return ERC20(_pool).name()
 
 

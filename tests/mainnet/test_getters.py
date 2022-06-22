@@ -8,12 +8,10 @@ from .abis import curve_pool, curve_pool_v2, gauge_controller
 from .utils.constants import (
     BTC_BASEPOOL_LP_TOKEN_MAINNET,
     BTC_BASEPOOL_MAINNET,
-    ETH,
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
     METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
     METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-    WETH,
 )
 
 
@@ -568,17 +566,31 @@ def test_get_fees(metaregistry, registry_pool_index_iterator):
             continue
 
         # get_fees
-        if registry_id != METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
+        if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
             actual_output = registry.get_fees(pool)
         else:
+            registry_query_reverts = False
             curve_contract = curve_pool_v2(pool)
-            actual_output = [
-                curve_contract.fee(),
-                curve_contract.admin_fee(),
-                curve_contract.mid_fee(),
-                curve_contract.out_fee(),
-            ]
-        metaregistry_output = metaregistry.get_fees(pool)
+            try:
+
+                actual_output = [
+                    curve_contract.fee(),
+                    curve_contract.admin_fee(),
+                    curve_contract.mid_fee(),
+                    curve_contract.out_fee(),
+                ]
+
+            except brownie.exceptions.VirtualMachineError:
+
+                registry_query_reverts = True
+
+        try:
+            metaregistry_output = metaregistry.get_fees(pool)
+        except brownie.exceptions.VirtualMachineError:
+            if registry_query_reverts:
+                # we skip this pool since the registry and metaregistry
+                # both revert for it
+                continue
         for j, output in enumerate(actual_output):
             assert output == metaregistry_output[j]
 
@@ -594,22 +606,34 @@ def test_get_pool_name(metaregistry, registry_pool_index_iterator):
         if check_pool_already_registered(metaregistry, pool, registry_handler):
             continue
 
-        if registry_id in [
-            METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-            METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-        ]:
+        registry_query_reverts = False
+        try:
 
-            actual_output = registry.get_pool_name(pool)
+            if registry_id in [
+                METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+            ]:
 
-        elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+                actual_output = registry.get_pool_name(pool)
 
-            actual_output = brownie.interface.ERC20(registry.get_token(pool)).name()
+            elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
 
-        else:
+                actual_output = brownie.interface.ERC20(registry.get_token(pool)).name()
 
-            actual_output = brownie.interface.ERC20(pool).name()
+            else:
 
-        metaregistry_output = metaregistry.get_pool_name(pool)
+                actual_output = brownie.interface.ERC20(pool).name()
+
+        except brownie.exceptions.VirtualMachineError:
+            registry_query_reverts = True
+
+        try:
+            metaregistry_output = metaregistry.get_pool_name(pool)
+        except brownie.exceptions.VirtualMachineError:
+            if registry_query_reverts:
+                # we skip because both metaregistyr and pool erc20 name / registry
+                # query revert
+                continue
 
         assert actual_output == metaregistry_output
 
@@ -626,22 +650,32 @@ def test_get_gauges(metaregistry, registry_pool_index_iterator):
             continue
 
         # get_gauges
-        if registry_id in [
-            METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-            METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-        ]:
+        registry_query_reverts = False
+        try:
+            if registry_id in [
+                METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+            ]:
 
-            actual_output = registry.get_gauges(pool)
+                actual_output = registry.get_gauges(pool)
 
-        else:
+            else:
 
-            gauge = registry.get_gauge(pool)
-            actual_output = (
-                [gauge] + [brownie.ZERO_ADDRESS] * 9,
-                [gauge_controller().gauge_types(gauge)] + [0] * 9,
-            )
+                gauge = registry.get_gauge(pool)
+                actual_output = (
+                    [gauge] + [brownie.ZERO_ADDRESS] * 9,
+                    [gauge_controller().gauge_types(gauge)] + [0] * 9,
+                )
+        except brownie.exceptions.VirtualMachineError:
+            registry_query_reverts = True
 
-        metaregistry_output = metaregistry.get_gauges(pool)
+        try:
+            metaregistry_output = metaregistry.get_gauges(pool)
+        except brownie.exceptions.VirtualMachineError:
+            if registry_query_reverts:
+                # both registry and metaregistry queries for get_gauge revert
+                # so we ignore testing this pool
+                continue
         assert actual_output == metaregistry_output
 
 

@@ -126,7 +126,7 @@ def _get_registry_handler_from_pool(_pool: address) -> address:
 
         if self.get_registry[i].is_active and RegistryHandler(handler).is_registered(_pool):
             pool_registry_handler = handler
-    
+
     if pool_registry_handler == ZERO_ADDRESS:
         raise("no registry")
     return pool_registry_handler
