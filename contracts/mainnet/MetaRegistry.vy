@@ -110,13 +110,26 @@ def _get_pool_from_lp_token(_token: address) -> address:
 @internal
 @view
 def _get_registry_handler_from_pool(_pool: address) -> address:
+    """
+    @dev sometimes a factory pool can be registered in a manual registry
+         because of this, we always take the last registry a pool is
+         registered in and not the first, as manual registries are first
+         and factories come later
+    """
+
+    pool_registry_handler: address = ZERO_ADDRESS
     for i in range(MAX_REGISTRIES):
+
         if i == self.registry_length:
             break
         handler: address = self.get_registry[i].registry_handler
+
         if self.get_registry[i].is_active and RegistryHandler(handler).is_registered(_pool):
-            return handler
-    raise("no registry")
+            pool_registry_handler = handler
+    
+    if pool_registry_handler == ZERO_ADDRESS:
+        raise("no registry")
+    return pool_registry_handler
 
 
 # ---- most used methods: Admin / DAO privileged methods ---- #

@@ -96,7 +96,7 @@ def get_balances(_pool: address) -> uint256[MAX_COINS]:
 def get_base_pool(_pool: address) -> address:
     if not(self._is_meta(_pool)):
         return ZERO_ADDRESS
-    return CurvePool(_pool).base_pool()
+    return self.base_registry.get_pool_from_lp_token(self.base_registry.get_coins(_pool)[1])
 
 
 @view

@@ -16,18 +16,39 @@ from .utils.constants import (
     WETH,
 )
 
+
+def check_pool_already_registered(metaregistry, pool, registry_handler_for_pool):
+    """Checks whether the pool was already registered. Skips test if it was.
+    Args:
+        metaregistry (fixture): MetaRegistry contract fixture.
+        pool (str): address of pool
+        registry (brownie.Contract): Contract instance of registry.
+    """
+    registry_handler_for_pool_in_metaregistry = metaregistry.get_registry_handler_from_pool(pool)
+
+    if registry_handler_for_pool != registry_handler_for_pool_in_metaregistry:
+        warnings.warn(
+            "Pool already registred in another registry. "
+            f"Pool: {pool}, "
+            f"registry handler for pool: {registry_handler_for_pool}, "
+            f"registry handler in metaregistry: {registry_handler_for_pool_in_metaregistry}"
+        )
+        return True
+    return False
+
+
 # --------- Parameterised Tests: checkers ---------
 
 
 def test_is_registered(metaregistry, registry_pool_index_iterator):
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
         if pool != brownie.ZERO_ADDRESS:
             assert metaregistry.is_registered(pool)
 
 
 def test_is_meta(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         if registry_id in [
             METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
@@ -46,7 +67,7 @@ def test_is_meta(metaregistry, registry_pool_index_iterator):
 
 def test_get_lp_token(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         # get_lp_token
         if registry_id in [
@@ -65,7 +86,7 @@ def test_get_lp_token(metaregistry, registry_pool_index_iterator):
 
 def test_get_pool_from_lp_token(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         lp_token = metaregistry.get_lp_token(pool)
         metaregistry_output = metaregistry.get_pool_from_lp_token(lp_token)
@@ -75,7 +96,7 @@ def test_get_pool_from_lp_token(metaregistry, registry_pool_index_iterator):
 
 def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         lp_token = metaregistry.get_lp_token(pool)
 
@@ -112,7 +133,7 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
 
 def test_get_decimals(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
         metaregistry_output = metaregistry.get_decimals(pool)
 
         # get actuals and pad zeroes to match metaregistry_output length
@@ -129,7 +150,7 @@ def test_get_decimals(metaregistry, registry_pool_index_iterator):
 
 def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         # metaregistry underlying decimals:
         metaregistry_output = metaregistry.get_underlying_decimals(pool)
@@ -158,7 +179,7 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator):
 
 def test_get_coins(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         metaregistry_output = metaregistry.get_coins(pool)
 
@@ -170,7 +191,7 @@ def test_get_coins(metaregistry, registry_pool_index_iterator):
 
 def test_get_underlying_coins(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         metaregistry_output = metaregistry.get_underlying_coins(pool)
 
@@ -194,7 +215,7 @@ def test_get_underlying_coins(metaregistry, registry_pool_index_iterator):
 
 def test_get_balances(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
         metaregistry_output = metaregistry.get_balances(pool)
         actual_output = list(registry.get_balances(pool))
         actual_output += [0] * (len(metaregistry_output) - len(actual_output))
@@ -203,7 +224,7 @@ def test_get_balances(metaregistry, registry_pool_index_iterator):
 
 def test_get_underlying_balances(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         if sum(registry.get_balances(pool)) == 0:
             pytest.skip(f"Empty pool: {pool}")
@@ -282,7 +303,7 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator):
 
 def test_get_n_coins(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         metaregistry_output = metaregistry.get_n_coins(pool)
 
@@ -315,7 +336,7 @@ def test_get_n_coins(metaregistry, registry_pool_index_iterator):
 
 def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         metaregistry_output = metaregistry.get_n_underlying_coins(pool)
 
@@ -360,7 +381,7 @@ def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator):
 
 def test_get_coin_indices(metaregistry, stable_factory_handler, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         is_meta = metaregistry.is_meta(pool)
         pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != brownie.ZERO_ADDRESS]
@@ -404,7 +425,7 @@ def test_get_coin_indices(metaregistry, stable_factory_handler, registry_pool_in
 
 def test_get_pool_params_stableswap_cryptoswap(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         """This test is only for stableswap and cryptoswap amms"""
 
@@ -446,34 +467,39 @@ def test_get_pool_params_stableswap_cryptoswap(metaregistry, registry_pool_index
 
 def test_get_base_pool(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
-        # get_base_pool
-        if registry_id in [
-            METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-            METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
-        ]:
-            actual_output = brownie.ZERO_ADDRESS
-        elif registry_id == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX:
-            if not registry.is_meta(pool):
-                actual_output = brownie.ZERO_ADDRESS
-            elif registry.get_pool_asset_type(pool) == 2:
-                actual_output = BTC_BASEPOOL_LP_TOKEN_MAINNET
-            else:
-                actual_output = registry.get_base_pool(pool)
-        else:
-            if not registry.is_meta(pool):
-                actual_output = brownie.ZERO_ADDRESS
-            else:
-                actual_output = curve_pool(pool).base_pool()
+        actual_output = brownie.ZERO_ADDRESS
+
+        if registry_id == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX:
+
+            # because of a bug in the stable registy contract, btc pools
+            # have no base pool. so we check if the btc basepool token is
+            # in the pool. if so, then actual output is the btc basepool token
+            if BTC_BASEPOOL_LP_TOKEN_MAINNET in registry.get_coins(pool):
+                actual_output = BTC_BASEPOOL_MAINNET
+            elif registry.is_meta(pool):
+                # stable registry does not have get_base_pool method
+                actual_output = registry.get_pool_from_lp_token(registry.get_coins(pool)[1])
+
+        if registry_id == METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX and metaregistry.is_meta(pool):
+
+            actual_output = registry.get_base_pool(pool)
 
         metaregistry_output = metaregistry.get_base_pool(pool)
         assert actual_output == metaregistry_output
 
 
-def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator):
+def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, registries):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
+
+        # we skip if pool was registered: this is because some pools are
+        # registered in the stable registry but are from the stable factory.
+        # skipping does not skip the test: since metaregistry chooses stable
+        # factory as the registry handler and not the registry in these cases
+        if check_pool_already_registered(metaregistry, pool, registry_handler):
+            continue
 
         # get_pool_asset_type
         if registry_id in [
@@ -490,23 +516,41 @@ def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator):
 
 def test_get_admin_balances(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
-        metaregistry_output = metaregistry.get_admin_balances(pool)
+        # we skip if pool was registered: this is because some pools are
+        # registered in the stable registry but are from the stable factory.
+        # skipping does not skip the test: since metaregistry chooses stable
+        # factory as the registry handler and not the registry in these cases
+        if check_pool_already_registered(metaregistry, pool, registry_handler):
+            continue
+
+        metaregistry_reverts = False
+        try:
+
+            metaregistry_output = metaregistry.get_admin_balances(pool)
+
+        except brownie.exceptions.VirtualMachineError:
+            metaregistry_reverts = True
 
         # get_admin_balances
-        if registry_id != METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
-            actual_output = registry.get_admin_balances(pool)
-        else:
-            balances = registry.get_balances(pool)
-            coins = registry.get_coins(pool)
-            for k in range(len(coins)):
-                coin = coins[k]
-                if coin in [ETH, WETH]:
-                    balances[k] = brownie.accounts.at(pool).balance() - balances[k]
-                else:
-                    balances[k] = brownie.interface.ERC20(coin).balanceOf(pool) - balances[k]
-            actual_output = balances
+        try:
+            if not registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+                actual_output = registry.get_admin_balances(pool)
+            else:
+                coins = registry.get_coins(pool)
+                balances = [0] * len(metaregistry_output)
+                for coin_id, coin in enumerate(coins):
+                    if not coin == brownie.ETH_ADDRESS:
+                        balances[coin_id] = brownie.interface.ERC20(coin).balanceOf(pool)
+                    else:
+                        balances[coin_id] = brownie.Contract(coin).balances()
+
+        except brownie.exceptions.VirtualMachineError:
+            if metaregistry_reverts:
+                # both registry and metaregistry revert for pool
+                # since it is a consistent behavior, we will ignore it
+                continue
 
         for j, output in enumerate(actual_output):
             assert output == metaregistry_output[j]
@@ -514,7 +558,14 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator):
 
 def test_get_fees(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
+
+        # we skip if pool was registered: this is because some pools are
+        # registered in the stable registry but are from the stable factory.
+        # skipping does not skip the test: since metaregistry chooses stable
+        # factory as the registry handler and not the registry in these cases
+        if check_pool_already_registered(metaregistry, pool, registry_handler):
+            continue
 
         # get_fees
         if registry_id != METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
@@ -534,7 +585,14 @@ def test_get_fees(metaregistry, registry_pool_index_iterator):
 
 def test_get_pool_name(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
+
+        # we skip if pool was registered: this is because some pools are
+        # registered in the stable registry but are from the stable factory.
+        # skipping does not skip the test: since metaregistry chooses stable
+        # factory as the registry handler and not the registry in these cases
+        if check_pool_already_registered(metaregistry, pool, registry_handler):
+            continue
 
         if registry_id in [
             METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
@@ -558,7 +616,14 @@ def test_get_pool_name(metaregistry, registry_pool_index_iterator):
 
 def test_get_gauges(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
+
+        # we skip if pool was registered: this is because some pools are
+        # registered in the stable registry but are from the stable factory.
+        # skipping does not skip the test: since metaregistry chooses stable
+        # factory as the registry handler and not the registry in these cases
+        if check_pool_already_registered(metaregistry, pool, registry_handler):
+            continue
 
         # get_gauges
         if registry_id in [

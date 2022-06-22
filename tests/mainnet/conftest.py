@@ -84,16 +84,29 @@ def registries():
     ]
 
 
+@pytest.fixture(scope="module")
+def handlers(
+    stable_registry_handler, stable_factory_handler, crypto_registry_handler, crypto_factory_handler
+):
+    yield [
+        stable_registry_handler,
+        stable_factory_handler,
+        crypto_registry_handler,
+        crypto_factory_handler,
+    ]
+
+
 @pytest.fixture(scope="module", autouse=True)
-def registry_pool_index_iterator(registries, max_pools):
+def registry_pool_index_iterator(registries, max_pools, handlers):
 
     pool_count = [registry.pool_count() for registry in registries]
-    registry_indices = list(range(len(registries)))
+    registry_indices = range(len(registries))
 
     iterable = []
     for registry_id in registry_indices:
 
         registry = registries[registry_id]
+        registry_handler = handlers[registry_id]
         pool_indices = list(range(pool_count[registry_id]))
 
         for pool_index in pool_indices:
@@ -103,12 +116,6 @@ def registry_pool_index_iterator(registries, max_pools):
                 break
 
             pool = registry.pool_list(pool_index)
-            iterable.append((registry_id, registry, pool))
+            iterable.append((registry_id, registry_handler, registry, pool))
 
     return iterable
-
-
-@pytest.fixture(scope="module", autouse=True)
-def registry_pool_count(registries):
-    pool_count_per_registry = [registry.pool_count() for registry in registries]
-    return {registries[i]: max_pools for i, max_pools in enumerate(pool_count_per_registry)}
