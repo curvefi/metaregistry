@@ -33,7 +33,7 @@ def test_is_meta(metaregistry, registry_pool_index_iterator):
             METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
             METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
         ]:
-            actual_output = False
+            actual_output = False  # mainnet crypto registries don't have this method.
         else:
             actual_output = registry.is_meta(pool)
 
@@ -383,15 +383,22 @@ def test_get_coin_indices(metaregistry, stable_factory_handler, registry_pool_in
             metaregistry_output = metaregistry.get_coin_indices(
                 pool, combination[0], combination[1]
             )
-            if registry_id > 1:
-                indices = registry.get_coin_indices(pool, combination[0], combination[1])
-                actual_output = (indices[0], indices[1], False)
-            else:
-                actual_output = registry.get_coin_indices(pool, combination[0], combination[1])
-            # fix bug with stable registry & is_underlying always true
-            if metaregistry.get_registry_handler_from_pool(pool) == stable_factory_handler.address:
-                actual_output = list(actual_output)
-                actual_output[-1] = not registry.is_meta(pool)
+            actual_output = list(registry.get_coin_indices(pool, combination[0], combination[1]))
+
+            if registry_id == 1:
+                # fix bug with stable factory where returned `is_underlying` is always True
+
+                # so check if pool is metapool and basepool lp token is not in combination
+                # (then `is_underlying` == True)
+                actual_output[-1] = False
+                if registry.is_meta(pool) and not registry.get_coins(pool)[1] in combination:
+                    actual_output[-1] = True
+
+            elif registry_id in [2, 3]:
+                # mainnet crypto registry and crypto factory do not return `is_underlying`
+                # but metaregistry does (since stable registry and factory do)
+                actual_output = (actual_output[0], actual_output[1], False)
+
             assert actual_output == metaregistry_output
 
 

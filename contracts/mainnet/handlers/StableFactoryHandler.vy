@@ -7,6 +7,7 @@
 # ---- interfaces ---- #
 interface AddressProvider:
     def get_address(_id: uint256) -> address: view
+    def get_registry() -> address: view
 
 
 interface BaseRegistry:
@@ -20,6 +21,7 @@ interface BaseRegistry:
     def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
     def get_fees(_pool: address) -> uint256[2]: view
     def get_gauge(_pool: address) -> address: view
+    def get_lp_token(_pool: address) -> address: view
     def get_meta_n_coins(_pool: address) -> (uint256, uint256): view
     def get_n_coins(_pool: address) -> uint256: view
     def get_pool_asset_type(_pool: address) -> uint256: view
@@ -151,6 +153,16 @@ def _get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     return self._pad_uint_array(self.base_registry.get_decimals(_pool))
 
 
+@internal
+@view
+def _get_base_pool(_pool: address) -> address:
+    if not self._is_meta(_pool):
+        return ZERO_ADDRESS
+    if self.base_registry.get_pool_asset_type(_pool) == 2:
+        return BTC_BASE_POOL
+    return self.base_registry.get_base_pool(_pool)
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -173,21 +185,28 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_base_pool(_pool: address) -> address:
-    if not self._is_meta(_pool):
-        return ZERO_ADDRESS
-    if self.base_registry.get_pool_asset_type(_pool) == 2:
-        return BTC_BASE_POOL
-    return self.base_registry.get_base_pool(_pool)
-
+    return self._get_base_pool(_pool)
+    
 
 @view
 @external
 def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool):
     coin1: int128 = 0
     coin2: int128 = 0
+    is_underlying: bool = False
+
     (coin1, coin2) = self.base_registry.get_coin_indices(_pool, _from, _to)
-    # we discard is_underlying as it's always true due to a bug in original factory contract
-    return (coin1, coin2, not self._is_meta(_pool))
+
+    # due to a bug in original factory contract, `is_underlying`` is always True
+    # to fix this, we first check if it is a metapool, and if not then we return
+    # False. If so, then we check if basepool lp token is one of the two coins,
+    # in which case `is_underlying` would be False
+    if self._is_meta(_pool):
+        base_pool_lp_token: address = self.base_registry.get_coins(_pool)[1]
+        if base_pool_lp_token not in [_from, _to]:
+            is_underlying = True
+
+    return (coin1, coin2, is_underlying)
 
 
 @external
