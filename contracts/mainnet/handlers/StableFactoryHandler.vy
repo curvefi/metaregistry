@@ -186,7 +186,7 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @view
 def get_base_pool(_pool: address) -> address:
     return self._get_base_pool(_pool)
-    
+
 
 @view
 @external
