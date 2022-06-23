@@ -1,7 +1,9 @@
 import itertools
+
 import pytest
 
-from tests.utils.constants import WETH, ETH
+from tests.utils.constants import ETH, WETH
+
 
 def test_get_estimated_swap_amount(
     atomic_swap,
