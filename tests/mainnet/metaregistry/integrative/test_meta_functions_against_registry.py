@@ -1,7 +1,7 @@
 from brownie import ZERO_ADDRESS, accounts, interface
 
-from .abis import curve_pool, curve_pool_v2, gauge_controller
-from .utils.constants import (
+from tests.abis import curve_pool, curve_pool_v2, gauge_controller
+from tests.utils.constants import (
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
     METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
