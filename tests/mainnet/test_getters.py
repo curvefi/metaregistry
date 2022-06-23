@@ -233,55 +233,13 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator):
         else:
             assert metaregistry_output[1] > 0  # it must have a second coin
 
-        is_btc_basepool = False
         if registry_id in [
             METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
             METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-        ]:
+        ] and registry.is_meta(pool):
 
-            try:
-
-                coins_in_pool = metaregistry.get_coins(pool)
-                # if it is paired with a btc metapool, then the registry query
-                # `get_underlying_balances` will revert since BTC metapools do not
-                # have `base_pool` attribute (bug). So we'll have to try
-                # getting the right balances another way:
-
-                if coins_in_pool[1] == BTC_BASEPOOL_LP_TOKEN_MAINNET:
-                    is_btc_basepool = True
-                    pool_balances = registry.get_balances(pool)
-                    base_pool_balances = metaregistry.get_balances(BTC_BASEPOOL_MAINNET)
-                    actual_output = [0] * len(metaregistry_output)
-
-                    # paired coin balance is on the first index
-                    actual_output[0] = pool_balances[0]
-
-                    # get btc lp token share of the pool vs total supply and get
-                    # individual balances of underlying:
-                    total_supply_btc_basepool_lp_token = brownie.Contract(
-                        BTC_BASEPOOL_LP_TOKEN_MAINNET
-                    ).totalSupply()
-                    pct_pool_btc_lp_token_share = int(
-                        pool_balances[1] * 10**36 / total_supply_btc_basepool_lp_token
-                    )
-                    for coin_id in range(3):
-                        actual_output[coin_id + 1] = int(
-                            base_pool_balances[coin_id] * pct_pool_btc_lp_token_share / 10**36
-                        )
-
-                else:
-
-                    # the metaregistry uses get_balances if the pool is not a metapool:
-                    if registry.is_meta(pool):
-                        actual_output = registry.get_underlying_balances(pool)
-                    else:
-                        actual_output = registry.get_balances(pool)
-
-            # for any other reverts, just get balances and check with metaregistry output.
-            # assertion errors there will catch issues:
-            except brownie.exceptions.VirtualMachineError:
-
-                actual_output = registry.get_balances(pool)
+            # the metaregistry uses get_balances if the pool is not a metapool:
+            actual_output = registry.get_underlying_balances(pool)
 
         else:
 
@@ -290,13 +248,7 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator):
         actual_output = list(actual_output)
         actual_output += [0] * (len(metaregistry_output) - len(actual_output))
 
-        if not is_btc_basepool:
-            assert tuple(actual_output) == metaregistry_output
-        else:
-            # because btc basepool balances are calculated, there can be
-            # precision errors (different oc <1000 Wei)
-            for coin_id, calculated_actual_balance in enumerate(actual_output):
-                assert calculated_actual_balance - actual_output[coin_id] < 1000  # Wei
+        assert tuple(actual_output) == metaregistry_output
 
 
 def test_get_n_coins(metaregistry, registry_pool_index_iterator):
@@ -469,19 +421,15 @@ def test_get_base_pool(metaregistry, registry_pool_index_iterator):
 
         actual_output = brownie.ZERO_ADDRESS
 
-        if registry_id == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX:
+        if registry_id == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX and registry.is_meta(pool):
+            # stable registry does not have get_base_pool method
+            actual_output = registry.get_pool_from_lp_token(registry.get_coins(pool)[1])
 
-            # because of a bug in the stable registy contract, btc pools
-            # have no base pool. so we check if the btc basepool token is
-            # in the pool. if so, then actual output is the btc basepool token
-            if BTC_BASEPOOL_LP_TOKEN_MAINNET in registry.get_coins(pool):
-                actual_output = BTC_BASEPOOL_MAINNET
-            elif registry.is_meta(pool):
-                # stable registry does not have get_base_pool method
-                actual_output = registry.get_pool_from_lp_token(registry.get_coins(pool)[1])
+        elif registry_id == METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX and metaregistry.is_meta(
+            pool
+        ):
 
-        if registry_id == METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX and metaregistry.is_meta(pool):
-
+            # this might exclude BTC pools, since they dont have a base pool!
             actual_output = registry.get_base_pool(pool)
 
         metaregistry_output = metaregistry.get_base_pool(pool)
