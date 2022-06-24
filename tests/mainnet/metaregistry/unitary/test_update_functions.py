@@ -1,6 +1,6 @@
 import brownie
 
-from .utils.constants import DAI, METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX, TRIPOOL
+from tests.utils.constants import DAI, METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX, TRIPOOL
 
 
 def test_update_address_provider_not_to_address_zero(metaregistry, owner, fn_isolation):

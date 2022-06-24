@@ -4,8 +4,8 @@ import warnings
 import brownie
 import pytest
 
-from .abis import curve_pool, curve_pool_v2, gauge_controller
-from .utils.constants import (
+from tests.abis import curve_pool, curve_pool_v2, gauge_controller
+from tests.utils.constants import (
     BTC_BASEPOOL_LP_TOKEN_MAINNET,
     BTC_BASEPOOL_MAINNET,
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,

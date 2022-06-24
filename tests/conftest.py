@@ -1,7 +1,7 @@
 import pytest
 
-from .abis import crypto_factory, crypto_registry, stable_factory, stable_registry
-from .utils.constants import ADDRESS_PROVIDER
+from tests.abis import crypto_factory, crypto_registry, stable_factory, stable_registry
+from tests.utils.constants import ADDRESS_PROVIDER
 
 
 def pytest_addoption(parser):

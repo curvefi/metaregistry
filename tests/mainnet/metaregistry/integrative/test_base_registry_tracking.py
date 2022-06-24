@@ -1,6 +1,6 @@
 from brownie import ZERO_ADDRESS
 
-from .utils.constants import (
+from tests.utils.constants import (
     BVECVX_LPTOKEN,
     CVXFXS_LPTOKEN,
     DAI,
