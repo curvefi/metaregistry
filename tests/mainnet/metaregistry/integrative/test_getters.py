@@ -49,7 +49,7 @@ def test_is_registered(metaregistry, registry_pool_index_iterator, pool_id):
     if pool_id > len(registry_pool_index_iterator):
         pytest.skip()
 
-    pool = registry_pool_index_iterator[pool_id][-1]
+    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     if pool != brownie.ZERO_ADDRESS:
         assert metaregistry.is_registered(pool)
 
