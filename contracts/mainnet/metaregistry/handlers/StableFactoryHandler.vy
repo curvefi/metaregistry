@@ -260,6 +260,9 @@ def get_pool_name(_pool: address) -> String[64]:
     """
     @dev stable factory pools are ERC20 tokenized
     """
+    if self._get_n_coins(_pool) == 0:
+        # _pool is not in base registry, so we ignore:
+        return ""
     return ERC20(_pool).name()
 
 
