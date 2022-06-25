@@ -4,21 +4,6 @@ from tests.abis import crypto_factory, crypto_registry, stable_factory, stable_r
 from tests.utils.constants import ADDRESS_PROVIDER
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--pools",
-        type=int,
-        action="store",
-        default=0,
-        help="Only syncs up to the specified number of pools on each registry",
-    )
-
-
-@pytest.fixture(scope="session")
-def max_pools(request):
-    return request.config.getoption("--pools")
-
-
 @pytest.fixture(scope="session")
 def alice(accounts):
     yield accounts[1]
@@ -97,7 +82,7 @@ def handlers(
 
 
 @pytest.fixture(scope="module", autouse=True)
-def registry_pool_index_iterator(registries, max_pools, handlers):
+def registry_pool_index_iterator(registries, handlers):
 
     pool_count = [registry.pool_count() for registry in registries]
     registry_indices = range(len(registries))
@@ -109,10 +94,6 @@ def registry_pool_index_iterator(registries, max_pools, handlers):
         registry_handler = handlers[registry_id]
 
         for pool_index in range(pool_count[registry_id]):
-
-            # limit pools if max_pools is specified (>0)
-            if max_pools and pool_index > max_pools - 1:
-                break
 
             pool = registry.pool_list(pool_index)
             iterable.append((registry_id, registry_handler, registry, pool))
