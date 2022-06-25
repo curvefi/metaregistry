@@ -36,6 +36,11 @@ def check_pool_already_registered(metaregistry, pool, registry_handler_for_pool)
     return False
 
 
+def skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator):
+    if pool_id >= len(registry_pool_index_iterator):
+        pytest.skip()
+
+
 # --------- Parameterised Tests: checkers ---------
 
 
@@ -46,8 +51,7 @@ def test_max_pools_covers_all_pools(registry_pool_index_iterator):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_is_registered(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     if pool != brownie.ZERO_ADDRESS:
@@ -57,8 +61,7 @@ def test_is_registered(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_is_meta(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -80,8 +83,7 @@ def test_is_meta(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_lp_token(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -103,8 +105,7 @@ def test_get_lp_token(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_pool_from_lp_token(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -117,8 +118,7 @@ def test_get_pool_from_lp_token(metaregistry, registry_pool_index_iterator, pool
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -150,8 +150,7 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_decimals(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     metaregistry_output = metaregistry.get_decimals(pool)
@@ -171,8 +170,7 @@ def test_get_decimals(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -204,8 +202,7 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -220,8 +217,7 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     metaregistry_output = metaregistry.get_underlying_coins(pool)
@@ -244,8 +240,7 @@ def test_get_underlying_coins(metaregistry, registry_pool_index_iterator, pool_i
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     metaregistry_output = metaregistry.get_balances(pool)
@@ -257,8 +252,7 @@ def test_get_balances(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -292,8 +286,7 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, poo
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_n_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -329,8 +322,7 @@ def test_get_n_coins(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -378,8 +370,7 @@ def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator, pool
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_coin_indices(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -420,8 +411,7 @@ def test_get_coin_indices(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_pool_params_stableswap_cryptoswap(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -466,8 +456,7 @@ def test_get_pool_params_stableswap_cryptoswap(metaregistry, registry_pool_index
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_base_pool(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -489,8 +478,7 @@ def test_get_base_pool(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -517,8 +505,7 @@ def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, pool_id
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -550,8 +537,7 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id)
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -582,8 +568,7 @@ def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_pool_name(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
@@ -636,8 +621,7 @@ def _get_gauges_actual(registry, registry_id, pool):
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
 
-    if pool_id > len(registry_pool_index_iterator):
-        pytest.skip()
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
