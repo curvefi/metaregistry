@@ -107,12 +107,11 @@ def registry_pool_index_iterator(registries, max_pools, handlers):
 
         registry = registries[registry_id]
         registry_handler = handlers[registry_id]
-        pool_indices = list(range(pool_count[registry_id]))
 
-        for pool_index in pool_indices:
+        for pool_index in range(pool_count[registry_id]):
 
             # limit pools if max_pools is specified (>0)
-            if pool_index > max_pools - 1 and max_pools > 0:
+            if max_pools and pool_index > max_pools - 1:
                 break
 
             pool = registry.pool_list(pool_index)

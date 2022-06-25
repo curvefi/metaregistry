@@ -93,23 +93,32 @@ def test_get_pool_from_lp_token(metaregistry, registry_pool_index_iterator):
 
 def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_iterator):
 
-    for registry_id, _, registry, pool in registry_pool_index_iterator:
+    for registry_id, registry_handler, registry, pool in registry_pool_index_iterator:
 
         lp_token = metaregistry.get_lp_token(pool)
 
-        # virtual price from metaregistry:
-        metaregistry_output = metaregistry.get_virtual_price_from_lp_token(lp_token)
+        registry_reverts = False
+        try:
+            # virtual price from underlying child registries:
+            if registry_id in [
+                METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+                METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+            ]:
+                actual_output = registry.get_virtual_price_from_lp_token(lp_token)
+            else:
+                actual_output = curve_pool(pool).get_virtual_price()
+        except brownie.exceptions.VirtualMachineError:
+            registry_reverts = True
 
-        # virtual price from underlying child registries:
-        if registry_id in [
-            METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-            METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-        ]:
-            actual_output = registry.get_virtual_price_from_lp_token(lp_token)
+        # if child registry call reverts, then metaregistry must revert too
+        if registry_reverts:
+            with brownie.reverts():
+                metaregistry.get_virtual_price_from_lp_token(pool)
+            continue
         else:
-            actual_output = curve_pool(pool).get_virtual_price()
-
-        assert actual_output == metaregistry_output
+            # virtual price from metaregistry:
+            metaregistry_output = metaregistry.get_virtual_price_from_lp_token(lp_token)
+            assert actual_output == metaregistry_output
 
 
 def test_get_decimals(metaregistry, registry_pool_index_iterator):
