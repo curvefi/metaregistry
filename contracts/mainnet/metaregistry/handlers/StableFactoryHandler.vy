@@ -257,6 +257,9 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
 @external
 @view
 def get_pool_name(_pool: address) -> String[64]:
+    """
+    @dev stable factory pools are ERC20 tokenized
+    """
     return ERC20(_pool).name()
 
 
