@@ -5,8 +5,6 @@ import brownie
 import pytest
 
 from tests.abis import curve_pool, curve_pool_v2, gauge_controller
-from tests.abis import crypto_factory, crypto_registry, stable_factory, stable_registry
-
 from tests.utils.constants import (
     BTC_BASEPOOL_LP_TOKEN_MAINNET,
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
@@ -42,7 +40,7 @@ def check_pool_already_registered(metaregistry, pool, registry_handler_for_pool)
 
 
 def test_max_pools_covers_all_pools(registry_pool_index_iterator):
-    assert MAX_POOLS < len(registry_pool_index_iterator)
+    assert MAX_POOLS > len(registry_pool_index_iterator)
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
