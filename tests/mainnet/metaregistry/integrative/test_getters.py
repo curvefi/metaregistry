@@ -214,6 +214,20 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
     assert tuple(actual_output) == metaregistry_output
 
 
+def _get_underlying_coins_from_registry(registry_id, registry, pool):
+
+    if registry_id in [
+        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+    ]:
+
+        return registry.get_underlying_coins(pool)
+
+    else:
+
+        return registry.get_coins(pool)
+
+
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
@@ -222,15 +236,10 @@ def test_get_underlying_coins(metaregistry, registry_pool_index_iterator, pool_i
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     metaregistry_output = metaregistry.get_underlying_coins(pool)
 
-    if registry_id in [
-        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-    ]:
-
-        actual_output = registry.get_underlying_coins(pool)
-
-    else:
-
+    try:
+        actual_output = _get_underlying_coins_from_registry(registry_id, registry, pool)
+    except brownie.exceptions.VirtualMachineError:
+        assert not registry.is_meta(pool)
         actual_output = registry.get_coins(pool)
 
     for idx, registry_value in enumerate(actual_output):
