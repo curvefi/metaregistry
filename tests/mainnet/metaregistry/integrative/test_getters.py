@@ -189,11 +189,8 @@ def test_get_underlying_coins(metaregistry, registry_pool_index_iterator):
             METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
             METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
         ]:
-            if registry.is_meta(pool):
-                # it will revert if its not a metapool
-                actual_output = list(registry.get_underlying_coins(pool))
-            else:
-                actual_output = list(registry.get_coins(pool))
+
+            actual_output = list(registry.get_underlying_coins(pool))
 
         else:
 
