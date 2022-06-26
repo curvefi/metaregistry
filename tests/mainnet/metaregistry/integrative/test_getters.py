@@ -258,21 +258,7 @@ def test_get_balances(metaregistry, registry_pool_index_iterator, pool_id):
     assert tuple(actual_output) == metaregistry_output
 
 
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, pool_id):
-
-    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
-
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
-
-    if sum(registry.get_balances(pool)) == 0:
-        pytest.skip(f"Empty pool: {pool}")
-
-    metaregistry_output = metaregistry.get_underlying_balances(pool)
-    if metaregistry.is_meta(pool):
-        assert metaregistry_output[2] > 0  # it must have a third coin
-    else:
-        assert metaregistry_output[1] > 0  # it must have a second coin
+def _get_underlying_balances_from_registry(registry_id, registry, pool):
 
     if registry_id in [
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
@@ -280,16 +266,42 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, poo
     ] and registry.is_meta(pool):
 
         # the metaregistry uses get_balances if the pool is not a metapool:
-        actual_output = registry.get_underlying_balances(pool)
+        return registry.get_underlying_balances(pool)
 
     else:
 
-        actual_output = registry.get_balances(pool)
+        return registry.get_balances(pool)
 
-    actual_output = list(actual_output)
-    actual_output += [0] * (len(metaregistry_output) - len(actual_output))
 
-    assert tuple(actual_output) == metaregistry_output
+@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
+def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, pool_id):
+
+    skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
+
+    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
+
+    registry_query_reverts = False
+    try:
+        actual_output = _get_underlying_balances_from_registry(registry_id, registry, pool)
+    except brownie.exceptions.VirtualMachineError:
+        registry_query_reverts = True
+
+    if sum(registry.get_balances(pool)) == 0:
+        pytest.skip(f"Empty pool: {pool}")
+
+    if registry_query_reverts:
+        with brownie.reverts():
+            metaregistry.get_underlying_balances(pool)
+    else:
+        metaregistry_output = metaregistry.get_underlying_balances(pool)
+
+        if metaregistry.is_meta(pool):
+            assert metaregistry_output[2] > 0  # it must have a third coin
+        else:
+            assert metaregistry_output[1] > 0  # it must have a second coin
+
+        for idx, registry_value in enumerate(actual_output):
+            assert registry_value == metaregistry_output[idx]
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
