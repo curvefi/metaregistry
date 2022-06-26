@@ -523,6 +523,23 @@ def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, pool_id
     assert actual_output == metaregistry_output
 
 
+def _get_admin_balances_actuals(registry_id, registry, pool):
+
+    # get_admin_balances
+    if not registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+        return registry.get_admin_balances(pool)
+    else:
+        coins = registry.get_coins(pool)
+        balances = []
+        for coin in coins:
+            if not coin == brownie.ETH_ADDRESS:
+                balances.append(brownie.interface.ERC20(coin).balanceOf(pool))
+            else:
+                balances.append(brownie.Contract(coin).balances())
+
+        return balances
+
+
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
@@ -537,22 +554,19 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id)
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
-    metaregistry_output = metaregistry.get_admin_balances(pool)
+    registry_reverts = False
+    try:
+        actual_output = _get_admin_balances_actuals(registry_id, registry, pool)
+    except brownie.exceptions.VirtualMachineError:
+        registry_reverts = True
 
-    # get_admin_balances
-    if not registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
-        actual_output = registry.get_admin_balances(pool)
+    if registry_reverts:
+        with brownie.reverts():
+            metaregistry.get_admin_balances(pool)
     else:
-        coins = registry.get_coins(pool)
-        balances = [0] * len(metaregistry_output)
-        for coin_id, coin in enumerate(coins):
-            if not coin == brownie.ETH_ADDRESS:
-                balances[coin_id] = brownie.interface.ERC20(coin).balanceOf(pool)
-            else:
-                balances[coin_id] = brownie.Contract(coin).balances()
-
-    for j, output in enumerate(actual_output):
-        assert output == metaregistry_output[j]
+        metaregistry_output = metaregistry.get_admin_balances(pool)
+        for j, output in enumerate(actual_output):
+            assert output == metaregistry_output[j]
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
