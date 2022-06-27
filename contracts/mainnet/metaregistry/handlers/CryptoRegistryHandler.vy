@@ -122,7 +122,7 @@ def get_admin_balances(_pool: address) -> uint256[MAX_COINS]:
 
     # pool hasnt made enough profits so admin balances are zero:
     if xcp_profit > xcp_profit_a:
-        
+
         # calculate admin fees in lp token amounts:
         fees: uint256 = (xcp_profit - xcp_profit_a) * admin_fee / (2 * 10**10)
         if fees > 0:
