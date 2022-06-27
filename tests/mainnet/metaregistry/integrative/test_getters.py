@@ -531,12 +531,14 @@ def _get_admin_balances_actuals(registry_id, registry, pool, metaregistry, alice
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
     ]:
         coins = registry.get_coins(pool)
-        balances = []
-        for coin in coins:
-            if not coin == brownie.ETH_ADDRESS:
-                balances.append(brownie.interface.ERC20(coin).balanceOf(pool))
+        balances = [0] * 8
+        for idx, coin in enumerate(coins):
+            if coin == brownie.ZERO_ADDRESS:
+                break
+            elif not coin == brownie.ETH_ADDRESS:
+                balances[idx] = brownie.interface.ERC20(coin).balanceOf(pool)
             else:
-                balances.append(brownie.Contract(coin).balances())
+                balances[idx] = brownie.Contract(coin).balances()
 
         return balances
 
