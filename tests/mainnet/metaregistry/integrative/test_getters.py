@@ -535,10 +535,10 @@ def _get_admin_balances_actuals(registry_id, registry, pool, metaregistry, alice
         for idx, coin in enumerate(coins):
             if coin == brownie.ZERO_ADDRESS:
                 break
-            elif not coin == brownie.ETH_ADDRESS:
+            elif coin != brownie.ETH_ADDRESS:
                 balances[idx] = brownie.interface.ERC20(coin).balanceOf(pool)
             else:
-                balances[idx] = brownie.Contract(coin).balances()
+                balances[idx] = brownie.Contract(pool).balance()
 
         return balances
 
@@ -588,6 +588,10 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
         )
     except brownie.exceptions.VirtualMachineError:
         registry_reverts = True
+    except ValueError(
+        "Failed to retrieve data from API: {'status': '0', 'message': 'NOTOK', 'result': 'Contract source code not verified'}"
+    ):
+        pytest.skip
     chain.revert()
 
     if registry_reverts:
