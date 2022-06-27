@@ -588,10 +588,6 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
         )
     except brownie.exceptions.VirtualMachineError:
         registry_reverts = True
-    except ValueError(
-        "Failed to retrieve data from API: {'status': '0', 'message': 'NOTOK', 'result': 'Contract source code not verified'}"
-    ):
-        pytest.skip
     chain.revert()
 
     if registry_reverts:
