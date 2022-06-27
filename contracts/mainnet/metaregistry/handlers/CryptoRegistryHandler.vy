@@ -40,6 +40,15 @@ interface CurvePool:
     def ma_half_time() -> uint256: view
     def mid_fee() -> uint256: view
     def out_fee() -> uint256: view
+    def virtual_price() -> uint256: view
+    def xcp_profit() -> uint256: view
+    def xcp_profit_a() -> uint256: view
+
+
+interface ERC20:
+    def name() -> String[64]: view
+    def balanceOf(_addr: address) -> uint256: view
+    def totalSupply() -> uint256: view
 
 
 interface MetaRegistry:
@@ -98,7 +107,81 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
 @external
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_COINS]:
-    return self.base_registry.get_admin_balances(_pool)
+    """
+    @dev the crypto registry method for admin balances uses the stableswap method
+         which is incorrect. Until the registry is amended, the following logic
+         is used:
+         1. get fees from cryptopool._claim_admin_fees() method
+         2. get lp tokens.
+         3. get balance of lp tokens.
+    """
+    xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
+    xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
+    admin_fee: uint256 = CurvePool(_pool).admin_fee()
+    admin_balances: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
+
+    # pool hasnt made enough profits so admin balances are zero:
+    if xcp_profit > xcp_profit_a:
+        
+        # calculate admin fees in lp token amounts:
+        fees: uint256 = (xcp_profit - xcp_profit_a) * admin_fee / (2 * 10**10)
+        if fees > 0:
+            vprice: uint256 = CurvePool(_pool).virtual_price()
+            lp_token: address = self._get_lp_token(_pool)
+            frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
+
+            # the total supply of lp token is current supply + (supply * frac / 10**18):
+            lp_token_total_supply: uint256 = ERC20(lp_token).totalSupply()
+            d_supply: uint256 = lp_token_total_supply * frac / 10**18
+            lp_token_total_supply += d_supply
+            admin_lp_frac: uint256 = d_supply * 10 ** 18 / lp_token_total_supply
+
+            # get admin balances in individual assets:
+            reserves: uint256[MAX_COINS] = self._get_balances(_pool)
+            for i in range(MAX_COINS):
+                admin_balances[i] = admin_lp_frac * reserves[i] / 10 ** 18
+
+    return admin_balances
+
+
+# @internal
+# def _claim_admin_fees():
+#     A_gamma: uint256[2] = self._A_gamma()
+
+#     xcp_profit: uint256 = self.xcp_profit
+#     xcp_profit_a: uint256 = self.xcp_profit_a
+
+#     # Gulp here
+#     for i in range(N_COINS):
+#         coin: address = self.coins[i]
+#         if coin == WETH20:
+#             self.balances[i] = self.balance
+#         else:
+#             self.balances[i] = ERC20(coin).balanceOf(self)
+
+#     vprice: uint256 = self.virtual_price
+
+#     if xcp_profit > xcp_profit_a:
+#         fees: uint256 = (xcp_profit - xcp_profit_a) * self.admin_fee / (2 * 10**10)
+#         if fees > 0:
+#             receiver: address = Factory(self.factory).fee_receiver()
+#             if receiver != ZERO_ADDRESS:
+#                 frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
+#                 claimed: uint256 = CurveToken(self.token).mint_relative(receiver, frac)
+#                 xcp_profit -= fees*2
+#                 self.xcp_profit = xcp_profit
+#                 log ClaimAdminFee(receiver, claimed)
+
+#     total_supply: uint256 = CurveToken(self.token).totalSupply()
+
+#     # Recalculate D b/c we gulped
+#     D: uint256 = self.newton_D(A_gamma[0], A_gamma[1], self.xp())
+#     self.D = D
+
+#     self.virtual_price = 10**18 * self.get_xcp(D) / total_supply
+
+#     if xcp_profit > xcp_profit_a:
+#         self.xcp_profit_a = xcp_profit
 
 
 @external

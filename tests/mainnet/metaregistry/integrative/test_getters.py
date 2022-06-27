@@ -523,12 +523,13 @@ def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, pool_id
     assert actual_output == metaregistry_output
 
 
-def _get_admin_balances_actuals(registry_id, registry, pool):
+def _get_admin_balances_actuals(registry_id, registry, pool, metaregistry, alice):
 
-    # get_admin_balances
-    if not registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
-        return registry.get_admin_balances(pool)
-    else:
+    # admin balances for stableswap:
+    if registry_id in [
+        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+    ]:
         coins = registry.get_coins(pool)
         balances = []
         for coin in coins:
@@ -539,9 +540,32 @@ def _get_admin_balances_actuals(registry_id, registry, pool):
 
         return balances
 
+    # admin balances for crypto swap is different:
+    v2_pool = curve_pool_v2(pool)
+    if registry_id == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
+        fee_receiver = v2_pool.admin_fee_receiver()
+    elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+        fee_receiver = registry.fee_receiver()
+
+    lp_token = brownie.interface.ERC20(metaregistry.get_lp_token(pool))
+    fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
+    v2_pool.claim_admin_fees({"from": alice})
+    claimed_lp_token_as_fee = lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
+
+    total_supply_lp_token = lp_token.totalSupply()
+    frac_admin_fee = int(claimed_lp_token_as_fee * 10**18 / total_supply_lp_token)
+
+    # get admin balances in individual assets:
+    reserves = metaregistry.get_balances(pool)
+    admin_balances = [0] * 8
+    for i in range(8):
+        admin_balances[i] = int(frac_admin_fee * reserves[i] / 10**18)
+
+    return admin_balances
+
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id):
+def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id, alice, chain):
 
     skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
@@ -554,11 +578,15 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id)
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
+    chain.snapshot()
     registry_reverts = False
     try:
-        actual_output = _get_admin_balances_actuals(registry_id, registry, pool)
+        actual_output = _get_admin_balances_actuals(
+            registry_id, registry, pool, metaregistry, alice
+        )
     except brownie.exceptions.VirtualMachineError:
         registry_reverts = True
+    chain.revert()
 
     if registry_reverts:
         with brownie.reverts():
@@ -566,7 +594,12 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id)
     else:
         metaregistry_output = metaregistry.get_admin_balances(pool)
         for j, output in enumerate(actual_output):
-            assert output == metaregistry_output[j]
+            try:
+                output == metaregistry_output[j]
+            except AssertionError:
+                diff = output - metaregistry_output[j]
+                assert diff < 100
+                warnings.warn(f"actual_output != metaregistry_output. Diff: {diff}")
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
