@@ -365,12 +365,9 @@ def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator, pool
                 assert n_coins == metaregistry_output
 
             except AssertionError:
-                # its ok to catch this assertion error if we continue:
-                warnings.warn("Assertion broken: could be a btc metapool issue")
-                coins = registry.get_coins(pool)
-
                 # have to hardcode this test since btc metapool accounting
                 # has some bugs with registry:
+                coins = registry.get_coins(pool)
                 if coins[1] == BTC_BASEPOOL_LP_TOKEN_MAINNET:
                     # add btc coins (3) and remove 1 lp coin = add 2:
                     assert n_coins + 2 == metaregistry_output
@@ -578,6 +575,10 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
     # skipping does not skip the test: since metaregistry chooses stable
     # factory as the registry handler and not the registry in these cases
     if check_pool_already_registered(metaregistry, pool, registry_handler):
+        pytest.skip()
+
+    # we skip if the pool is empty:
+    if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip()
 
     chain.snapshot()
