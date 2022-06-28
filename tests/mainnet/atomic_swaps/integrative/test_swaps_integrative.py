@@ -1,21 +1,8 @@
 import itertools
 
-from .utils import WETH, ETH
+import pytest
 
-
-def test_synth_swap_through(WBTC, USDT, atomic_swap, add_atomic_swap_synths, metaregistry):
-    """test swap through synthswap
-    note: if link:coin pair exists in registry, then this test will just go to the registry swap
-    instead of synth swap.
-    """
-    amount_in = 10**18
-    _expected = atomic_swap.get_atomic_swap_amount(WBTC, ETH, amount_in)
-    print(f"Expected out for between {WBTC} > {WETH} -> in: {amount_in}, out: {_expected} \n")
-    assert _expected > 0
-
-    _expected = atomic_swap.get_atomic_swap_amount(WBTC, USDT, amount_in)
-    print(f"Expected out for between {WBTC} > {USDT} -> in: {amount_in}, out: {_expected} \n")
-    assert _expected > 0
+from tests.utils.constants import ETH, WETH
 
 
 def test_get_estimated_swap_amount(
