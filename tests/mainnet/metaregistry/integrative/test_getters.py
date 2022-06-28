@@ -550,8 +550,8 @@ def _get_admin_balances_actuals(registry_id, registry, pool, metaregistry, alice
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
     v2_pool.claim_admin_fees({"from": alice})
     claimed_lp_token_as_fee = lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
-
     total_supply_lp_token = lp_token.totalSupply()
+
     frac_admin_fee = int(claimed_lp_token_as_fee * 10**18 / total_supply_lp_token)
 
     # get admin balances in individual assets:
@@ -579,7 +579,10 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
 
     # we skip if the pool is empty:
     if sum(metaregistry.get_balances(pool)) == 0:
-        pytest.skip()
+        pytest.skip("empty pool: skipping.")
+
+    if brownie.interface.ERC20(metaregistry.get_lp_token(pool)).totalSupply() == 0:
+        pytest.skip("lp token supply is zero.")
 
     chain.snapshot()
     registry_reverts = False
