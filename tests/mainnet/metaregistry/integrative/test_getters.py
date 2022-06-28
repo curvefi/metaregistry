@@ -623,20 +623,28 @@ def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
         pytest.skip()
 
     # get_fees
-    if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
-        actual_output = registry.get_fees(pool)
-    else:
-        curve_contract = curve_pool_v2(pool)
-        actual_output = [
-            curve_contract.fee(),
-            curve_contract.admin_fee(),
-            curve_contract.mid_fee(),
-            curve_contract.out_fee(),
-        ]
+    actuals_reverts = False
+    try:
+        if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+            actual_output = registry.get_fees(pool)
+        else:
+            curve_contract = curve_pool_v2(pool)
+            actual_output = [
+                curve_contract.fee(),
+                curve_contract.admin_fee(),
+                curve_contract.mid_fee(),
+                curve_contract.out_fee(),
+            ]
+    except brownie.exceptions.VirtualMachineError:
+        actuals_reverts = True
 
-    metaregistry_output = metaregistry.get_fees(pool)
-    for j, output in enumerate(actual_output):
-        assert output == metaregistry_output[j]
+    if actuals_reverts:
+        with brownie.reverts():
+            metaregistry.get_fees(pool)
+    else:
+        metaregistry_output = metaregistry.get_fees(pool)
+        for j, output in enumerate(actual_output):
+            assert output == metaregistry_output[j]
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
