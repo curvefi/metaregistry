@@ -360,17 +360,7 @@ def test_get_n_underlying_coins(metaregistry, registry_pool_index_iterator, pool
 
         if type(n_coins) == brownie.convert.datatypes.Wei:
 
-            try:
-
-                assert n_coins == metaregistry_output
-
-            except AssertionError:
-                # have to hardcode this test since btc metapool accounting
-                # has some bugs with registry:
-                coins = registry.get_coins(pool)
-                if coins[1] == BTC_BASEPOOL_LP_TOKEN_MAINNET:
-                    # add btc coins (3) and remove 1 lp coin = add 2:
-                    assert n_coins + 2 == metaregistry_output
+            assert n_coins == metaregistry_output
 
         elif len(set(n_coins)) == 1:
             # the registry returns a tuple with the same value, e.g. (3, 3)
@@ -717,7 +707,7 @@ def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
     # check if registry query reverts:
     registry_reverts = False
     try:
-        actual_output = _get_gauges_actual(pool)
+        actual_output = _get_gauges_actual(registry, registry_id, pool)
     except brownie.exceptions.VirtualMachineError:
         registry_reverts = True
 
