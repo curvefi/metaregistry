@@ -39,4 +39,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Tests
-        run: brownie test -x
+        run: brownie test -x --network mainnet-fork-alchemy

@@ -132,19 +132,19 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
-    @dev the crypto registry method for admin balances uses the stableswap method
-         which is incorrect. Until the registry is amended, the following logic
-         is used:
-         1. get fees from cryptopool._claim_admin_fees() method
-         2. get lp tokens.
-         3. get balance of lp tokens.
+    @dev Cryptoswap pools do not store admin fees in the form of
+         admin token balances. Instead, the admin fees are computed
+         at the time of claim iff sufficient profits have been made.
+         These fees are allocated to the admin by minting LP tokens 
+         (dilution). The logic to calculate fees are derived from
+         cryptopool._claim_admin_fees() method.
     """
     xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
     xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
     admin_fee: uint256 = CurvePool(_pool).admin_fee()
     admin_balances: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
 
-    # pool hasnt made enough profits so admin balances are zero:
+    # admin balances are non zero if pool has made more than allowed profits:
     if xcp_profit > xcp_profit_a:
 
         # calculate admin fees in lp token amounts:
@@ -154,7 +154,7 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
             lp_token: address = self._get_lp_token(_pool)
             frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
 
-            # the total supply of lp token is current supply + (supply * frac / 10**18):
+            # the total supply of lp token is current supply + claimable:
             lp_token_total_supply: uint256 = ERC20(lp_token).totalSupply()
             d_supply: uint256 = lp_token_total_supply * frac / 10**18
             lp_token_total_supply += d_supply

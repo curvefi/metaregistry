@@ -1,7 +1,7 @@
 autofetch_sources: true
 networks:
   default: mainnet-fork
-  mainnet-fork:
+  mainnet-fork-alchemy:
     explorer: https://api.etherscan.io/api
     cmd: ganache-cli
     cmd_settings:
