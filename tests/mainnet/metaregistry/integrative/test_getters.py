@@ -533,7 +533,7 @@ def _get_admin_balances_actuals(registry_id, registry, pool, metaregistry, alice
             elif coin != brownie.ETH_ADDRESS:
                 balances[idx] = brownie.interface.ERC20(coin).balanceOf(pool)
             else:
-                balances[idx] = brownie.Contract(pool).balance()
+                balances[idx] = curve_pool(pool).balance()
 
         return balances
 
