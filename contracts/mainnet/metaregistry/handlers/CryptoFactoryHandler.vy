@@ -135,7 +135,7 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     @dev Cryptoswap pools do not store admin fees in the form of
          admin token balances. Instead, the admin fees are computed
          at the time of claim iff sufficient profits have been made.
-         These fees are allocated to the admin by minting LP tokens 
+         These fees are allocated to the admin by minting LP tokens
          (dilution). The logic to calculate fees are derived from
          cryptopool._claim_admin_fees() method.
     """
