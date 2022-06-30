@@ -3,7 +3,6 @@
 @title Curve Registry Handler for v1 Registry
 @license MIT
 """
-
 # ---- interface ---- #
 interface AddressProvider:
     def get_address(_id: uint256) -> address: view
@@ -35,6 +34,9 @@ interface BaseRegistry:
 
 interface CurvePool:
     def base_pool() -> address: view
+
+interface ERC20:
+    def decimals() -> uint256: view
 
 
 interface MetaRegistry:
@@ -105,10 +107,16 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     return self.base_registry.get_coin_indices(_pool, _from, _to)
 
 
+@internal
+@view
+def _get_coins(_pool: address) -> address[MAX_COINS]:
+    return self.base_registry.get_coins(_pool)
+
+
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_registry.get_coins(_pool)
+    return self._get_coins(_pool)
 
 
 @external
@@ -185,6 +193,12 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
     return self.base_registry.get_underlying_balances(_pool)
 
 
+@internal
+@view
+def _get_underlying_coins(_pool: address) -> address[MAX_COINS]:
+    return self.base_registry.get_underlying_coins(_pool)
+
+
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
@@ -192,16 +206,22 @@ def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
     @dev For pools that do not lend, the base registry returns the
          same value as `get_coins`
     """
-    return self.base_registry.get_underlying_coins(_pool)
+    return self._get_underlying_coins(_pool)
 
 
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
-    if not self._is_meta(_pool):
-        return self.base_registry.get_decimals(_pool)
-    return self.base_registry.get_underlying_decimals(_pool)
+    coin_decimals: uint256[MAX_COINS] = self.base_registry.get_decimals(_pool)
+    underlying_coin_decimals: uint256[MAX_COINS] = self.base_registry.get_underlying_decimals(_pool)
 
+    # this is a check for cases where base_registry.get_underlying_decimals
+    # returns wrong values but base_registry.get_decimals is the right one:
+    for i in range(MAX_COINS):
+        if underlying_coin_decimals[i] == 0:
+            underlying_coin_decimals[i] = coin_decimals[i]
+
+    return underlying_coin_decimals
 
 @external
 @view
