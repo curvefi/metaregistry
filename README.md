@@ -2,8 +2,6 @@
 
 ### Tests
 
-To run the tests:
-
-Please set up an alchemy api key into an environment variable labelled `ALCHEMY_API_KEY`.
+Please set up an alchemy api key into an environment variable labelled `ALCHEMY_API_KEY`. To run the tests:
 
 `brownie test -x`

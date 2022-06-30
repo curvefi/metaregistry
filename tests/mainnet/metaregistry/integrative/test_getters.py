@@ -16,21 +16,32 @@ from tests.utils.constants import (
 MAX_POOLS = 1000
 
 
-def check_pool_already_registered(metaregistry, pool, registry_handler_for_pool):
+def check_pool_already_registered(
+    metaregistry, pool, registry_handler_for_pool, handler_id: int = 0
+):
     """Checks whether the pool was already registered. Skips test if it was.
     Args:
         metaregistry (fixture): MetaRegistry contract fixture.
         pool (str): address of pool
         registry (brownie.Contract): Contract instance of registry.
+        handler_id (int): 0 if pool is registered at only 1 registry, > 0 otherwise.
     """
-    registry_handler_for_pool_in_metaregistry = metaregistry.get_registry_handler_from_pool(pool)
+    registered_handlers = metaregistry.get_registry_handlers_from_pool(pool)
+    registry_handlers = []
+    for registry_handler in registered_handlers:
+        if registry_handler == brownie.ZERO_ADDRESS:
+            break
+        registry_handlers.append(registry_handler)
 
-    if registry_handler_for_pool != registry_handler_for_pool_in_metaregistry:
+    if len(registry_handlers) > 1:
+        warnings.warn(f"Pool {pool} is registered in more than one registry.")
+
+    if registry_handler_for_pool != registry_handlers[handler_id]:
         warnings.warn(
             "Pool already registred in another registry. "
             f"Pool: {pool}, "
             f"registry handler for pool: {registry_handler_for_pool}, "
-            f"registry handler in metaregistry: {registry_handler_for_pool_in_metaregistry}"
+            f"registry handler in metaregistry: {registry_handlers[handler_id]}"
         )
         return True
     return False
