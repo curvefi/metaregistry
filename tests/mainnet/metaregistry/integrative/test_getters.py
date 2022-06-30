@@ -198,24 +198,23 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
     ]:
         pool_is_metapool = registry.is_meta(pool)
 
-    # exception for 0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2
-    # if pool == "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2":
+    pool_underlying_decimals_exceptions = {
+        # eth: ankreth pool returns [18, 0] when it should return:
+        "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2": [18, 18],
+        # compound pools. ctokens are 8 decimals. underlying is dai usdc:
+        "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56": [18, 6],
+        # cream-yearn cytokens are 8 decimals, whereas underlying is
+        # dai usdc usdt:
+        "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF": [18, 6, 6],
+        # usdt pool has cDAI, cUSDC and USDT (which is 8, 8, 6):
+        "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C": [18, 6, 6],
+    }
 
-    if pool_is_metapool:
+    if pool in pool_underlying_decimals_exceptions.keys():
+        actual_output = pool_underlying_decimals_exceptions[pool]
+    elif pool_is_metapool:
         actual_output = list(registry.get_underlying_decimals(pool))
         assert actual_output[2] != 0  # there has to be a third coins!
-    elif pool == "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2":
-        actual_output = [18, 18]  # eth: ankreth pool
-    elif pool == "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56":
-        # compound pools. ctokens are 8 decimals. underlying is dai usdc
-        actual_output = [18, 6]
-    elif pool == "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF":
-        # cream-yearn cytokens are 8 decimals, whereas underlying is
-        # dai usdc usdt
-        actual_output = [18, 6, 6]
-    elif pool == "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C":
-        # usdt pool has cDAI, cUSDC and USDT (which is 8, 8, 6)
-        actual_output = [18, 6, 6]
     else:
         actual_output = list(registry.get_decimals(pool))
 
