@@ -189,7 +189,7 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
     """
-    @dev For pools that do not lend, the base registry returns the 
+    @dev For pools that do not lend, the base registry returns the
          same value as `get_coins`
     """
     return self.base_registry.get_underlying_coins(_pool)
