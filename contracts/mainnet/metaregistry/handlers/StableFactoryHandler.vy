@@ -96,6 +96,26 @@ def _get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 
 @internal
 @view
+def _get_btc_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Get balances for each underlying coin within a metapool
+    @dev  Used with BTC factory metapools that do not have a base_pool attribute
+    @param _pool Metapool address
+    @return uint256 list of underlying balances
+    """
+    underlying_balances: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
+    underlying_balances[0] = CurvePool(_pool).balances(0)
+
+    base_total_supply: uint256 = ERC20(self.base_registry.get_coins(_pool)[1]).totalSupply()
+    if base_total_supply > 0:
+        underlying_pct: uint256 = CurvePool(_pool).balances(1) * 10**36 / base_total_supply
+        for i in range(3):
+            underlying_balances[i + 1] = CurveLegacyPool(BTC_BASE_POOL).balances(i) * underlying_pct / 10**36
+    return underlying_balances
+
+
+@internal
+@view
 def _get_n_coins(_pool: address) -> uint256:
     if self._is_meta(_pool):
         return 2
@@ -138,6 +158,8 @@ def _get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 def _get_base_pool(_pool: address) -> address:
     if not self._is_meta(_pool):
         return ZERO_ADDRESS
+    if (self.base_registry.get_pool_asset_type(_pool) == 2):
+        return BTC_BASE_POOL
     return self.base_registry.get_base_pool(_pool)
 
 
@@ -283,6 +305,10 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
     if not self._is_meta(_pool):
         return self._get_balances(_pool)
+    if (self.base_registry.get_pool_asset_type(_pool) == 2):
+        # some metapools (BTC) do not have a base_pool attribute so some registry functions
+        # will revert because the pools are not recognized as metapools.
+        return self._get_btc_underlying_balances(_pool)
     return self.base_registry.get_underlying_balances(_pool)
 
 

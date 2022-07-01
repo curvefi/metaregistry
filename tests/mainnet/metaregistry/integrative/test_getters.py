@@ -7,6 +7,7 @@ import pytest
 from tests.abis import curve_pool, curve_pool_v2, gauge_controller
 from tests.utils.constants import (
     BTC_BASEPOOL_LP_TOKEN_MAINNET,
+    BTC_BASEPOOL_MAINNET,
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
     METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
@@ -293,21 +294,6 @@ def test_get_balances(metaregistry, registry_pool_index_iterator, pool_id):
     assert tuple(actual_output) == metaregistry_output
 
 
-def _get_underlying_balances_from_registry(registry_id, registry, pool):
-
-    if registry_id in [
-        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-    ] and registry.is_meta(pool):
-
-        # the metaregistry uses get_balances if the pool is not a metapool:
-        return registry.get_underlying_balances(pool)
-
-    else:
-
-        return registry.get_balances(pool)
-
-
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
@@ -315,28 +301,43 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, poo
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    registry_query_reverts = False
-    try:
-        actual_output = _get_underlying_balances_from_registry(registry_id, registry, pool)
-    except brownie.exceptions.VirtualMachineError:
-        registry_query_reverts = True
-
-    if sum(registry.get_balances(pool)) == 0:
+    if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip(f"Empty pool: {pool}")
 
-    if registry_query_reverts:
-        with brownie.reverts():
-            metaregistry.get_underlying_balances(pool)
+    if metaregistry.get_coins(pool)[1] == BTC_BASEPOOL_LP_TOKEN_MAINNET:
+        actual_output = [0] * 8
+        pool_balances = [curve_pool(pool).balances(0), curve_pool(pool).balances(1)]
+        total_supply_metalp = brownie.interface.ERC20(BTC_BASEPOOL_LP_TOKEN_MAINNET).totalSupply()
+        ratio_in_pool = pool_balances[1] / total_supply_metalp
+
+        actual_output[0] = curve_pool(pool).balances(0)
+        basepool_balances = metaregistry.get_balances(BTC_BASEPOOL_MAINNET)
+        actual_output[1:4] = [i * ratio_in_pool for i in basepool_balances[0:3]]
+
+    elif registry_id in [
+        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+    ] and registry.is_meta(pool):
+
+        # the metaregistry uses get_balances if the pool is not a metapool:
+        actual_output = registry.get_underlying_balances(pool)
+
     else:
-        metaregistry_output = metaregistry.get_underlying_balances(pool)
 
-        if metaregistry.is_meta(pool):
-            assert metaregistry_output[2] > 0  # it must have a third coin
+        actual_output = registry.get_balances(pool)
+
+    metaregistry_output = metaregistry.get_underlying_balances(pool)
+
+    if metaregistry.is_meta(pool):
+        assert metaregistry_output[2] > 0  # it must have a third coin
+    else:
+        assert metaregistry_output[1] > 0  # it must have a second coin
+
+    for idx, registry_value in enumerate(actual_output):
+        if metaregistry_output[idx] - registry_value != 0:
+            assert registry_value == pytest.approx(metaregistry_output[idx])
         else:
-            assert metaregistry_output[1] > 0  # it must have a second coin
-
-        for idx, registry_value in enumerate(actual_output):
-            assert registry_value == metaregistry_output[idx]
+            assert True
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
