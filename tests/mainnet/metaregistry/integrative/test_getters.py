@@ -19,7 +19,8 @@ MAX_POOLS = 1000
 def check_pool_already_registered(
     metaregistry, pool, registry_handler_for_pool, handler_id: int = 0
 ):
-    """Checks whether the pool was already registered. Skips test if it was.
+    """Checks whether the pool was already registered in a different registry.
+
     Args:
         metaregistry (fixture): MetaRegistry contract fixture.
         pool (str): address of pool
@@ -210,7 +211,7 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
         "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C": [18, 6, 6],
     }
 
-    if pool in pool_underlying_decimals_exceptions.keys():
+    if pool in pool_underlying_decimals_exceptions:
         actual_output = pool_underlying_decimals_exceptions[pool]
     elif pool_is_metapool:
         actual_output = list(registry.get_underlying_decimals(pool))
@@ -523,10 +524,6 @@ def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, pool_id
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # we skip if pool was registered: this is because some pools are
-    # registered in the stable registry but are from the stable factory.
-    # skipping does not skip the test: since metaregistry chooses stable
-    # factory as the registry handler and not the registry in these cases
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
@@ -543,26 +540,8 @@ def test_get_pool_asset_type(metaregistry, registry_pool_index_iterator, pool_id
     assert actual_output == metaregistry_output
 
 
-def _get_admin_balances_actuals(registry_id, registry, pool, metaregistry, alice):
+def _get_admin_balances_crypto(registry_id, registry, pool, metaregistry, alice):
 
-    # admin balances for stableswap:
-    if registry_id in [
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
-    ]:
-        coins = registry.get_coins(pool)
-        balances = [0] * 8
-        for idx, coin in enumerate(coins):
-            if coin == brownie.ZERO_ADDRESS:
-                break
-            elif coin != brownie.ETH_ADDRESS:
-                balances[idx] = brownie.interface.ERC20(coin).balanceOf(pool)
-            else:
-                balances[idx] = curve_pool(pool).balance()
-
-        return balances
-
-    # admin balances for crypto swap is different:
     v2_pool = curve_pool_v2(pool)
     if registry_id == METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX:
         fee_receiver = v2_pool.admin_fee_receiver()
@@ -593,42 +572,30 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # we skip if pool was registered: this is because some pools are
-    # registered in the stable registry but are from the stable factory.
-    # skipping does not skip the test: since metaregistry chooses stable
-    # factory as the registry handler and not the registry in these cases
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
-    # we skip if the pool is empty:
     if sum(metaregistry.get_balances(pool)) == 0:
-        pytest.skip("empty pool: skipping.")
+        pytest.skip("empty pool: skipping")
 
     if brownie.interface.ERC20(metaregistry.get_lp_token(pool)).totalSupply() == 0:
-        pytest.skip("lp token supply is zero.")
+        pytest.skip("lp token supply is zero")
 
-    chain.snapshot()
-    registry_reverts = False
-    try:
-        actual_output = _get_admin_balances_actuals(
-            registry_id, registry, pool, metaregistry, alice
-        )
-    except brownie.exceptions.VirtualMachineError:
-        registry_reverts = True
-    chain.revert()
-
-    if registry_reverts:
-        with brownie.reverts():
-            metaregistry.get_admin_balances(pool)
-    else:
+    if registry_id in [
+        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
+    ]:
+        actual_output = registry.get_admin_balances(pool)
         metaregistry_output = metaregistry.get_admin_balances(pool)
-        for j, output in enumerate(actual_output):
-            try:
-                output == metaregistry_output[j]
-            except AssertionError:
-                diff = output - metaregistry_output[j]
-                assert diff < 100
-                warnings.warn(f"actual_output != metaregistry_output. Diff: {diff}")
+        for i, output in enumerate(actual_output):
+            assert output == metaregistry_output[i]
+    else:
+        chain.snapshot()
+        actual_output = _get_admin_balances_crypto(registry_id, registry, pool, metaregistry, alice)
+        chain.revert()
+        metaregistry_output = metaregistry.get_admin_balances(pool)
+        for i, output in enumerate(actual_output):
+            assert output == pytest.approx(metaregistry_output[i])
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
@@ -638,10 +605,6 @@ def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # we skip if pool was registered: this is because some pools are
-    # registered in the stable registry but are from the stable factory.
-    # skipping does not skip the test: since metaregistry chooses stable
-    # factory as the registry handler and not the registry in these cases
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
@@ -677,10 +640,6 @@ def test_get_pool_name(metaregistry, registry_pool_index_iterator, pool_id):
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # we skip if pool was registered: this is because some pools are
-    # registered in the stable registry but are from the stable factory.
-    # skipping does not skip the test: since metaregistry chooses stable
-    # factory as the registry handler and not the registry in these cases
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
@@ -730,10 +689,6 @@ def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # we skip if pool was registered: this is because some pools are
-    # registered in the stable registry but are from the stable factory.
-    # skipping does not skip the test: since metaregistry chooses stable
-    # factory as the registry handler and not the registry in these cases
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
