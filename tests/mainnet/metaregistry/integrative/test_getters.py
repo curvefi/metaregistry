@@ -134,29 +134,38 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
+    pool_balances = metaregistry.get_balances(pool)
+    coin_decimals = metaregistry.get_decimals(pool)
+    coins = metaregistry.get_coins(pool)
+    for i in range(len(pool_balances)):
+        if coins[i] == brownie.ZERO_ADDRESS:
+            break
+        elif (
+            coin_decimals[i] == 0
+            and brownie.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
+        ):
+            pytest.skip("skem token in pool with zero decimals")
+        if sum(pool_balances) == 0:
+            pytest.skip(f"empty pool: {pool}")
+        elif pool_balances[i] / 10 ** coin_decimals[i] < 1:
+            pytest.skip(
+                f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
+                f"{pool_balances[i] / 10 ** coin_decimals[i]}"
+            )
+
     lp_token = metaregistry.get_lp_token(pool)
+    # virtual price from underlying child registries:
+    if registry_id in [
+        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+    ]:
+        actual_output = registry.get_virtual_price_from_lp_token(lp_token)
+    else:  # factories dont have virtual price getters
+        actual_output = curve_pool(pool).get_virtual_price()
 
-    registry_reverts = False
-    try:
-        # virtual price from underlying child registries:
-        if registry_id in [
-            METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-            METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-        ]:
-            actual_output = registry.get_virtual_price_from_lp_token(lp_token)
-        else:
-            actual_output = curve_pool(pool).get_virtual_price()
-    except brownie.exceptions.VirtualMachineError:
-        registry_reverts = True
-
-    # if child registry call reverts, then metaregistry must revert too
-    if registry_reverts:
-        with brownie.reverts():
-            metaregistry.get_virtual_price_from_lp_token(pool)
-    else:
-        # virtual price from metaregistry:
-        metaregistry_output = metaregistry.get_virtual_price_from_lp_token(lp_token)
-        assert actual_output == metaregistry_output
+    # virtual price from metaregistry:
+    metaregistry_output = metaregistry.get_virtual_price_from_lp_token(lp_token)
+    assert actual_output == metaregistry_output
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
