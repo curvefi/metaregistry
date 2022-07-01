@@ -107,16 +107,10 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     return self.base_registry.get_coin_indices(_pool, _from, _to)
 
 
-@internal
-@view
-def _get_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_registry.get_coins(_pool)
-
-
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
-    return self._get_coins(_pool)
+    return self.base_registry.get_coins(_pool)
 
 
 @external
@@ -193,12 +187,6 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
     return self.base_registry.get_underlying_balances(_pool)
 
 
-@internal
-@view
-def _get_underlying_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_registry.get_underlying_coins(_pool)
-
-
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
@@ -206,7 +194,7 @@ def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
     @dev For pools that do not lend, the base registry returns the
          same value as `get_coins`
     """
-    return self._get_underlying_coins(_pool)
+    return self.base_registry.get_underlying_coins(_pool)
 
 
 @external
@@ -222,6 +210,7 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
             underlying_coin_decimals[i] = coin_decimals[i]
 
     return underlying_coin_decimals
+
 
 @external
 @view
