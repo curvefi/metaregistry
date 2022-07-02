@@ -51,6 +51,10 @@ interface GaugeController:
     def gauges(i: uint256) -> address: view
 
 
+interface Gauge:
+    def is_killed() -> bool: view
+
+
 interface MetaRegistry:
     def registry_length() -> uint256: view
 
@@ -212,16 +216,26 @@ def get_fees(_pool: address) -> uint256[10]:
 
 @internal
 @view
-def _is_dao_onboarded_gauge(_gauge: address) -> bool:
+def _get_gauge_type(_gauge: address) -> int128:
 
-    for i in range(1000000000):
-        gauge: address = GaugeController(GAUGE_CONTROLLER).gauges(i)
-        if gauge == ZERO_ADDRESS:
-            break
-        if _gauge == gauge:
-            return True
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        GAUGE_CONTROLLER, 
+        concat(
+            method_id("gauge_type(address)"),
+            convert(_gauge, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
 
-    return False
+    if success and not Gauge(_gauge).is_killed():
+        return convert(response, int128)
+
+    return 0
+    
 
 @external
 @view
@@ -229,8 +243,7 @@ def get_gauges(_pool: address) -> (address[10], int128[10]):
     gauges: address[10] = empty(address[10])
     types: int128[10] = empty(int128[10])
     gauges[0] = self.base_registry.get_gauge(_pool)
-    if self._is_dao_onboarded_gauge(gauges[0]):
-        types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
+    types[0] = self._get_gauge_type(gauges[0])
     return (gauges, types)
 
 
