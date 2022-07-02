@@ -150,20 +150,20 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
             and brownie.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
         ):
             with brownie.reverts():
-                metaregistry.registry.get_virtual_price_from_lp_token(lp_token)
+                metaregistry.get_virtual_price_from_lp_token(lp_token)
             pytest.skip("skem token in pool with zero decimals")
 
         if sum(pool_balances) == 0:
 
             with brownie.reverts():
-                metaregistry.registry.get_virtual_price_from_lp_token(lp_token)
+                metaregistry.get_virtual_price_from_lp_token(lp_token)
 
             pytest.skip(f"empty pool: {pool}")
 
         elif pool_balances[i] / 10 ** coin_decimals[i] < 1:
 
             with brownie.reverts():
-                metaregistry.registry.get_virtual_price_from_lp_token(lp_token)
+                metaregistry.get_virtual_price_from_lp_token(lp_token)
 
             pytest.skip(
                 f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "

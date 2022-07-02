@@ -220,7 +220,7 @@ def _is_dao_onboarded_gauge(_gauge: address) -> bool:
             break
         if _gauge == gauge:
             return True
-        
+
     return False
 
 @external
