@@ -137,24 +137,39 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
 
     pool_balances = metaregistry.get_balances(pool)
     coin_decimals = metaregistry.get_decimals(pool)
+    lp_token = metaregistry.get_lp_token(pool)
+
     coins = metaregistry.get_coins(pool)
     for i in range(len(pool_balances)):
+
         if coins[i] == brownie.ZERO_ADDRESS:
             break
+
         elif (
             coin_decimals[i] == 0
             and brownie.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
         ):
+            with brownie.reverts():
+                metaregistry.registry.get_virtual_price_from_lp_token(lp_token)
             pytest.skip("skem token in pool with zero decimals")
+
         if sum(pool_balances) == 0:
+
+            with brownie.reverts():
+                metaregistry.registry.get_virtual_price_from_lp_token(lp_token)
+
             pytest.skip(f"empty pool: {pool}")
+
         elif pool_balances[i] / 10 ** coin_decimals[i] < 1:
+
+            with brownie.reverts():
+                metaregistry.registry.get_virtual_price_from_lp_token(lp_token)
+
             pytest.skip(
                 f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
                 f"{pool_balances[i] / 10 ** coin_decimals[i]}"
             )
 
-    lp_token = metaregistry.get_lp_token(pool)
     # virtual price from underlying child registries:
     if registry_id in [
         METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
@@ -612,35 +627,41 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
 def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
 
     skip_if_pool_id_gt_max_pools_in_registry(pool_id, registry_pool_index_iterator)
-
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
+
+    # curve v2 pools need to calculates self.xp() for getting self.fee(), and that is not
+    # possible if the pool is empty.
+    if (
+        registry_id
+        in [METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX, METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX]
+        and sum(metaregistry.get_balances(pool)) == 0
+    ):
+        with brownie.reverts():
+            curve_pool_v2(pool).fee()
+        pytest.skip(
+            f"crypto factory pool {pool} is empty and factory pools tend to "
+            "revert for `fee()` since calcs are needed and they can't be done "
+            "for an empty pool"
+        )
 
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
     # get_fees
-    actuals_reverts = False
-    try:
-        if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
-            actual_output = registry.get_fees(pool)
-        else:
-            curve_contract = curve_pool_v2(pool)
-            actual_output = [
-                curve_contract.fee(),
-                curve_contract.admin_fee(),
-                curve_contract.mid_fee(),
-                curve_contract.out_fee(),
-            ]
-    except brownie.exceptions.VirtualMachineError:
-        actuals_reverts = True
-
-    if actuals_reverts:
-        with brownie.reverts():
-            metaregistry.get_fees(pool)
+    if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+        actual_output = registry.get_fees(pool)
     else:
-        metaregistry_output = metaregistry.get_fees(pool)
-        for j, output in enumerate(actual_output):
-            assert output == metaregistry_output[j]
+        curve_contract = curve_pool_v2(pool)
+        actual_output = [
+            curve_contract.fee(),
+            curve_contract.admin_fee(),
+            curve_contract.mid_fee(),
+            curve_contract.out_fee(),
+        ]
+
+    metaregistry_output = metaregistry.get_fees(pool)
+    for j, output in enumerate(actual_output):
+        assert output == metaregistry_output[j]
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
