@@ -45,6 +45,12 @@ with open(
 ) as fp:
     GAUGE_CONTROLLER_ABI = json.load(fp)
 
+with open(
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), "LiquidityGauge.json"),
+    "r",
+) as fp:
+    LIQUIDITY_GAUGE_ABI = json.load(fp)
+
 
 def curve_pool(_pool: str) -> Contract:
     return Contract.from_abi(name="CurveV1", address=_pool, abi=CURVE_V1_ABI)
@@ -84,3 +90,7 @@ def gauge_controller() -> Contract:
         address=GAUGE_CONTROLLER,
         abi=GAUGE_CONTROLLER_ABI,
     )
+
+
+def liquidity_gauge(addr) -> Contract:
+    return Contract.from_abi(name="LiquidityGauge", address=addr, abi=LIQUIDITY_GAUGE_ABI)

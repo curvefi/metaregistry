@@ -4,7 +4,7 @@ import warnings
 import brownie
 import pytest
 
-from tests.abis import curve_pool, curve_pool_v2, gauge_controller
+from tests.abis import curve_pool, curve_pool_v2, gauge_controller, liquidity_gauge
 from tests.utils.constants import (
     BTC_BASEPOOL_LP_TOKEN_MAINNET,
     BTC_BASEPOOL_MAINNET,
@@ -703,11 +703,15 @@ def test_get_pool_name(metaregistry, registry_pool_index_iterator, pool_id):
 
 def _is_dao_onboarded_gauge(_gauge):
 
-    for i in range(1000000000):
-        if gauge_controller().gauges(i) == brownie.ZERO_ADDRESS:
-            return False
-        elif gauge_controller().gauges(i) == _gauge:
-            return True
+    try:
+        gauge_controller().gauge_types(_gauge)
+    except brownie.exceptions.VirtualMachineError:
+        return False
+
+    if liquidity_gauge(_gauge).is_killed():
+        return False
+
+    return True
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
