@@ -48,6 +48,7 @@ interface ERC20:
 
 interface GaugeController:
     def gauge_types(gauge: address) -> int128: view
+    def gauges(i: uint256) -> address: view
 
 
 interface MetaRegistry:
@@ -209,13 +210,27 @@ def get_fees(_pool: address) -> uint256[10]:
     return fees
 
 
+@internal
+@view
+def _is_dao_onboarded_gauge(_gauge: address) -> bool:
+
+    for i in range(1000000000):
+        gauge: address = GaugeController(GAUGE_CONTROLLER).gauges(i)
+        if gauge == ZERO_ADDRESS:
+            break
+        if _gauge == gauge:
+            return True
+        
+    return False
+
 @external
 @view
 def get_gauges(_pool: address) -> (address[10], int128[10]):
     gauges: address[10] = empty(address[10])
     types: int128[10] = empty(int128[10])
     gauges[0] = self.base_registry.get_gauge(_pool)
-    types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
+    if self._is_dao_onboarded_gauge(gauges[0]):
+        types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
     return (gauges, types)
 
 

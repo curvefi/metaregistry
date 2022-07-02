@@ -693,24 +693,13 @@ def test_get_pool_name(metaregistry, registry_pool_index_iterator, pool_id):
     assert actual_output == metaregistry_output
 
 
-def _get_gauges_actual(registry, registry_id, pool):
+def _is_dao_onboarded_gauge(_gauge):
 
-    if registry_id in [
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-    ]:
-
-        actual_output = registry.get_gauges(pool)
-
-    else:
-
-        gauge = registry.get_gauge(pool)
-        actual_output = (
-            [gauge] + [brownie.ZERO_ADDRESS] * 9,
-            [gauge_controller().gauge_types(gauge)] + [0] * 9,
-        )
-
-    return actual_output
+    for i in range(1000000000):
+        if gauge_controller().gauges(i) == brownie.ZERO_ADDRESS:
+            return False
+        elif gauge_controller().gauges(i) == _gauge:
+            return True
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
@@ -723,19 +712,33 @@ def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
     if check_pool_already_registered(metaregistry, pool, registry_handler):
         pytest.skip()
 
-    # check if registry query reverts:
-    registry_reverts = False
-    try:
-        actual_output = _get_gauges_actual(registry, registry_id, pool)
-    except brownie.exceptions.VirtualMachineError:
-        registry_reverts = True
+    if registry_id in [
+        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+    ]:
 
-    if registry_reverts:
-        with brownie.reverts():
-            metaregistry.get_gauges(pool)
-    else:
-        metaregistry_output = metaregistry.get_gauges(pool)
-        assert actual_output == metaregistry_output
+        actual_output = registry.get_gauges(pool)
+
+    else:  # for factory pools, some checks need to be done
+
+        gauge = registry.get_gauge(pool)
+
+        # we check if the gauge is dao onboarded, else
+        # gauge_controller().gauge_types(gauge) will be revert
+        # as gauge type is zero. This slows down tests significantly
+        if _is_dao_onboarded_gauge(gauge):
+            actual_output = (
+                [gauge] + [brownie.ZERO_ADDRESS] * 9,
+                [gauge_controller().gauge_types(gauge)] + [0] * 9,
+            )
+        else:
+            actual_output = (
+                [gauge] + [brownie.ZERO_ADDRESS] * 9,
+                [0] * 10,
+            )
+
+    metaregistry_output = metaregistry.get_gauges(pool)
+    assert actual_output == metaregistry_output
 
 
 def test_find_pool_for_coins(metaregistry):
