@@ -140,12 +140,15 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
     lp_token = metaregistry.get_lp_token(pool)
 
     coins = metaregistry.get_coins(pool)
+    pool_balances_float = []
     for i in range(len(pool_balances)):
 
         if coins[i] == brownie.ZERO_ADDRESS:
             break
 
-        elif (
+        pool_balances_float.append(pool_balances[i] / 10 ** coin_decimals[i])
+
+        if (
             coin_decimals[i] == 0
             and brownie.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
         ):
@@ -160,15 +163,20 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
 
             pytest.skip(f"empty pool: {pool}")
 
-        elif pool_balances[i] / 10 ** coin_decimals[i] < 1:
+    # check if pool balances are skewed: vprice calc will bork if one of the coin
+    # balances is close to zero.
+    if (
+        max(pool_balances_float) - min(pool_balances_float)
+        == pytest.approx(max(pool_balances_float))
+        and min(pool_balances_float) < 1
+    ):
+        with brownie.reverts():
+            metaregistry.get_virtual_price_from_lp_token(lp_token)
 
-            with brownie.reverts():
-                metaregistry.get_virtual_price_from_lp_token(lp_token)
-
-            pytest.skip(
-                f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
-                f"{pool_balances[i] / 10 ** coin_decimals[i]}"
-            )
+        pytest.skip(
+            f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
+            f"{pool_balances[i] / 10 ** coin_decimals[i]}"
+        )
 
     # virtual price from underlying child registries:
     if registry_id in [
