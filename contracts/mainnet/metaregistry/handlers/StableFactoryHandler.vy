@@ -7,6 +7,7 @@
 # ---- interfaces ---- #
 interface AddressProvider:
     def get_address(_id: uint256) -> address: view
+    def get_registry() -> address: view
 
 
 interface BaseRegistry:
@@ -20,6 +21,7 @@ interface BaseRegistry:
     def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
     def get_fees(_pool: address) -> uint256[2]: view
     def get_gauge(_pool: address) -> address: view
+    def get_lp_token(_pool: address) -> address: view
     def get_meta_n_coins(_pool: address) -> (uint256, uint256): view
     def get_n_coins(_pool: address) -> uint256: view
     def get_pool_asset_type(_pool: address) -> uint256: view
@@ -48,6 +50,11 @@ interface ERC20:
 
 interface GaugeController:
     def gauge_types(gauge: address) -> int128: view
+    def gauges(i: uint256) -> address: view
+
+
+interface Gauge:
+    def is_killed() -> bool: view
 
 
 interface MetaRegistry:
@@ -78,6 +85,22 @@ def __init__(_metaregistry: address, _id: uint256, address_provider: address):
 # ---- internal methods ---- #
 @internal
 @view
+def _is_meta(_pool: address) -> bool:
+    return self.base_registry.is_meta(_pool)
+
+
+@internal
+@view
+def _get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
+    _coins: address[MAX_COINS] = self.base_registry.get_coins(_pool)
+    _padded_coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
+    for i in range(MAX_COINS):
+        _padded_coins[i] = _coins[i]
+    return _padded_coins
+
+
+@internal
+@view
 def _get_btc_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
     @notice Get balances for each underlying coin within a metapool
@@ -94,22 +117,6 @@ def _get_btc_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COI
         for i in range(3):
             underlying_balances[i + 1] = CurveLegacyPool(BTC_BASE_POOL).balances(i) * underlying_pct / 10**36
     return underlying_balances
-
-
-@internal
-@view
-def _is_meta(_pool: address) -> bool:
-    return self.base_registry.is_meta(_pool)
-
-
-@internal
-@view
-def _get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
-    _coins: address[MAX_COINS] = self.base_registry.get_coins(_pool)
-    _padded_coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
-    for i in range(MAX_COINS):
-        _padded_coins[i] = _coins[i]
-    return _padded_coins
 
 
 @internal
@@ -145,6 +152,22 @@ def _get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     return self._pad_uint_array(self.base_registry.get_balances(_pool))
 
 
+@internal
+@view
+def _get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    return self._pad_uint_array(self.base_registry.get_decimals(_pool))
+
+
+@internal
+@view
+def _get_base_pool(_pool: address) -> address:
+    if not self._is_meta(_pool):
+        return ZERO_ADDRESS
+    if (self.base_registry.get_pool_asset_type(_pool) == 2):
+        return BTC_BASE_POOL
+    return self.base_registry.get_base_pool(_pool)
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -167,11 +190,7 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_base_pool(_pool: address) -> address:
-    if not (self._is_meta(_pool)):
-        return ZERO_ADDRESS
-    if (self.base_registry.get_pool_asset_type(_pool) == 2):
-        return BTC_BASE_POOL
-    return self.base_registry.get_base_pool(_pool)
+    return self._get_base_pool(_pool)
 
 
 @view
@@ -179,9 +198,20 @@ def get_base_pool(_pool: address) -> address:
 def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool):
     coin1: int128 = 0
     coin2: int128 = 0
+    is_underlying: bool = False
+
     (coin1, coin2) = self.base_registry.get_coin_indices(_pool, _from, _to)
-    # we discard is_underlying as it's always true due to a bug in original factory contract
-    return (coin1, coin2, not self._is_meta(_pool))
+
+    # due to a bug in original factory contract, `is_underlying`` is always True
+    # to fix this, we first check if it is a metapool, and if not then we return
+    # False. If so, then we check if basepool lp token is one of the two coins,
+    # in which case `is_underlying` would be False
+    if self._is_meta(_pool):
+        base_pool_lp_token: address = self.base_registry.get_coins(_pool)[1]
+        if base_pool_lp_token not in [_from, _to]:
+            is_underlying = True
+
+    return (coin1, coin2, is_underlying)
 
 
 @external
@@ -193,7 +223,7 @@ def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self._pad_uint_array(self.base_registry.get_decimals(_pool))
+    return self._get_decimals(_pool)
 
 
 @external
@@ -206,13 +236,36 @@ def get_fees(_pool: address) -> uint256[10]:
     return fees
 
 
+@internal
+@view
+def _get_gauge_type(_gauge: address) -> int128:
+
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        GAUGE_CONTROLLER,
+        concat(
+            method_id("gauge_type(address)"),
+            convert(_gauge, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+
+    if success and not Gauge(_gauge).is_killed():
+        return convert(response, int128)
+
+    return 0
+
+
 @external
 @view
 def get_gauges(_pool: address) -> (address[10], int128[10]):
     gauges: address[10] = empty(address[10])
     types: int128[10] = empty(int128[10])
     gauges[0] = self.base_registry.get_gauge(_pool)
-    types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
+    types[0] = self._get_gauge_type(gauges[0])
     return (gauges, types)
 
 
@@ -231,7 +284,10 @@ def get_n_coins(_pool: address) -> uint256:
 @external
 @view
 def get_n_underlying_coins(_pool: address) -> uint256:
-    return self.base_registry.get_meta_n_coins(_pool)[1]
+    if self._is_meta(_pool):
+        return self.base_registry.get_meta_n_coins(_pool)[1]
+    else:
+        return self.base_registry.get_n_coins(_pool)
 
 
 @external
@@ -251,7 +307,11 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
 @external
 @view
 def get_pool_name(_pool: address) -> String[64]:
-    if self.base_registry.get_n_coins(_pool) == 0:
+    """
+    @dev stable factory pools are ERC20 tokenized
+    """
+    if self._get_n_coins(_pool) == 0:
+        # _pool is not in base registry, so we ignore:
         return ""
     return ERC20(_pool).name()
 
@@ -267,7 +327,11 @@ def get_pool_params(_pool: address) -> uint256[20]:
 @external
 @view
 def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    if not (self._is_meta(_pool)):
+    """
+    @dev some metapools (BTC) do not have a base_pool attribute so some registry functions
+         will revert because the pools are not recognized as metapools.
+    """
+    if not self._is_meta(_pool):
         return self._get_balances(_pool)
     if (self.base_registry.get_pool_asset_type(_pool) == 2):
         # some metapools (BTC) do not have a base_pool attribute so some registry functions
@@ -279,7 +343,7 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
-    if not (self._is_meta(_pool)):
+    if not self._is_meta(_pool):
         return self._get_coins(_pool)
     return self._get_underlying_coins(_pool)
 
@@ -287,6 +351,15 @@ def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    """
+    @notice If it is a metapool, method uses the base registry. Else it uses a
+    custom getter. This is because the base registry cannot unpack decimals
+    (stored as a bitmap) if there is no metapool. So it returns the decimals of
+    only the first coin.
+    @param _pool Address of the pool
+    """
+    if not self._is_meta(_pool):
+        return self._get_decimals(_pool)
     return self.base_registry.get_underlying_decimals(_pool)
 
 

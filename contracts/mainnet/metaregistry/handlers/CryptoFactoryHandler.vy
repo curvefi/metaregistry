@@ -21,6 +21,7 @@ interface BaseRegistry:
     def pool_count() -> uint256: view
     def pool_list(pool_id: uint256) -> address: view
 
+
 interface CurvePool:
     def adjustment_step() -> uint256: view
     def admin_fee() -> uint256: view
@@ -34,15 +35,24 @@ interface CurvePool:
     def ma_half_time() -> uint256: view
     def mid_fee() -> uint256: view
     def out_fee() -> uint256: view
+    def virtual_price() -> uint256: view
+    def xcp_profit() -> uint256: view
+    def xcp_profit_a() -> uint256: view
 
 
 interface ERC20:
     def name() -> String[64]: view
     def balanceOf(_addr: address) -> uint256: view
+    def totalSupply() -> uint256: view
 
 
 interface GaugeController:
     def gauge_types(gauge: address) -> int128: view
+    def gauges(i: uint256) -> address: view
+
+
+interface Gauge:
+    def is_killed() -> bool: view
 
 
 interface MetaRegistry:
@@ -126,15 +136,41 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
 @external
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    balances: uint256[MAX_METAREGISTRY_COINS] = self._get_balances(_pool)
-    coins: address[MAX_METAREGISTRY_COINS] = self._get_coins(_pool)
-    for i in range(N_COINS):
-        coin: address = coins[i]
-        if (coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE or coin == 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2):
-            balances[i] = _pool.balance - balances[i]
-        else:
-            balances[i] = ERC20(coin).balanceOf(_pool) - balances[i]
-    return balances
+    """
+    @dev Cryptoswap pools do not store admin fees in the form of
+         admin token balances. Instead, the admin fees are computed
+         at the time of claim iff sufficient profits have been made.
+         These fees are allocated to the admin by minting LP tokens
+         (dilution). The logic to calculate fees are derived from
+         cryptopool._claim_admin_fees() method.
+    """
+    xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
+    xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
+    admin_fee: uint256 = CurvePool(_pool).admin_fee()
+    admin_balances: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
+
+    # admin balances are non zero if pool has made more than allowed profits:
+    if xcp_profit > xcp_profit_a:
+
+        # calculate admin fees in lp token amounts:
+        fees: uint256 = (xcp_profit - xcp_profit_a) * admin_fee / (2 * 10**10)
+        if fees > 0:
+            vprice: uint256 = CurvePool(_pool).virtual_price()
+            lp_token: address = self._get_lp_token(_pool)
+            frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
+
+            # the total supply of lp token is current supply + claimable:
+            lp_token_total_supply: uint256 = ERC20(lp_token).totalSupply()
+            d_supply: uint256 = lp_token_total_supply * frac / 10**18
+            lp_token_total_supply += d_supply
+            admin_lp_frac: uint256 = d_supply * 10 ** 18 / lp_token_total_supply
+
+            # get admin balances in individual assets:
+            reserves: uint256[MAX_METAREGISTRY_COINS] = self._get_balances(_pool)
+            for i in range(MAX_METAREGISTRY_COINS):
+                admin_balances[i] = admin_lp_frac * reserves[i] / 10 ** 18
+
+    return admin_balances
 
 
 @external
@@ -178,13 +214,36 @@ def get_fees(_pool: address) -> uint256[10]:
     return fees
 
 
+@internal
+@view
+def _get_gauge_type(_gauge: address) -> int128:
+
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        GAUGE_CONTROLLER,
+        concat(
+            method_id("gauge_type(address)"),
+            convert(_gauge, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+
+    if success and not Gauge(_gauge).is_killed():
+        return convert(response, int128)
+
+    return 0
+
+
 @external
 @view
 def get_gauges(_pool: address) -> (address[10], int128[10]):
     gauges: address[10] = empty(address[10])
     types: int128[10] = empty(int128[10])
     gauges[0] = self.base_registry.get_gauge(_pool)
-    types[0] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauges[0])
+    types[0] = self._get_gauge_type(gauges[0])
     return (gauges, types)
 
 

@@ -2,10 +2,6 @@
 
 ### Tests
 
-To run the tests:
+Please set up an alchemy api key into an environment variable labelled `ALCHEMY_API_KEY`. To run the tests:
 
-`brownie test tests`
-
-The `--pools` flag allow to limit the numbers of pools tested on each registry to speed up test execution. To only test with the first pool on each registry:
-
-`brownie test tests --pools 1`
+`brownie test -x`
