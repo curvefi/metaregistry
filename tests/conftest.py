@@ -1,13 +1,12 @@
 import pytest
 
 from tests.abis import (
+    address_provider,
     crypto_factory,
     crypto_registry,
     stable_factory,
     stable_registry,
-    address_provider,
 )
-from tests.utils.constants import ADDRESS_PROVIDER
 
 
 @pytest.fixture(scope="session")

@@ -1,30 +1,31 @@
 import brownie
-from brownie import ZERO_ADDRESS, chain
 
 
 def test_update_address_provider_non_authorized(metaregistry, alice):
     with brownie.reverts():
-        tx = metaregistry.update_address_provider(ZERO_ADDRESS, {"from": alice})
+        tx = metaregistry.update_address_provider(brownie.ZERO_ADDRESS, {"from": alice})
         assert tx.revert_msg == "dev: only owner"
 
 
 def test_update_single_registry_non_authorized(metaregistry, alice):
     with brownie.reverts():
         tx = metaregistry.update_single_registry(
-            0, ZERO_ADDRESS, 0, ZERO_ADDRESS, "a", True, {"from": alice}
+            0, brownie.ZERO_ADDRESS, 0, brownie.ZERO_ADDRESS, "a", True, {"from": alice}
         )
         assert tx.revert_msg == "dev: only owner"
 
 
 def test_update_registry_handler_non_authorized(metaregistry, alice):
     with brownie.reverts():
-        tx = metaregistry.update_registry_handler(0, ZERO_ADDRESS, {"from": alice})
+        tx = metaregistry.update_registry_handler(0, brownie.ZERO_ADDRESS, {"from": alice})
         assert tx.revert_msg == "dev: only owner"
 
 
 def test_add_registry_by_address_provider_id_non_authorized(metaregistry, alice):
     with brownie.reverts():
-        tx = metaregistry.add_registry_by_address_provider_id(0, ZERO_ADDRESS, {"from": alice})
+        tx = metaregistry.add_registry_by_address_provider_id(
+            0, brownie.ZERO_ADDRESS, {"from": alice}
+        )
         assert tx.revert_msg == "dev: only owner"
 
 

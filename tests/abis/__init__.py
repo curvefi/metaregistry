@@ -12,7 +12,6 @@ from tests.utils.constants import (
     STABLE_REGISTRY,
 )
 
-
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePool.json"), "r") as fp:
     CURVE_V1_ABI = json.load(fp)
 
