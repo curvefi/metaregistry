@@ -65,12 +65,7 @@ ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
 # ---- storage variables ---- #
 address_provider: public(AddressProvider)
-admin_actions_deadline: public(uint256)
-transfer_ownership_deadline: public(uint256)
-
 owner: public(address)
-future_owner: public(address)
-
 get_registry: public(HashMap[uint256, Registry]) # get registry by index, index starts at 0
 registry_length: public(uint256)
 
@@ -78,9 +73,9 @@ registry_length: public(uint256)
 
 # ---- constructor ---- #
 @external
-def __init__(_owner: address, address_provider: address):
-    self.owner = _owner
-    self.address_provider = AddressProvider(address_provider)
+def __init__():
+    self.address_provider = AddressProvider(0x0000000022D53366457F9d5E68Ec105046FC4383)
+    self.owner = AddressProvider(0x0000000022D53366457F9d5E68Ec105046FC4383).admin()
 
 
 # ---- internal methods ---- #
@@ -547,37 +542,3 @@ def pool_list(_index: uint256) -> address:
             return RegistryHandler(handler).pool_list(_index - pools_skip)
         pools_skip += count
     return ZERO_ADDRESS
-
-
-# ---- lesser used methods go here (slightly more gas optimal) ---- #
-# -- admin ownership transfer methods -- #
-@external
-def commit_transfer_ownership(_owner: address):
-    assert msg.sender == self.owner  # dev: only owner
-    assert self.transfer_ownership_deadline == 0  # dev: active transfer
-
-    _deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
-    self.transfer_ownership_deadline = _deadline
-    self.future_owner = _owner
-
-    log CommitNewAdmin(_deadline, _owner)
-
-
-@external
-def apply_transfer_ownership():
-    assert msg.sender == self.owner  # dev: only owner
-    assert block.timestamp >= self.transfer_ownership_deadline  # dev: insufficient time
-    assert self.transfer_ownership_deadline != 0  # dev: no active transfer
-
-    self.transfer_ownership_deadline = 0
-    _owner: address = self.future_owner
-    self.owner = _owner
-
-    log NewAdmin(_owner)
-
-
-@external
-def revert_transfer_ownership():
-    assert msg.sender == self.owner  # dev: only owner
-
-    self.transfer_ownership_deadline = 0
