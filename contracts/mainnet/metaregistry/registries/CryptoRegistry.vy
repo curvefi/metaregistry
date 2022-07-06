@@ -45,6 +45,8 @@ interface CurvePool:
     def admin_fee() -> uint256: view
     def balances(i: uint256) -> uint256: view
     def D() -> uint256: view
+    def xcp_profit() -> uint256: view
+    def xcp_profit_a() -> uint256: view
 
 interface LiquidityGauge:
     def lp_token() -> address: view
@@ -262,26 +264,44 @@ def get_fees(_pool: address) -> uint256[4]:
     return [CurvePool(_pool).fee(), CurvePool(_pool).admin_fee(), CurvePool(_pool).mid_fee(), CurvePool(_pool).out_fee()]
 
 
-@view
 @external
+@view
 def get_admin_balances(_pool: address) -> uint256[MAX_COINS]:
     """
-    @notice Get the current admin balances (uncollected fees) for a pool
-    @param _pool Pool address
-    @return List of uint256 admin balances
+    @dev Cryptoswap pools do not store admin fees in the form of
+         admin token balances. Instead, the admin fees are computed
+         at the time of claim iff sufficient profits have been made.
+         These fees are allocated to the admin by minting LP tokens
+         (dilution). The logic to calculate fees are derived from
+         cryptopool._claim_admin_fees() method.
     """
-    balances: uint256[MAX_COINS] = self._get_balances(_pool)
-    n_coins: uint256 = self.pool_data[_pool].n_coins
-    for i in range(MAX_COINS):
-        coin: address = self.pool_data[_pool].coins[i]
-        if i == n_coins:
-            break
-        if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
-            balances[i] = _pool.balance - balances[i]
-        else:
-            balances[i] = ERC20(coin).balanceOf(_pool) - balances[i]
+    xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
+    xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
+    admin_fee: uint256 = CurvePool(_pool).admin_fee()
+    admin_balances: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
 
-    return balances
+    # admin balances are non zero if pool has made more than allowed profits:
+    if xcp_profit > xcp_profit_a:
+
+        # calculate admin fees in lp token amounts:
+        fees: uint256 = (xcp_profit - xcp_profit_a) * admin_fee / (2 * 10**10)
+        if fees > 0:
+            vprice: uint256 = CurvePool(_pool).get_virtual_price()
+            lp_token: address = self.get_lp_token[_pool]
+            frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
+
+            # the total supply of lp token is current supply + claimable:
+            lp_token_total_supply: uint256 = ERC20(lp_token).totalSupply()
+            d_supply: uint256 = lp_token_total_supply * frac / 10**18
+            lp_token_total_supply += d_supply
+            admin_lp_frac: uint256 = d_supply * 10 ** 18 / lp_token_total_supply
+
+            # get admin balances in individual assets:
+            reserves: uint256[MAX_COINS] = self._get_balances(_pool)
+            for i in range(MAX_COINS):
+                admin_balances[i] = admin_lp_frac * reserves[i] / 10 ** 18
+
+    return admin_balances
 
 
 @view
