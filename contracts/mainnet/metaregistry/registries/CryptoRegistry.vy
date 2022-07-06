@@ -18,8 +18,11 @@ struct CoinInfo:
 struct PoolArray:
     location: uint256
     decimals: uint256
+    underlying_decimals: uint256
+    base_pool: address
     coins: address[MAX_COINS]
-    n_coins: uint256
+    ul_coins: address[MAX_COINS]
+    n_coins: uint256  # [coins, underlying coins] tightly packed as uint128[2]
     name: String[64]
 
 
@@ -96,13 +99,28 @@ last_updated: public(uint256)
 
 
 @external
-def __init__(_address_provider: AddressProvider):
+def __init__(_address_provider: address):
     """
     @notice Constructor function
     """
-    self.address_provider = _address_provider
+    self.address_provider = AddressProvider(_address_provider)
+
 
 # internal functionality for getters
+
+@view
+@internal
+def _unpack_decimals(_packed: uint256, _n_coins: uint256) -> uint256[MAX_COINS]:
+    # decimals are tightly packed as a series of uint8 within a little-endian bytes32
+    # the packed value is stored as uint256 to simplify unpacking via shift and modulo
+    decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
+    for i in range(MAX_COINS):
+        if i == _n_coins:
+            break
+        decimals[i] = shift(_packed, -8 * convert(i, int128)) % 256
+
+    return decimals
+
 
 @view
 @internal
@@ -117,6 +135,75 @@ def _get_balances(_pool: address) -> uint256[MAX_COINS]:
 
     return balances
 
+
+@view
+@internal
+def _get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
+    raise
+
+
+@view
+@internal
+def _get_meta_underlying_balances(_pool: address, _base_pool: address) -> uint256[MAX_COINS]:
+    raise
+
+
+@view
+@internal
+def _get_coin_indices(
+    _pool: address,
+    _from: address,
+    _to: address
+) -> uint256[3]:
+    """
+    Convert coin addresses to indices for use with pool methods
+    """
+    # the return value is stored as `uint256[3]` to reduce gas costs
+    # from index, to index, is the market underlying?
+    result: uint256[3] = empty(uint256[3])
+
+    found_market: bool = False
+
+    # check coin markets
+    for x in range(MAX_COINS):
+        coin: address = self.pool_data[_pool].coins[x]
+        if coin == ZERO_ADDRESS:
+            # if we reach the end of the coins, reset `found_market` and try again
+            # with the underlying coins
+            found_market = False
+            break
+        if coin == _from:
+            result[0] = x
+        elif coin == _to:
+            result[1] = x
+        else:
+            continue
+
+        if found_market:
+            # the second time we find a match, break out of the loop
+            break
+        # the first time we find a match, set `found_market` to True
+        found_market = True
+
+    if not found_market:
+        # check underlying coin markets
+        for x in range(MAX_COINS):
+            coin: address = self.pool_data[_pool].ul_coins[x]
+            if coin == ZERO_ADDRESS:
+                raise "No available market"
+            if coin == _from:
+                result[0] = x
+            elif coin == _to:
+                result[1] = x
+            else:
+                continue
+
+            if found_market:
+                result[2] = 1
+                break
+            found_market = True
+
+    return result
 
 # targetted external getters, optimized for on-chain calls
 
@@ -148,6 +235,15 @@ def get_n_coins(_pool: address) -> uint256:
     return self.pool_data[_pool].n_coins
 
 
+@external
+@view
+def get_n_underlying_coins(_pool: address) -> uint256:
+    """
+    @notice Get the number of underlying coins in a pool
+    """
+    raise
+
+
 @view
 @external
 def get_coins(_pool: address) -> address[MAX_COINS]:
@@ -165,6 +261,18 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
         coins[i] = self.pool_data[_pool].coins[i]
 
     return coins
+
+
+@view
+@external
+def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
+    """
+    @notice Get the underlying coins within a pool
+    @dev For pools that do not lend, returns the same value as `get_coins`
+    @param _pool Pool address
+    @return List of coin addresses
+    """
+    raise
 
 
 @view
@@ -188,6 +296,18 @@ def get_decimals(_pool: address) -> uint256[MAX_COINS]:
         decimals[i] = shift(packed, -8 * convert(i, int128)) % 256
 
     return decimals
+
+
+@view
+@external
+def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
+    """
+    @notice Get decimal places for each underlying coin within a pool
+    @dev For pools that do not lend, returns the same value as `get_decimals`
+    @param _pool Pool address
+    @return uint256 list of decimals
+    """
+    raise
 
 
 @view
@@ -219,6 +339,18 @@ def get_balances(_pool: address) -> uint256[MAX_COINS]:
     @return uint256 list of balances
     """
     return self._get_balances(_pool)
+
+
+@view
+@external
+def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
+    """
+    @notice Get balances for each underlying coin within a pool
+    @dev  For pools that do not lend, returns the same value as `get_balances`
+    @param _pool Pool address
+    @return uint256 list of underlyingbalances
+    """
+    raise
 
 
 @view
@@ -310,40 +442,26 @@ def get_coin_indices(
     _pool: address,
     _from: address,
     _to: address
-) -> (uint256, uint256):
+) -> (int128, int128, bool):
     """
     @notice Convert coin addresses to indices for use with pool methods
     @param _from Coin address to be used as `i` within a pool
     @param _to Coin address to be used as `j` within a pool
     @return int128 `i`, int128 `j`, boolean indicating if `i` and `j` are underlying coins
     """
-    # the return value is stored as `uint256[3]` to reduce gas costs
-    # from index, to index, is the market underlying?
-    result: uint256[2] = empty(uint256[2])
+    result: uint256[3] = self._get_coin_indices(_pool, _from, _to)
+    return convert(result[0], int128), convert(result[1], int128), result[2] > 0
 
-    found_market: bool = False
 
-    # check coin markets
-    for x in range(MAX_COINS):
-        coin: address = self.pool_data[_pool].coins[x]
-        if coin == ZERO_ADDRESS:
-            # if we reach the end of the coins, reset `found_market` and try again
-            # with the underlying coins
-            found_market = False
-            break
-        if coin == _from:
-            result[0] = x
-        elif coin == _to:
-            result[1] = x
-        else:
-            continue
-        if found_market:
-            # the second time we find a match, break out of the loop
-            return result[0], result[1]
-        # the first time we find a match, set `found_market` to True
-        found_market = True
-
-    raise "No available market"
+@view
+@external
+def is_meta(_pool: address) -> bool:
+    """
+    @notice Verify `_pool` is a metapool
+    @param _pool Pool address
+    @return True if `_pool` is a metapool
+    """
+    return self.pool_data[_pool].base_pool != ZERO_ADDRESS
 
 
 @view
@@ -382,6 +500,19 @@ def get_coin_swap_complement(_coin: address, _index: uint256) -> address:
 
 
 # internal functionality used in admin setters
+
+@internal
+def _add_pool(
+    _sender: address,
+    _pool: address,
+    _n_coins: uint256,
+    _lp_token: address,
+    _rate_info: bytes32,
+    _has_initial_A: bool,
+    _is_v1: bool,
+    _name: String[64],
+):
+    raise
 
 
 @internal
@@ -595,6 +726,56 @@ def add_pool(
 
     self.last_updated = block.timestamp
     log PoolAdded(_pool)
+
+
+@external
+def add_pool_without_underlying(
+    _pool: address,
+    _n_coins: uint256,
+    _lp_token: address,
+    _rate_info: bytes32,
+    _decimals: uint256,
+    _use_rates: uint256,
+    _has_initial_A: bool,
+    _is_v1: bool,
+    _name: String[64],
+):
+    """
+    @notice Add a pool to the registry
+    @dev Only callable by admin
+    @param _pool Pool address to add
+    @param _n_coins Number of coins in the pool
+    @param _lp_token Pool deposit token address
+    @param _rate_info Encoded twenty-byte rate calculator address and/or four-byte
+        function signature to query coin rates
+    @param _decimals Coin decimal values, tightly packed as uint8 in a little-endian bytes32
+    @param _use_rates Boolean array indicating which coins use lending rates,
+                      tightly packed in a little-endian bytes32
+    @param _name The name of the pool
+    """
+    raise
+
+
+@external
+def add_metapool(
+    _pool: address,
+    _n_coins: uint256,
+    _lp_token: address,
+    _decimals: uint256,
+    _name: String[64],
+    _base_pool: address = ZERO_ADDRESS
+):
+    """
+    @notice Add a pool to the registry
+    @dev Only callable by admin
+    @param _pool Pool address to add
+    @param _n_coins Number of coins in the pool
+    @param _lp_token Pool deposit token address
+    @param _decimals Coin decimal values, tightly packed as uint8 in a little-endian bytes32
+    @param _name The name of the pool
+    @param _base_pool Address of the base_pool useful for adding factory pools
+    """
+    raise
 
 
 @external
