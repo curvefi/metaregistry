@@ -4,6 +4,7 @@ import os
 from brownie import Contract
 
 from tests.utils.constants import (
+    ADDRESS_PROVIDER,
     CRYPTO_FACTORY,
     CRYPTO_REGISTRY,
     GAUGE_CONTROLLER,
@@ -14,13 +15,16 @@ from tests.utils.constants import (
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePool.json"), "r") as fp:
     CURVE_V1_ABI = json.load(fp)
 
+
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "CurvePoolV2.json"), "r") as fp:
     CURVE_V2_ABI = json.load(fp)
+
 
 with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "CryptoFactory.json"), "r"
 ) as fp:
     CRYPTO_FACTORY_ABI = json.load(fp)
+
 
 with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "CryptoRegistry.json"),
@@ -28,22 +32,26 @@ with open(
 ) as fp:
     CRYPTO_REGISTRY_ABI = json.load(fp)
 
+
 with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "StableRegistry.json"),
     "r",
 ) as fp:
     STABLE_REGISTRY_ABI = json.load(fp)
 
+
 with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "StableFactory.json"), "r"
 ) as fp:
     STABLE_FACTORY_ABI = json.load(fp)
+
 
 with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "GaugeController.json"),
     "r",
 ) as fp:
     GAUGE_CONTROLLER_ABI = json.load(fp)
+
 
 with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "LiquidityGauge.json"),
@@ -52,12 +60,25 @@ with open(
     LIQUIDITY_GAUGE_ABI = json.load(fp)
 
 
+with open(
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), "AddressProvider.json"),
+    "r",
+) as fp:
+    ADDRESS_PROVIDER_ABI = json.load(fp)
+
+
 def curve_pool(_pool: str) -> Contract:
     return Contract.from_abi(name="CurveV1", address=_pool, abi=CURVE_V1_ABI)
 
 
 def curve_pool_v2(_pool: str) -> Contract:
     return Contract.from_abi(name="CurveV2", address=_pool, abi=CURVE_V2_ABI)
+
+
+def address_provider() -> Contract:
+    return Contract.from_abi(
+        name="Address Provider", address=ADDRESS_PROVIDER, abi=ADDRESS_PROVIDER_ABI
+    )
 
 
 def crypto_factory() -> Contract:
