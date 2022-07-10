@@ -22,6 +22,7 @@ struct BasePool:
     decimals: uint256[MAX_COINS]
     n_coins: uint256
     is_legacy: bool
+    name: String[64]
 
 struct PoolArray:
     location: uint256
@@ -30,7 +31,7 @@ struct PoolArray:
     coins: address[MAX_COINS]
     n_coins: uint256
     name: String[64]
-    is_lending_pool: bool
+    has_positive_rebasing_tokens: uint256
 
 
 interface AddressProvider:
@@ -778,7 +779,7 @@ def _remove_market(_pool: address, _coina: address, _coinb: address):
 # admin functions
 
 @external
-def add_base_pool(_pool: address, _lp_token: address, _coins: address[MAX_COINS]):
+def add_base_pool(_pool: address, _lp_token: address, _coins: address[MAX_COINS], _name: String[64]):
     """
     @notice Add a base pool to the registry
     @dev this is needed since paired base pools might be in a different registry
@@ -792,6 +793,7 @@ def add_base_pool(_pool: address, _lp_token: address, _coins: address[MAX_COINS]
     self.base_pool_data[_pool].location = self.base_pool_count + 1
     self.base_pool_data[_pool].lp_token = _lp_token
     self.base_pool_data[_pool].coins = _coins
+    self.base_pool_data[_pool].name = _name
 
     _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     for i in range(MAX_COINS):
@@ -831,25 +833,23 @@ def add_base_pool(_pool: address, _lp_token: address, _coins: address[MAX_COINS]
 @external
 def add_pool(
     _pool: address,
-    _n_coins: uint256,
     _lp_token: address,
     _gauge: address,
     _zap: address,
-    _decimals: uint256,
     _name: String[64],
     _base_pool: address = ZERO_ADDRESS,
-    _is_lending: bool = False
+    _has_positive_rebasing_tokens: bool = False
 ):
     """
     @notice Add a pool to the registry
     @dev Only callable by admin
     @param _pool Pool address to add
-    @param _n_coins Number of coins in the pool
-    @param _coins Coins in the pool
-    @param _ul_coins Underlying coins in the pool
     @param _lp_token Pool deposit token address
-    @param _decimals Coin decimal values, tightly packed as uint8 in a little-endian bytes32
+    @param _gauge Gauge address
+    @param _zap Zap address
     @param _name The name of the pool
+    @param _base_pool Address of base pool
+    @param _is_lending pool contains positive rebasing tokens
     """
     self._add_pool(msg.sender, _pool, _lp_token, _gauge, _zap, _name)
 
@@ -872,8 +872,8 @@ def add_pool(
 
         self._add_coins_to_market(_pool, _underlying_coins)
 
-    if _is_lending:
-        self.pool_data[_pool].is_lending_pool = True
+    if _has_positive_rebasing_tokens:
+        self.pool_data[_pool].has_positive_rebasing_tokens = 1
 
 
 @external
@@ -882,19 +882,9 @@ def remove_pool(_pool: address):
     @notice Remove a pool to the registry
     @dev Only callable by admin
     @param _pool Pool address to remove
-
-    location: uint256
-    decimals: uint256
-    base_pool: address
-    coins: address[MAX_COINS]
-    n_coins: uint256
-    name: String[64]
-    is_lending_pool: bool
-
     """
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
     assert self.pool_data[_pool].coins[0] != ZERO_ADDRESS  # dev: pool does not exist
-
 
     self.get_pool_from_lp_token[self.get_lp_token[_pool]] = ZERO_ADDRESS
     self.get_lp_token[_pool] = ZERO_ADDRESS
@@ -916,7 +906,6 @@ def remove_pool(_pool: address):
     self.pool_data[_pool].decimals = empty(uint256[MAX_COINS])
     self.pool_data[_pool].n_coins = 0
     self.pool_data[_pool].name = ""
-    self.pool_data[_pool].base_pool = ZERO_ADDRESS
 
     coins: address[MAX_COINS] = empty(address[MAX_COINS])
     for i in range(MAX_COINS):
@@ -933,6 +922,7 @@ def remove_pool(_pool: address):
     ucoins: address[MAX_COINS] = empty(address[MAX_COINS])
     if is_meta:
         ucoins = self._get_underlying_coins_for_metapool(_pool)
+        self.pool_data[_pool].base_pool = ZERO_ADDRESS
 
     for i in range(MAX_COINS):
         coin: address = coins[i]
@@ -957,6 +947,9 @@ def remove_pool(_pool: address):
             if is_meta and not ucoin in coins:
                 key: uint256 = bitwise_xor(convert(ucoin, uint256), convert(ucoinx, uint256))
                 self._unregister_coin_pair(ucoin, ucoinx, key)
+
+    if self.pool_data[_pool].has_positive_rebasing_tokens > 0:
+        self.pool_data[_pool].has_positive_rebasing_tokens = 0
 
     if self.get_zap[_pool] != ZERO_ADDRESS:
         self.get_zap[_pool] = ZERO_ADDRESS
