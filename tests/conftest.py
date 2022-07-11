@@ -34,7 +34,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     crypto_registry.add_base_pool(
         TRIPOOL,
         TRIPOOL_LPTOKEN,
-        [DAI, USDC, USDT],
+        [DAI, USDC, USDT] + [brownie.ZERO_ADDRESS] * 5,
         "3pool",
         {"from": owner},
     )
