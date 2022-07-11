@@ -557,6 +557,18 @@ def get_coin_swap_complement(_coin: address, _index: uint256) -> address:
     return self.coins[_coin].swap_for[_index]
 
 
+@view
+@external
+def get_base_pool_data(_pool: address) -> BasePool:
+    return self.base_pool_data[_pool]
+
+
+@view
+@external
+def get_pool_data(_pool: address) -> PoolArray:
+    return self.pool_data[_pool]
+
+
 # internal functionality used in admin setters
 
 
