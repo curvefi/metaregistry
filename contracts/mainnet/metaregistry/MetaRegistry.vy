@@ -73,9 +73,9 @@ registry_length: public(uint256)
 
 # ---- constructor ---- #
 @external
-def __init__():
-    self.address_provider = AddressProvider(0x0000000022D53366457F9d5E68Ec105046FC4383)
-    self.owner = AddressProvider(0x0000000022D53366457F9d5E68Ec105046FC4383).admin()
+def __init__(_address_provider: address):
+    self.address_provider = AddressProvider(_address_provider)
+    self.owner = AddressProvider(_address_provider).admin()
 
 
 # ---- internal methods ---- #

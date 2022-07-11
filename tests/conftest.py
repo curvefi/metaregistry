@@ -25,13 +25,12 @@ def owner():
     yield address_provider().admin()
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def crypto_registry_v1(CryptoRegistryV1, owner):
-    crypto_registry = CryptoRegistryV1.deploy(address_provider(), {"from": owner})
-    assert address_provider().set_address(5, crypto_registry, {"from": owner})
-
+    registry = CryptoRegistryV1.deploy(address_provider().address, {"from": owner})
+    raise
     # add 3pool as base_pool:
-    crypto_registry.add_base_pool(
+    tx = registry.add_base_pool(
         TRIPOOL,
         TRIPOOL_LPTOKEN,
         [DAI, USDC, USDT] + [brownie.ZERO_ADDRESS] * 5,
@@ -40,7 +39,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add tricrypto2
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0xD51a44d3FaE010294C616388b506AcdA1bfAAE46",  # _pool
         "0xc4AD29ba4B3c580e6D59105FFf484999997675Ff",  # _lp_token
         "0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168",  # _gauge
@@ -52,7 +51,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add EURT3CRV pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0x9838eccc42659fa8aa7daf2ad134b53984c9427b",  # _pool
         "0x3b6831c0077a1e44ed0a21841c3bc4dc11bce833",  # _lp_token
         "0x4Fd86Ce7Ecea88F7E0aA78DC12625996Fb3a04bC",  # _gauge
@@ -64,7 +63,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add EURSUSDC pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0x98a7F18d4E56Cfe84E3D081B40001B3d5bD3eB8B",  # _pool
         "0x3D229E1B4faab62F621eF2F6A610961f7BD7b23B",  # _lp_token
         "0x65CA7Dc5CB661fC58De57B1E1aF404649a27AD35",  # _gauge
@@ -76,7 +75,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add crveth pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511",  # _pool
         "0xEd4064f376cB8d68F770FB1Ff088a3d0F3FF5c4d",  # _lp_token
         "0x1cEBdB0856dd985fAe9b8fEa2262469360B8a3a6",  # _gauge
@@ -88,7 +87,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add cvxeth pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",  # _pool
         "0x3A283D9c08E8b55966afb64C515f5143cf907611",  # _lp_token
         "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1",  # _gauge
@@ -100,7 +99,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add xaut3crv pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0xAdCFcf9894335dC340f6Cd182aFA45999F45Fc44",  # _pool
         "0x8484673cA7BfF40F82B041916881aeA15ee84834",  # _lp_token
         "0x1B3E14157ED33F60668f2103bCd5Db39a1573E5B",  # _gauge
@@ -112,7 +111,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add spelleth pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0x98638FAcf9a3865cd033F36548713183f6996122",  # _pool
         "0x8282BD15dcA2EA2bDf24163E8f2781B30C43A2ef",  # _lp_token
         "0x08380a4999Be1a958E2abbA07968d703C7A3027C",  # _gauge
@@ -124,7 +123,7 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
     )
 
     # add teth pool
-    crypto_registry.add_pool(
+    tx = registry.add_pool(
         "0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC",  # _pool
         "0xCb08717451aaE9EF950a2524E33B6DCaBA60147B",  # _lp_token
         "0x6070fBD4E608ee5391189E7205d70cc4A274c017",  # _gauge
@@ -135,40 +134,59 @@ def crypto_registry_v1(CryptoRegistryV1, owner):
         {"from": owner},
     )
 
-    yield crypto_registry
-
-
-@pytest.fixture(scope="module")
-def metaregistry(MetaRegistry, owner):
-    yield MetaRegistry.deploy({"from": owner})
+    yield registry
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_registry_handler(StableRegistryHandler, owner, metaregistry):
-    handler = StableRegistryHandler.deploy(metaregistry, 0, {"from": owner})
+def address_provider_updated(crypto_registry_v1):
+    add_provider = address_provider()
+    tx = add_provider.set_address(5, crypto_registry_v1, {"from": owner})
+    yield add_provider
+
+
+@pytest.fixture(scope="module")
+def metaregistry(MetaRegistry, address_provider_updated, owner):
+    yield MetaRegistry.deploy(address_provider_updated, {"from": owner})
+
+
+@pytest.fixture(scope="module", autouse=True)
+def stable_registry_handler(StableRegistryHandler, owner, metaregistry, address_provider_updated):
+    handler = StableRegistryHandler.deploy(
+        metaregistry, address_provider_updated, 0, {"from": owner}
+    )
     metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
 def stable_factory_handler(
-    StableFactoryHandler, owner, metaregistry, stable_registry_handler
+    StableFactoryHandler, owner, metaregistry, address_provider_updated, stable_registry_handler
 ):  # ensure registry fixtures exec order
-    handler = StableFactoryHandler.deploy(metaregistry, 3, {"from": owner})
+    handler = StableFactoryHandler.deploy(
+        metaregistry, address_provider_updated, 3, {"from": owner}
+    )
     metaregistry.add_registry_by_address_provider_id(3, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_handler(CryptoRegistryHandler, owner, metaregistry, stable_factory_handler):
-    handler = CryptoRegistryHandler.deploy(metaregistry, 5, {"from": owner})
+def crypto_registry_handler(
+    CryptoRegistryHandler, owner, metaregistry, address_provider_updated, stable_factory_handler
+):
+    handler = CryptoRegistryHandler.deploy(
+        metaregistry, address_provider_updated, 5, {"from": owner}
+    )
     metaregistry.add_registry_by_address_provider_id(5, handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_factory_handler(CryptoFactoryHandler, owner, metaregistry, crypto_registry_handler):
-    handler = CryptoFactoryHandler.deploy(metaregistry, 6, {"from": owner})
+def crypto_factory_handler(
+    CryptoFactoryHandler, owner, metaregistry, address_provider_updated, crypto_registry_handler
+):
+    handler = CryptoFactoryHandler.deploy(
+        metaregistry, address_provider_updated, 6, {"from": owner}
+    )
     metaregistry.add_registry_by_address_provider_id(6, handler, {"from": owner})
     yield handler
 

@@ -256,6 +256,7 @@ def _get_coin_indices(
 
     return result
 
+
 # targetted external getters, optimized for on-chain calls
 
 
@@ -580,66 +581,6 @@ def _get_decimals(_coins: address[MAX_COINS]) -> uint256[MAX_COINS]:
 
 
 @internal
-def _add_pool(
-    _sender: address,
-    _pool: address,
-    _lp_token: address,
-    _gauge: address,
-    _zap: address,
-    _name: String[64],
-):
-    """
-    location: uint256
-    decimals: uint256
-    base_pool: address
-    coins: address[MAX_COINS]
-    n_coins: uint256
-    name: String[64]
-    """
-
-    assert _sender == self.address_provider.admin()  # dev: admin-only function
-    assert _lp_token != ZERO_ADDRESS
-    assert self.pool_data[_pool].coins[0] == ZERO_ADDRESS  # dev: pool exists
-    assert self.get_pool_from_lp_token[_lp_token] == ZERO_ADDRESS
-
-    # initialise PoolArray struct
-    length: uint256 = self.pool_count
-    self.pool_list[length] = _pool
-    self.pool_count = length + 1
-    self.pool_data[_pool].location = length
-    self.pool_data[_pool].name = _name
-
-    # update public mappings
-    if _zap != ZERO_ADDRESS:
-        self.get_zap[_pool] = _zap
-
-    if _gauge != ZERO_ADDRESS:
-        self.liquidity_gauges[_pool][0] = _gauge
-
-    self.get_pool_from_lp_token[_lp_token] = _pool
-    self.get_lp_token[_pool] = _lp_token
-
-    # add coins:
-    _coins: address[MAX_COINS] = empty(address[MAX_COINS])
-    _coin: address = ZERO_ADDRESS
-    _n_coins: uint256 = 0
-    for i in range(MAX_COINS):
-        _coin = CurvePool(_pool).coins(convert(i, uint256))
-        if _coin == ZERO_ADDRESS:
-            _n_coins = convert(i,uint256) + 1
-            break
-        _coins[i] = _coin
-
-    self.pool_data[_pool].n_coins = _n_coins
-    self.pool_data[_pool].coins = _coins
-    self.pool_data[_pool].decimals = self._get_decimals(_coins)
-
-    # log pool added:
-    self.last_updated = block.timestamp
-    log PoolAdded(_pool)
-
-
-@internal
 def _register_coin(_coin: address):
     if self.coins[_coin].register_count == 0:
         coin_count: uint256 = self.coin_count
@@ -782,7 +723,8 @@ def add_base_pool(_pool: address, _lp_token: address, _coins: address[MAX_COINS]
     assert self.base_pool_data[_pool].lp_token == ZERO_ADDRESS  # dev: pool exists
 
     # add pool to base_pool_list
-    self.base_pool_data[_pool].location = self.base_pool_count + 1
+    base_pool_count: uint256 = self.base_pool_count
+    self.base_pool_data[_pool].location = base_pool_count + 1
     self.base_pool_data[_pool].lp_token = _lp_token
     self.base_pool_data[_pool].coins = _coins
     self.base_pool_data[_pool].name = _name
@@ -819,6 +761,7 @@ def add_base_pool(_pool: address, _lp_token: address, _coins: address[MAX_COINS]
         self.base_pool_data[_pool].is_legacy = True
 
     self.last_updated = block.timestamp
+    self.base_pool_count = base_pool_count + 1
     log BasePoolAdded(_pool)
 
 
@@ -843,29 +786,74 @@ def add_pool(
     @param _base_pool Address of base pool
     @param _has_positive_rebasing_tokens pool contains positive rebasing tokens
     """
-    self._add_pool(msg.sender, _pool, _lp_token, _gauge, _zap, _name)
+    assert msg.sender == self.address_provider.admin()  # dev: admin-only function
+    assert _lp_token != ZERO_ADDRESS
+    assert self.pool_data[_pool].coins[0] == ZERO_ADDRESS  # dev: pool exists
+    assert self.get_pool_from_lp_token[_lp_token] == ZERO_ADDRESS
 
-    # add pool coins to market:
+    # initialise PoolArray struct
+    length: uint256 = self.pool_count
+    self.pool_list[length] = _pool
+    self.pool_count = length + 1
+    self.pool_data[_pool].location = length
+    self.pool_data[_pool].name = _name
+
+    # update public mappings
+    if _zap != ZERO_ADDRESS:
+        self.get_zap[_pool] = _zap
+
+    if _gauge != ZERO_ADDRESS:
+        self.liquidity_gauges[_pool][0] = _gauge
+
+    self.get_pool_from_lp_token[_lp_token] = _pool
+    self.get_lp_token[_pool] = _lp_token
+
+    # add coins:
     _coins: address[MAX_COINS] = empty(address[MAX_COINS])
     _coin: address = ZERO_ADDRESS
+    _n_coins: uint256 = 0
     for i in range(MAX_COINS):
-        _coin = CurvePool(_pool).coins(convert(i, uint256))
-        if _coin == ZERO_ADDRESS:
+
+        success: bool = False
+        response: Bytes[32] = b""
+        success, response = raw_call(
+            _pool,
+            concat(
+                method_id("coins(uint256)"),
+                convert(i, bytes32),
+            ),
+            max_outsize=32,
+            revert_on_failure=False,
+            is_static_call=True
+        )
+
+        if success:
+            _coins[i] = _coin
+        else:
+            _n_coins = convert(i, uint256)
             break
-        _coins[i] = _coin
+
+    self.pool_data[_pool].n_coins = _n_coins
+    self.pool_data[_pool].coins = _coins
+    self.pool_data[_pool].decimals = self._get_decimals(_coins)
 
     self._add_coins_to_market(_pool, _coins)
 
     if _base_pool != ZERO_ADDRESS:
         assert self.base_pool_data[_base_pool].lp_token != ZERO_ADDRESS
         self.pool_data[_pool].base_pool = _base_pool
-
+        
         _underlying_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
+        assert _underlying_coins[0] != ZERO_ADDRESS
 
         self._add_coins_to_market(_pool, _underlying_coins)
 
     if _has_positive_rebasing_tokens:
         self.pool_data[_pool].has_positive_rebasing_tokens = 1
+
+    # log pool added:
+    self.last_updated = block.timestamp
+    log PoolAdded(_pool)  
 
 
 @external

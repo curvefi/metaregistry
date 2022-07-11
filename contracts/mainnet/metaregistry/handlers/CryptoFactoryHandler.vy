@@ -75,8 +75,8 @@ registry_index: uint256
 
 # ---- constructor ---- #
 @external
-def __init__(_metaregistry: address, _id: uint256):
-    self.base_registry = BaseRegistry(AddressProvider(0x0000000022D53366457F9d5E68Ec105046FC4383).get_address(_id))
+def __init__(_metaregistry: address, _address_provider: address, _id: uint256):
+    self.base_registry = BaseRegistry(AddressProvider(_address_provider).get_address(_id))
     self.registry_id = _id
     self.registry_index = MetaRegistry(_metaregistry).registry_length()
 
