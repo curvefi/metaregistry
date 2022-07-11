@@ -21,7 +21,7 @@ def charlie(accounts):
 
 
 @pytest.fixture(scope="session")
-def owner(address_provider):
+def owner():
     yield address_provider().admin()
 
 
