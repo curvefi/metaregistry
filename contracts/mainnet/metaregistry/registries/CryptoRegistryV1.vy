@@ -126,20 +126,6 @@ def __init__(_address_provider: address):
 
 # internal functionality for getters
 
-@view
-@internal
-def _unpack_decimals(_packed: uint256, _n_coins: uint256) -> uint256[MAX_COINS]:
-    # decimals are tightly packed as a series of uint8 within a little-endian bytes32
-    # the packed value is stored as uint256 to simplify unpacking via shift and modulo
-    decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
-    n_coins: int128 = convert(_n_coins, int128)
-    for i in range(MAX_COINS):
-        if i == n_coins:
-            break
-        decimals[i] = shift(_packed, -8 * i) % 256
-
-    return decimals
-
 
 @view
 @internal
@@ -531,6 +517,12 @@ def is_meta(_pool: address) -> bool:
 
 @view
 @external
+def get_base_pool(_pool: address) -> address:
+    return self.pool_data[_pool].base_pool
+
+
+@view
+@external
 def get_pool_name(_pool: address) -> String[64]:
     """
     @notice Get the given name for a pool
@@ -849,7 +841,7 @@ def add_pool(
     @param _zap Zap address
     @param _name The name of the pool
     @param _base_pool Address of base pool
-    @param _is_lending pool contains positive rebasing tokens
+    @param _has_positive_rebasing_tokens pool contains positive rebasing tokens
     """
     self._add_pool(msg.sender, _pool, _lp_token, _gauge, _zap, _name)
 

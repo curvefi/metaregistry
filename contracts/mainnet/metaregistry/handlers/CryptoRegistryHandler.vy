@@ -13,6 +13,7 @@ interface BaseRegistry:
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_admin_balances(_pool: address) -> uint256[MAX_COINS]: view
     def get_balances(_pool: address) -> uint256[MAX_COINS]: view
+    def get_base_pool(_pool: address) -> address: view
     def get_coins(_pool: address) -> address[MAX_COINS]: view
     def get_coin_indices(_pool: address, _from: address, _to: address) -> uint256[2]: view
     def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
@@ -22,7 +23,12 @@ interface BaseRegistry:
     def get_n_coins(_pool: address) -> uint256: view
     def get_pool_from_lp_token(_lp_token: address) -> address: view
     def get_pool_name(_pool: address) -> String[64]: view
+    def get_n_underlying_coins(_pool: address) -> uint256: view
+    def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]: view
+    def get_underlying_coins(_pool: address) -> address[MAX_COINS]: view
+    def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]: view
     def get_virtual_price_from_lp_token(_token: address) -> uint256: view
+    def is_meta(_pool: address) -> bool: view
     def pool_count() -> uint256: view
     def pool_list(pool_id: uint256) -> address: view
 
@@ -73,28 +79,12 @@ def __init__(_metaregistry: address, _id: uint256):
 
 
 # ---- internal methods ---- #
-@internal
-@view
-def _get_balances(_pool: address) -> uint256[MAX_COINS]:
-    return self.base_registry.get_balances(_pool)
-
-
-@internal
-@view
-def _get_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_registry.get_coins(_pool)
 
 
 @internal
 @view
 def _get_lp_token(_pool: address) -> address:
     return self.base_registry.get_lp_token(_pool)
-
-
-@internal
-@view
-def _get_n_coins(_pool: address) -> uint256:
-    return self.base_registry.get_n_coins(_pool)
 
 
 # ---- view methods (API) of the contract ---- #
@@ -107,53 +97,19 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
 @external
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_COINS]:
-    """
-    @dev Cryptoswap pools do not store admin fees in the form of
-         admin token balances. Instead, the admin fees are computed
-         at the time of claim iff sufficient profits have been made.
-         These fees are allocated to the admin by minting LP tokens
-         (dilution). The logic to calculate fees are derived from
-         cryptopool._claim_admin_fees() method.
-    """
-    xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
-    xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
-    admin_fee: uint256 = CurvePool(_pool).admin_fee()
-    admin_balances: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
-
-    # admin balances are non zero if pool has made more than allowed profits:
-    if xcp_profit > xcp_profit_a:
-
-        # calculate admin fees in lp token amounts:
-        fees: uint256 = (xcp_profit - xcp_profit_a) * admin_fee / (2 * 10**10)
-        if fees > 0:
-            vprice: uint256 = CurvePool(_pool).virtual_price()
-            lp_token: address = self._get_lp_token(_pool)
-            frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
-
-            # the total supply of lp token is current supply + claimable:
-            lp_token_total_supply: uint256 = ERC20(lp_token).totalSupply()
-            d_supply: uint256 = lp_token_total_supply * frac / 10**18
-            lp_token_total_supply += d_supply
-            admin_lp_frac: uint256 = d_supply * 10 ** 18 / lp_token_total_supply
-
-            # get admin balances in individual assets:
-            reserves: uint256[MAX_COINS] = self._get_balances(_pool)
-            for i in range(MAX_COINS):
-                admin_balances[i] = admin_lp_frac * reserves[i] / 10 ** 18
-
-    return admin_balances
+    return self.base_registry.get_admin_balances(_pool)
 
 
 @external
 @view
 def get_balances(_pool: address) -> uint256[MAX_COINS]:
-    return self._get_balances(_pool)
+    return self.base_registry.get_balances(_pool)
 
 
 @external
 @view
 def get_base_pool(_pool: address) -> address:
-    return ZERO_ADDRESS
+    return self.base_registry.get_base_pool(_pool)
 
 
 @view
@@ -166,7 +122,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
-    return self._get_coins(_pool)
+    return self.base_registry.get_coins(_pool)
 
 
 @external
@@ -200,13 +156,13 @@ def get_lp_token(_pool: address) -> address:
 @external
 @view
 def get_n_coins(_pool: address) -> uint256:
-    return self._get_n_coins(_pool)
+    return self.base_registry.get_n_coins(_pool)
 
 
 @external
 @view
 def get_n_underlying_coins(_pool: address) -> uint256:
-    return self._get_n_coins(_pool)
+    return self.base_registry.get_n_underlying_coins(_pool)
 
 
 @external
@@ -255,19 +211,19 @@ def get_pool_params(_pool: address) -> uint256[20]:
 @external
 @view
 def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
-    return self._get_balances(_pool)
+    return self.base_registry.get_underlying_balances(_pool)
 
 
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
-    return self._get_coins(_pool)
+    return self.base_registry.get_underlying_coins(_pool)
 
 
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
-    return self.base_registry.get_decimals(_pool)
+    return self.base_registry.get_underlying_decimals(_pool)
 
 
 @external
@@ -279,7 +235,7 @@ def get_virtual_price_from_lp_token(_token: address) -> uint256:
 @external
 @view
 def is_meta(_pool: address) -> bool:
-    return False
+    return self.base_registry.is_meta(_pool)
 
 
 @external
