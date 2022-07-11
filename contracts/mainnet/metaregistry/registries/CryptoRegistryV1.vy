@@ -842,7 +842,7 @@ def add_pool(
     if _base_pool != ZERO_ADDRESS:
         assert self.base_pool_data[_base_pool].lp_token != ZERO_ADDRESS
         self.pool_data[_pool].base_pool = _base_pool
-        
+
         _underlying_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
         assert _underlying_coins[0] != ZERO_ADDRESS
 
@@ -853,7 +853,7 @@ def add_pool(
 
     # log pool added:
     self.last_updated = block.timestamp
-    log PoolAdded(_pool)  
+    log PoolAdded(_pool)
 
 
 @external
