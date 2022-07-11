@@ -608,14 +608,14 @@ def _add_pool(
     self.pool_count = length + 1
     self.pool_data[_pool].location = length
     self.pool_data[_pool].name = _name
-    
+
     # update public mappings
     if _zap != ZERO_ADDRESS:
         self.get_zap[_pool] = _zap
 
     if _gauge != ZERO_ADDRESS:
         self.liquidity_gauges[_pool][0] = _gauge
-    
+
     self.get_pool_from_lp_token[_lp_token] = _pool
     self.get_lp_token[_pool] = _lp_token
 
@@ -633,7 +633,7 @@ def _add_pool(
     self.pool_data[_pool].n_coins = _n_coins
     self.pool_data[_pool].coins = _coins
     self.pool_data[_pool].decimals = self._get_decimals(_coins)
-    
+
     # log pool added:
     self.last_updated = block.timestamp
     log PoolAdded(_pool)
@@ -853,7 +853,7 @@ def add_pool(
         if _coin == ZERO_ADDRESS:
             break
         _coins[i] = _coin
-        
+
     self._add_coins_to_market(_pool, _coins)
 
     if _base_pool != ZERO_ADDRESS:
@@ -904,7 +904,7 @@ def remove_pool(_pool: address):
         coins[i] = self.pool_data[_pool].coins[i]
         if coins[i] == ZERO_ADDRESS:
             break
-        
+
         # delete coin address from pool_data
         self.pool_data[_pool].coins[i] = ZERO_ADDRESS
         self._unregister_coin(coins[i])

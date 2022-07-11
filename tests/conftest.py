@@ -1,14 +1,8 @@
-import pytest
 import brownie
+import pytest
 
-from tests.abis import (
-    address_provider,
-    crypto_factory,
-    crypto_registry,
-    stable_factory,
-    stable_registry,
-)
-from tests.utils.constants import TRIPOOL_LPTOKEN, TRIPOOL, DAI, USDC, USDT
+from tests.abis import address_provider, crypto_factory, stable_factory, stable_registry
+from tests.utils.constants import DAI, TRIPOOL, TRIPOOL_LPTOKEN, USDC, USDT
 
 
 @pytest.fixture(scope="session")
@@ -26,20 +20,15 @@ def charlie(accounts):
     yield accounts[3]
 
 
-@pytest.fixture(scope="module")
-def address_provider():
-    yield address_provider()
-
-
 @pytest.fixture(scope="session")
 def owner(address_provider):
-    yield address_provider.admin()
+    yield address_provider().admin()
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_v1(CryptoRegistryV1, address_provider, owner):
-    crypto_registry = CryptoRegistryV1.deploy(address_provider, {"from": owner})
-    assert address_provider.set_address(5, crypto_registry, {"from": owner})
+def crypto_registry_v1(CryptoRegistryV1, owner):
+    crypto_registry = CryptoRegistryV1.deploy(address_provider(), {"from": owner})
+    assert address_provider().set_address(5, crypto_registry, {"from": owner})
 
     # add 3pool as base_pool:
     crypto_registry.add_base_pool(
