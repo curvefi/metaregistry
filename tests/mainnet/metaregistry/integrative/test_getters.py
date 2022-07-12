@@ -72,17 +72,19 @@ def test_is_registered(metaregistry, registry_pool_index_iterator, pool_id):
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_is_meta(metaregistry, registry_pool_index_iterator, pool_id):
+def test_is_meta(metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    if registry_id in [
-        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-        METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
-    ]:
-        actual_output = False  # mainnet crypto registries don't have this method.
+    if registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+        coins = registry.get_coins(pool)
+        actual_output = False
+        for i in range(len(coins)):
+            if base_pool_registry.get_base_pool_for_lp_token(coins[i]) != brownie.ZERO_ADDRESS:
+                actual_output = True
+                break
     else:
         actual_output = registry.is_meta(pool)
 
@@ -225,13 +227,7 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
 
     # get actual decimals: first try registry
     # todo: include CryptoRegistryHandler when CryptoRegistry gets updated
-    pool_is_metapool = False
-    if registry_id in [
-        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-    ]:
-        pool_is_metapool = registry.is_meta(pool)
-
+    pool_is_metapool = metaregistry.is_meta(pool)
     pool_underlying_decimals_exceptions = {
         # eth: ankreth pool returns [18, 0] when it should return:
         "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2": [18, 18],
@@ -247,8 +243,15 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
     if pool in pool_underlying_decimals_exceptions:
         actual_output = pool_underlying_decimals_exceptions[pool]
     elif pool_is_metapool:
-        actual_output = list(registry.get_underlying_decimals(pool))
-        assert actual_output[2] != 0  # there has to be a third coins!
+        underlying_coins = metaregistry.get_underlying_coins(pool)
+        actual_output = []
+        for i in range(len(underlying_coins)):
+            if underlying_coins[i] == brownie.ZERO_ADDRESS:
+                actual_output.append(0)
+            else:
+                actual_output.append(brownie.interface.ERC20(underlying_coins[i]).decimals())
+
+        assert actual_output[2] != 0  # there has to be a third coin!
     else:
         actual_output = list(registry.get_decimals(pool))
 
