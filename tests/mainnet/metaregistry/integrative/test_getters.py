@@ -138,11 +138,27 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
+    # skip if pool has little to no liquidity, since vprice queries will most likely bork:
     pool_balances = metaregistry.get_balances(pool)
-    coin_decimals = metaregistry.get_decimals(pool)
     lp_token = metaregistry.get_lp_token(pool)
+    if sum(pool_balances) == 0:
 
+        with brownie.reverts():
+            metaregistry.get_virtual_price_from_lp_token(lp_token)
+
+        pytest.skip(f"empty pool: {pool}")
+
+    elif sum(pool_balances) < 100:  # tiny pool
+        with brownie.reverts():
+            metaregistry.get_virtual_price_from_lp_token(lp_token)
+
+        pytest.skip(f"tiny pool: {pool}")
+
+    coin_decimals = metaregistry.get_decimals(pool)
     coins = metaregistry.get_coins(pool)
+
+    # check if pool balances after accounting for decimals is legible.
+    # some scam tokens can have weird token properties (e.g. ELONX)
     pool_balances_float = []
     for i in range(len(pool_balances)):
 
@@ -157,14 +173,7 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
         ):
             with brownie.reverts():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)
-            pytest.skip("skem token in pool with zero decimals")
-
-        if sum(pool_balances) == 0:
-
-            with brownie.reverts():
-                metaregistry.get_virtual_price_from_lp_token(lp_token)
-
-            pytest.skip(f"empty pool: {pool}")
+            pytest.skip(f"skem token {coins[i]} in pool {pool} with zero decimals")
 
     # check if pool balances are skewed: vprice calc will bork if one of the coin
     # balances is close to zero.
