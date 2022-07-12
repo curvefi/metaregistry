@@ -437,7 +437,7 @@ def get_pool_params(_pool: address) -> uint256[20]:
 @external
 @view
 def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    if not self._is_meta(_pool):
+    if self._is_meta(_pool):
         return self._get_meta_underlying_balances(_pool)
     return self._get_balances(_pool)
 

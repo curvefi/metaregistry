@@ -363,7 +363,9 @@ def test_get_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, pool_id):
+def test_get_underlying_balances(
+    metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id
+):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
@@ -385,10 +387,35 @@ def test_get_underlying_balances(metaregistry, registry_pool_index_iterator, poo
     elif registry_id in [
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
         METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-    ] and registry.is_meta(pool):
+        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
+    ] and metaregistry.is_meta(pool):
 
         # the metaregistry uses get_balances if the pool is not a metapool:
         actual_output = registry.get_underlying_balances(pool)
+
+    elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX and metaregistry.is_meta(pool):
+        # crypto factory does not have get_underlying_balances method.
+        v2_pool = curve_pool_v2(pool)
+
+        coins = registry.get_coins(pool)
+        pool_balances = [0] * MAX_COINS
+
+        for idx, coin in enumerate(coins):
+            base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+            if base_pool != brownie.ZERO_ADDRESS:
+                basepool_coins = base_pool_registry.get_base_pool_data(base_pool)[2]
+                basepool_contract = brownie.Contract(base_pool)
+                basepool_lp_token_balance = v2_pool.balances(idx)
+                lp_token_supply = brownie.interfaces.ERC20(coin).totalSupply()
+                ratio_in_pool = basepool_lp_token_balance / lp_token_supply
+                for idy, coin in enumerate(basepool_coins):
+                    if coin == brownie.ZERO_ADDRESS:
+                        break
+                    pool_balances[idx] = basepool_contract.balances(idy) * ratio_in_pool
+
+                break
+            pool_balances[idx] = v2_pool.balances(idx)
+        actual_output = pool_balances
 
     else:
 
