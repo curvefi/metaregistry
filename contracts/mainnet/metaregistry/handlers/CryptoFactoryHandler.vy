@@ -164,7 +164,7 @@ def _get_base_pool(_pool: address) -> address:
             break
         base_pool = self.base_pool_registry.get_base_pool_for_lp_token(_coins[i])
         if base_pool != ZERO_ADDRESS:
-            return base_pool  
+            return base_pool
     return ZERO_ADDRESS
 
 
@@ -369,7 +369,7 @@ def get_lp_token(_pool: address) -> address:
 def get_n_coins(_pool: address) -> uint256:
     return self._get_n_coins(_pool)
 
-    
+
 @external
 @view
 def get_n_underlying_coins(_pool: address) -> uint256:
