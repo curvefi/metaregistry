@@ -8,6 +8,7 @@ from tests.abis import curve_pool, curve_pool_v2, gauge_controller, liquidity_ga
 from tests.utils.constants import (
     BTC_BASEPOOL_LP_TOKEN_MAINNET,
     BTC_BASEPOOL_MAINNET,
+    MAX_COINS,
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
     METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
     METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
@@ -276,22 +277,52 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
     assert tuple(actual_output) == metaregistry_output
 
 
-def _get_underlying_coins_from_registry(registry_id, registry, pool):
+def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registry, pool):
 
     if registry_id in [
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
         METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
+        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
     ]:
 
         return registry.get_underlying_coins(pool)
 
     else:
 
-        return registry.get_coins(pool)
+        # crypto factory does not have underlying coins methods,
+        # so we need to find it out the long way:
+        coins = registry.get_coins(pool)
+        underlying_coins = [brownie.ZERO_ADDRESS] * MAX_COINS
+
+        for idx, coin in enumerate(coins):
+
+            base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+
+            if base_pool != brownie.ZERO_ADDRESS:
+
+                basepool_coins = base_pool_registry.get_base_pool_data(base_pool)[2]
+
+                for bp_coin in basepool_coins:
+
+                    if bp_coin == brownie.ZERO_ADDRESS:
+                        break
+
+                    underlying_coins[idx] = bp_coin
+                    idx += 1
+
+                break
+
+            else:
+
+                underlying_coins[idx] = coin
+
+        return underlying_coins
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_underlying_coins(metaregistry, registry_pool_index_iterator, pool_id):
+def test_get_underlying_coins(
+    metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id
+):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
@@ -299,7 +330,9 @@ def test_get_underlying_coins(metaregistry, registry_pool_index_iterator, pool_i
     metaregistry_output = metaregistry.get_underlying_coins(pool)
 
     try:
-        actual_output = _get_underlying_coins_from_registry(registry_id, registry, pool)
+        actual_output = _get_underlying_coins_from_registry(
+            registry_id, registry, base_pool_registry, pool
+        )
     except brownie.exceptions.VirtualMachineError:
         assert not registry.is_meta(pool)
         actual_output = registry.get_coins(pool)
