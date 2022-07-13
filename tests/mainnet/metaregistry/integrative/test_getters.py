@@ -6,8 +6,6 @@ import pytest
 
 from tests.abis import curve_pool, curve_pool_v2, gauge_controller, liquidity_gauge
 from tests.utils.constants import (
-    BTC_BASEPOOL_LP_TOKEN_MAINNET,
-    BTC_BASEPOOL_MAINNET,
     MAX_COINS,
     METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX,
     METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
@@ -309,7 +307,7 @@ def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registr
 
             if base_pool != brownie.ZERO_ADDRESS:
 
-                basepool_coins = base_pool_registry.base_pool(base_pool)[2]
+                basepool_coins = base_pool_registry.get_coins(base_pool)
 
                 for bp_coin in basepool_coins:
 
@@ -393,7 +391,7 @@ def test_get_underlying_balances(
         for idx, coin in enumerate(coins):
             base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
             if base_pool != brownie.ZERO_ADDRESS:
-                basepool_coins = base_pool_registry.base_pool(base_pool)[2]
+                basepool_coins = base_pool_registry.get_coins(base_pool)
                 basepool_contract = brownie.Contract(base_pool)
                 basepool_lp_token_balance = v2_pool.balances(idx)
                 lp_token_supply = brownie.interfaces.ERC20(coin).totalSupply()
@@ -477,8 +475,9 @@ def test_get_n_underlying_coins(
     for idx, coin in enumerate(coins):
         if coin == brownie.ZERO_ADDRESS:
             break
-        if base_pool_registry.get_base_pool_for_lp_token(coin) != brownie.ZERO_ADDRESS:
-            basepool_coins = base_pool_registry.base_pool(coin)
+        base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+        if base_pool != brownie.ZERO_ADDRESS:
+            basepool_coins = base_pool_registry.get_coins(base_pool)
             num_bp_coins = sum([1 for i in basepool_coins if i != brownie.ZERO_ADDRESS])
             num_coins += num_bp_coins
         else:

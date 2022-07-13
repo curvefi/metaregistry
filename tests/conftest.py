@@ -1,9 +1,8 @@
-from re import A
 import brownie
 import pytest
 
 from tests.abis import address_provider, crypto_factory, stable_factory, stable_registry
-from tests.utils.constants import DAI, TRIPOOL, TRIPOOL_LPTOKEN, USDC, USDT
+from tests.utils.constants import TRIPOOL, TRIPOOL_LPTOKEN
 
 
 @pytest.fixture(scope="session")
@@ -31,23 +30,29 @@ def base_pool_registry(BasePoolRegistry, owner):
     registry = BasePoolRegistry.deploy(address_provider().address, {"from": owner})
 
     # add 3pool
-    tx = registry.add_base_pool(
+    registry.add_base_pool(
         TRIPOOL,
         TRIPOOL_LPTOKEN,
+        3,
+        False,
         {"from": owner},
     )
 
     # add fraxusdc pool
-    tx = registry.add_base_pool(
+    registry.add_base_pool(
         "0xdcef968d416a41cdac0ed8702fac8128a64241a2",
         "0x3175df0976dfa876431c2e9ee6bc45b65d3473cc",
+        2,
+        False,
         {"from": owner},
     )
 
     # add sbtc pool
-    tx = registry.add_base_pool(
+    registry.add_base_pool(
         "0x7fc77b5c7614e1533320ea6ddc2eb61fa00a9714",
         "0x075b1bb99792c9e1041ba13afef80c91a1e70fb3",
+        3,
+        True,
         {"from": owner},
     )
 

@@ -9,16 +9,6 @@ interface AddressProvider:
     def get_address(_id: uint256) -> address: view
 
 
-struct BasePool:
-    location: uint256
-    lp_token: address
-    coins: address[MAX_METAREGISTRY_COINS]
-    decimals: uint256[MAX_METAREGISTRY_COINS]
-    n_coins: uint256
-    is_legacy: bool
-    name: String[64]
-
-
 interface BaseRegistry:
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_balances(_pool: address) -> uint256[MAX_COINS]: view
@@ -33,8 +23,11 @@ interface BaseRegistry:
 
 
 interface BasePoolRegistry:
-    def get_base_pool_data(_base_pool: address) -> BasePool: view
-    def get_base_pool_for_lp_token(_lp_token: address) ->  address: view
+    def get_base_pool_for_lp_token(_lp_token: address) -> address: view
+    def get_n_coins(_pool: address) -> uint256: view
+    def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]: view
+    def get_lp_token(_pool: address) -> address: view
+    def is_legacy(_pool: address) -> bool: view
 
 
 interface CurvePool:
@@ -156,16 +149,8 @@ def _get_n_coins(_pool: address) -> uint256:
 @internal
 @view
 def _get_base_pool(_pool: address) -> address:
-    _coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
-    _coins = self._get_coins(_pool)
-    base_pool: address = ZERO_ADDRESS
-    for i in range(MAX_COINS):
-        if _coins[i] == ZERO_ADDRESS:
-            break
-        base_pool = self.base_pool_registry.get_base_pool_for_lp_token(_coins[i])
-        if base_pool != ZERO_ADDRESS:
-            return base_pool
-    return ZERO_ADDRESS
+    _coin: address = self.base_registry.get_coins(_pool)[1]
+    return self.base_pool_registry.get_base_pool_for_lp_token(_coin)
 
 
 @view
@@ -175,9 +160,7 @@ def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_METAREGIST
     base_pool: address = self._get_base_pool(_pool)
     assert base_pool != ZERO_ADDRESS
 
-    base_pool_coins: address[MAX_METAREGISTRY_COINS] = self.base_pool_registry.get_base_pool_data(
-        base_pool
-    ).coins
+    base_pool_coins: address[MAX_METAREGISTRY_COINS] = self.base_pool_registry.get_coins(base_pool)
     _underlying_coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
     base_coin_offset: uint256 = self._get_n_coins(_pool) - 1
 
@@ -201,9 +184,7 @@ def _is_meta(_pool: address) -> bool:
 def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     base_coin_idx: uint256 = self._get_n_coins(_pool) - 1
     base_pool: address = self._get_base_pool(_pool)
-    base_total_supply: uint256 = ERC20(
-        self.base_pool_registry.get_base_pool_data(base_pool).lp_token
-    ).totalSupply()
+    base_total_supply: uint256 = ERC20(self.base_pool_registry.get_lp_token(base_pool)).totalSupply()
 
     ul_balance: uint256 = 0
     underlying_pct: uint256 = 0
@@ -222,7 +203,7 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_CO
 
         else:
 
-            if self.base_pool_registry.get_base_pool_data(base_pool).is_legacy:
+            if self.base_pool_registry.is_legacy(base_pool):
                 ul_balance = StableSwapLegacy(base_pool).balances(convert(i - base_coin_idx, int128))
             else:
                 ul_balance = CurvePool(base_pool).balances(convert(i, uint256) - base_coin_idx)
@@ -291,7 +272,7 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_base_pool(_pool: address) -> address:
-    if self._is_meta(_pool):
+    if not self._is_meta(_pool):
         return ZERO_ADDRESS
     return self._get_base_pool(_pool)
 
@@ -376,11 +357,17 @@ def get_n_underlying_coins(_pool: address) -> uint256:
     """
     @notice Get the number of underlying coins in a pool
     """
-    if not self._is_meta(_pool):
-        return self._get_n_coins(_pool)
+    _coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
 
-    base_pool: address = self._get_base_pool(_pool)
-    return self._get_n_coins(_pool) + self.base_pool_registry.get_base_pool_data(base_pool).n_coins - 1
+    if self._is_meta(_pool):
+        _coins = self._get_underlying_coins_for_metapool(_pool)
+    else:
+        _coins = self._get_coins(_pool)
+
+    for i in range(MAX_METAREGISTRY_COINS):
+        if _coins[i] == ZERO_ADDRESS:
+            return i
+    raise
 
 
 @external

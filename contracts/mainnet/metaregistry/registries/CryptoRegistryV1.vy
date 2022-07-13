@@ -15,14 +15,6 @@ struct CoinInfo:
     swap_count: uint256
     swap_for: address[MAX_INT128]
 
-struct BasePool:
-    location: uint256
-    lp_token: address
-    coins: address[MAX_COINS]
-    decimals: uint256[MAX_COINS]
-    n_coins: uint256
-    is_legacy: bool
-    name: String[64]
 
 struct PoolArray:
     location: uint256
@@ -71,8 +63,11 @@ interface GaugeController:
     def gauge_types(gauge: address) -> int128: view
 
 interface BasePoolRegistry:
-    def get_base_pool_data(_base_pool: address) -> BasePool: view
     def get_base_pool_for_lp_token(_lp_token: address) ->  address: view
+    def get_n_coins(_pool: address) -> uint256: view
+    def get_coins(_pool: address) -> address[MAX_COINS]: view
+    def get_lp_token(_pool: address) -> address: view
+    def is_legacy(_pool: address) -> bool: view
 
 
 event PoolAdded:
@@ -136,9 +131,7 @@ def __init__(_address_provider: address, _base_pool_registry: address):
 @internal
 def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_COINS]:
 
-    base_pool_coins: address[MAX_COINS] = self.base_pool_registry.get_base_pool_data(
-        self.pool_data[_pool].base_pool
-    ).coins
+    base_pool_coins: address[MAX_COINS] = self.base_pool_registry.get_coins(self.pool_data[_pool].base_pool)
     _underlying_coins: address[MAX_COINS] = empty(address[MAX_COINS])
     base_coin_offset: int128 = convert(self.pool_data[_pool].n_coins - 1, int128)
 
@@ -170,9 +163,7 @@ def _get_balances(_pool: address) -> uint256[MAX_COINS]:
 def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
     base_coin_idx: uint256 = self.pool_data[_pool].n_coins - 1
     base_pool: address = self.pool_data[_pool].base_pool
-    base_total_supply: uint256 = ERC20(
-        self.base_pool_registry.get_base_pool_data(base_pool).lp_token
-    ).totalSupply()
+    base_total_supply: uint256 = ERC20(self.base_pool_registry.get_lp_token(base_pool)).totalSupply()
 
     underlying_balances: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     ul_balance: uint256 = 0
@@ -191,7 +182,7 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
 
         else:
 
-            if self.base_pool_registry.get_base_pool_data(base_pool).is_legacy:
+            if self.base_pool_registry.is_legacy(base_pool):
                 ul_balance = StableSwapLegacy(base_pool).balances(i - convert(base_coin_idx, int128))
             else:
                 ul_balance = CurvePool(base_pool).balances(convert(i, uint256) - base_coin_idx)
@@ -307,7 +298,7 @@ def get_n_underlying_coins(_pool: address) -> uint256:
         return self.pool_data[_pool].n_coins
 
     base_pool: address = self.pool_data[_pool].base_pool
-    return self.pool_data[_pool].n_coins + self.base_pool_registry.get_base_pool_data(base_pool).n_coins - 1
+    return self.pool_data[_pool].n_coins + self.base_pool_registry.get_n_coins(base_pool) - 1
 
 
 @view
@@ -808,7 +799,7 @@ def add_pool(
     self._add_coins_to_market(_pool, _coins)
 
     if _base_pool != ZERO_ADDRESS:
-        assert self.base_pool_registry.get_base_pool_data(_base_pool).lp_token != ZERO_ADDRESS
+        assert self.base_pool_registry.get_lp_token(_base_pool) != ZERO_ADDRESS
         self.pool_data[_pool].base_pool = _base_pool
 
         _underlying_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
