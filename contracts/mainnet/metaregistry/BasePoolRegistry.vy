@@ -134,7 +134,7 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
     self.base_pool[_pool].coins = _coins
 
     # for reverse lookup:
-    self.get_base_pool_for_lp_token[_lp_token] = _pool    
+    self.get_base_pool_for_lp_token[_lp_token] = _pool
 
     self.last_updated = block.timestamp
     self.base_pool_count = base_pool_count + 1
