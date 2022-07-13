@@ -1,3 +1,4 @@
+from re import A
 import brownie
 import pytest
 
@@ -25,40 +26,34 @@ def owner():
     yield address_provider().admin()
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def base_pool_registry(BasePoolRegistry, owner):
     registry = BasePoolRegistry.deploy(address_provider().address, {"from": owner})
 
     # add 3pool
-    registry.add_base_pool(
+    tx = registry.add_base_pool(
         TRIPOOL,
         TRIPOOL_LPTOKEN,
-        [DAI, USDC, USDT] + [brownie.ZERO_ADDRESS] * 5,
-        "3pool",
         {"from": owner},
     )
 
     # add fraxusdc pool
-    registry.add_base_pool(
+    tx = registry.add_base_pool(
         "0xdcef968d416a41cdac0ed8702fac8128a64241a2",
         "0x3175df0976dfa876431c2e9ee6bc45b65d3473cc",
-        ["0x853d955acef822db058eb8505911ed77f175b99e", USDC] + [brownie.ZERO_ADDRESS] * 6,
-        "fraxbp",
         {"from": owner},
     )
 
     # add sbtc pool
-    registry.add_base_pool(
+    tx = registry.add_base_pool(
         "0x7fc77b5c7614e1533320ea6ddc2eb61fa00a9714",
         "0x075b1bb99792c9e1041ba13afef80c91a1e70fb3",
-        [
-            "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D",
-            "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-            "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6",
-        ]
-        + [brownie.ZERO_ADDRESS] * 5,
-        "fraxbp",
         {"from": owner},
+    )
+
+    assert (
+        registry.get_base_pool_for_lp_token("0x075b1bb99792c9e1041ba13afef80c91a1e70fb3")
+        != brownie.ZERO_ADDRESS
     )
 
     yield registry
