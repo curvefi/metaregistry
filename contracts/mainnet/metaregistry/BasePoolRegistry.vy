@@ -35,6 +35,10 @@ event BasePoolAdded:
     basepool: indexed(address)
 
 
+event BasePoolRemoved:
+    basepool: indexed(address)
+
+
 ADDRESS_PROVIDER: immutable(address)
 base_pool: HashMap[address, BasePool]
 get_base_pool_for_lp_token: public(HashMap[address, address])
@@ -121,7 +125,6 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
     """
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
     assert ZERO_ADDRESS not in [_pool, _lp_token]
-    assert self.base_pool[_pool].coins[0] == ZERO_ADDRESS  # dev: pool exists
     assert self.base_pool[_pool].lp_token == ZERO_ADDRESS  # dev: pool exists
 
     # add pool to base_pool_list
@@ -139,5 +142,22 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
     self.last_updated = block.timestamp
     self.base_pool_count = base_pool_count + 1
     log BasePoolAdded(_pool)
+
+    return True
+
+
+@external
+def remove_base_pool(_pool: address) -> bool:
+    assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
+    assert _pool != ZERO_ADDRESS
+    assert self.base_pool[_pool].lp_token != ZERO_ADDRESS  # dev: no such pool
+
+    self.get_base_pool_for_lp_token[self.base_pool[_pool].lp_token] = ZERO_ADDRESS
+    self.base_pool[_pool].lp_token = ZERO_ADDRESS
+    self.base_pool[_pool].coins = empty(address[MAX_COINS])
+
+    self.last_updated = block.timestamp
+    self.base_pool_count -= 1
+    log BasePoolRemoved(_pool)
 
     return True

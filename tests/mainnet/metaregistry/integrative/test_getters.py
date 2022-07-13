@@ -336,12 +336,11 @@ def test_get_underlying_coins(
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     metaregistry_output = metaregistry.get_underlying_coins(pool)
 
-    try:
+    if metaregistry.is_meta(pool):
         actual_output = _get_underlying_coins_from_registry(
             registry_id, registry, base_pool_registry, pool
         )
-    except brownie.exceptions.VirtualMachineError:
-        assert not registry.is_meta(pool)
+    else:
         actual_output = registry.get_coins(pool)
 
     for idx, registry_value in enumerate(actual_output):
@@ -780,7 +779,7 @@ def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
         gauge = registry.get_gauge(pool)
 
         # we check if the gauge is dao onboarded, else
-        # gauge_controller().gauge_types(gauge) will be revert
+        # gauge_controller().gauge_types(gauge) will revert
         # as gauge type is zero. This slows down tests significantly
         if _is_dao_onboarded_gauge(gauge):
             actual_output = (

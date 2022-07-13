@@ -220,6 +220,10 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     """
     @dev Alas this will not return underlying pairs (e.g. crypto-USDT if crypto is paired with 3CRV)
     """
+    # todo: add logic for metapools here:
+    # 1. check if self.base_registry.find_pool_for_coins(_from, _to, i) returns something
+    # if not, check if either _from or _to is a basepool coin
+    # if not, then return ZERO_ADDRESS. if yes, then re-run with basepool lp token
     return self.base_registry.find_pool_for_coins(_from, _to, i)
 
 
@@ -442,7 +446,7 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     if self._is_meta(_pool):
         _underlying_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins_for_metapool(_pool)
         _decimals: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
-        for i in range(MAX_COINS):
+        for i in range(MAX_METAREGISTRY_COINS):
             if _underlying_coins[i] == ZERO_ADDRESS:
                 break
             _decimals[i] = ERC20(_underlying_coins[i]).decimals()
