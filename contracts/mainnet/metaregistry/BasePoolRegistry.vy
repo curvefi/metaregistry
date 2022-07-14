@@ -8,8 +8,9 @@ MAX_COINS: constant(uint256) = 8
 
 
 struct BasePool:
+    location: uint256
     lp_token: address
-    coins: address[MAX_COINS]
+    n_coins: uint256
     is_v2: bool
     is_legacy: bool
     is_lending: bool
@@ -41,6 +42,7 @@ event BasePoolRemoved:
 
 ADDRESS_PROVIDER: immutable(address)
 base_pool: HashMap[address, BasePool]
+base_pool_list: public(address[100])
 get_base_pool_for_lp_token: public(HashMap[address, address])
 base_pool_count: public(uint256)
 last_updated: public(uint256)
@@ -54,16 +56,34 @@ def __init__(_address_provider: address):
     ADDRESS_PROVIDER = _address_provider
 
 
+@internal
+@view
+def _get_basepool_coins(_pool: address) -> address[MAX_COINS]:
+    _n_coins: uint256 = self.base_pool[_pool].n_coins
+    _is_legacy: bool = self.base_pool[_pool].is_legacy
+    _coins: address[MAX_COINS] = empty(address[MAX_COINS])
+    for i in range(MAX_COINS):
+        if i == _n_coins:
+            break
+
+        if _is_legacy:
+            _coins[i] = CurvePoolLegacy(_pool).coins(convert(i, int128))
+        else:
+            _coins[i] = CurvePool(_pool).coins(i)
+
+    return _coins
+
+
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
-    return self.base_pool[_pool].coins
+    return self._get_basepool_coins(_pool)
 
 
 @external
 @view
 def get_decimals(_pool: address) -> uint256[MAX_COINS]:
-    _coins: address[MAX_COINS] = self.base_pool[_pool].coins
+    _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
     _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     for i in range(MAX_COINS):
         if _coins[i] == ZERO_ADDRESS:
@@ -85,12 +105,7 @@ def get_lp_token(_pool: address) -> address:
 @external
 @view
 def get_n_coins(_pool: address) -> uint256:
-    _coins: address[MAX_COINS] = self.base_pool[_pool].coins
-    for i in range(MAX_COINS):
-        if _coins[i] == ZERO_ADDRESS:
-            return i + 1
-
-    raise
+    return self.base_pool[_pool].n_coins
 
 
 @external
@@ -99,22 +114,16 @@ def is_legacy(_pool: address) -> bool:
     return self.base_pool[_pool].is_legacy
 
 
-@internal
+@external
 @view
-def _get_basepool_coins(_pool: address, _n_coins: uint256, _is_legacy: bool) -> address[MAX_COINS]:
+def is_v2(_pool: address) -> bool:
+    return self.base_pool[_pool].is_v2
 
-    _coins: address[MAX_COINS] = empty(address[MAX_COINS])
-    _coin: address = ZERO_ADDRESS
-    for i in range(MAX_COINS):
-        if i == _n_coins:
-            break
 
-        if _is_legacy:
-            _coins[i] = CurvePoolLegacy(_pool).coins(convert(i, int128))
-        else:
-            _coins[i] = CurvePool(_pool).coins(i)
-
-    return _coins
+@external
+@view
+def is_lending(_pool: address) -> bool:
+    return self.base_pool[_pool].is_lending
 
 
 @external
@@ -129,17 +138,18 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
 
     # add pool to base_pool_list
     base_pool_count: uint256 = self.base_pool_count
+    self.base_pool[_pool].location = base_pool_count
     self.base_pool[_pool].lp_token = _lp_token
+    self.base_pool[_pool].n_coins = _n_coins
     self.base_pool[_pool].is_v2 = _is_v2
     self.base_pool[_pool].is_legacy = _is_legacy
     self.base_pool[_pool].is_lending = _is_lending
-    _coins: address[MAX_COINS] = self._get_basepool_coins(_pool, _n_coins, _is_legacy)
-    self.base_pool[_pool].coins = _coins
 
     # for reverse lookup:
     self.get_base_pool_for_lp_token[_lp_token] = _pool
 
     self.last_updated = block.timestamp
+    self.base_pool_list[base_pool_count] = _pool
     self.base_pool_count = base_pool_count + 1
     log BasePoolAdded(_pool)
 
@@ -154,7 +164,10 @@ def remove_base_pool(_pool: address) -> bool:
 
     self.get_base_pool_for_lp_token[self.base_pool[_pool].lp_token] = ZERO_ADDRESS
     self.base_pool[_pool].lp_token = ZERO_ADDRESS
-    self.base_pool[_pool].coins = empty(address[MAX_COINS])
+    location: uint256 = self.base_pool[_pool].location
+    self.base_pool_list[location] = ZERO_ADDRESS
+    self.base_pool[_pool].location = 101  # some very large number so the index is invalid
+    self.base_pool[_pool].n_coins = 0
 
     self.last_updated = block.timestamp
     self.base_pool_count -= 1

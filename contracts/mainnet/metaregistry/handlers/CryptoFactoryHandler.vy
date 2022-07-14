@@ -28,6 +28,7 @@ interface BasePoolRegistry:
     def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]: view
     def get_lp_token(_pool: address) -> address: view
     def is_legacy(_pool: address) -> bool: view
+    def base_pool_list(i: uint256) -> address: view
 
 
 interface CurvePool:
@@ -213,18 +214,43 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_CO
     return underlying_balances
 
 
+@view
+@internal
+def _find_basepool_for_coin(_coin: address) -> address:
+
+    for i in range(100):
+        base_pool: address = self.base_pool_registry.base_pool_list(i)
+        if base_pool == ZERO_ADDRESS:
+            break
+        base_pool_coins: address[MAX_METAREGISTRY_COINS] = self.base_pool_registry.get_coins(base_pool)
+        if _coin in base_pool_coins:
+            return base_pool
+
+    return ZERO_ADDRESS
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
 def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address:
     """
-    @dev Alas this will not return underlying pairs (e.g. crypto-USDT if crypto is paired with 3CRV)
+    @notice checks if either of the two coins are in a base pool and then checks
+            if the basepool lp token and the other coin have a pool.
+            This is done because the factory does not have `underlying` methods in
+            pools that have a basepool lp token in them.
     """
-    # todo: add logic for metapools here:
-    # 1. check if self.base_registry.find_pool_for_coins(_from, _to, i) returns something
-    # if not, check if either _from or _to is a basepool coin
-    # if not, then return ZERO_ADDRESS. if yes, then re-run with basepool lp token
-    return self.base_registry.find_pool_for_coins(_from, _to, i)
+    _pool: address = self.base_registry.find_pool_for_coins(_from, _to, i)
+    _base_pool: address = ZERO_ADDRESS
+    for coin in [_from, _to]:
+        _base_pool = self._find_basepool_for_coin(coin)
+        if _pool == ZERO_ADDRESS and _base_pool != ZERO_ADDRESS:
+            base_pool_lp_token: address = self.base_pool_registry.get_lp_token(_base_pool)
+            if coin == _from:
+                return self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, 0)
+            else:
+                return self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, 0)
+
+    return _pool
 
 
 @external

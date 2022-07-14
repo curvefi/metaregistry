@@ -2,7 +2,7 @@ import brownie
 import pytest
 
 from tests.abis import address_provider, crypto_factory, stable_factory, stable_registry
-from tests.utils.constants import TRIPOOL, TRIPOOL_LPTOKEN
+from tests.utils.constants import BTC_BASEPOOL_LP_TOKEN_MAINNET, BTC_BASEPOOL_MAINNET, TRIPOOL, TRIPOOL_LPTOKEN
 
 
 @pytest.fixture(scope="session")
@@ -27,10 +27,14 @@ def owner():
 
 @pytest.fixture(scope="module")
 def base_pool_registry(BasePoolRegistry, owner):
-    registry = BasePoolRegistry.deploy(address_provider().address, {"from": owner})
+    yield BasePoolRegistry.deploy(address_provider().address, {"from": owner})
+
+
+@pytest.fixture(scope="module")
+def base_pool_registry_updated(base_pool_registry, owner):
 
     # add 3pool
-    registry.add_base_pool(
+    base_pool_registry.add_base_pool(
         TRIPOOL,
         TRIPOOL_LPTOKEN,
         3,
@@ -39,7 +43,7 @@ def base_pool_registry(BasePoolRegistry, owner):
     )
 
     # add fraxusdc pool
-    registry.add_base_pool(
+    base_pool_registry.add_base_pool(
         "0xdcef968d416a41cdac0ed8702fac8128a64241a2",
         "0x3175df0976dfa876431c2e9ee6bc45b65d3473cc",
         2,
@@ -48,20 +52,15 @@ def base_pool_registry(BasePoolRegistry, owner):
     )
 
     # add sbtc pool
-    registry.add_base_pool(
-        "0x7fc77b5c7614e1533320ea6ddc2eb61fa00a9714",
-        "0x075b1bb99792c9e1041ba13afef80c91a1e70fb3",
+    base_pool_registry.add_base_pool(
+        BTC_BASEPOOL_MAINNET,
+        BTC_BASEPOOL_LP_TOKEN_MAINNET,
         3,
         True,
         {"from": owner},
     )
 
-    assert (
-        registry.get_base_pool_for_lp_token("0x075b1bb99792c9e1041ba13afef80c91a1e70fb3")
-        != brownie.ZERO_ADDRESS
-    )
-
-    yield registry
+    yield base_pool_registry
 
 
 @pytest.fixture(scope="module")

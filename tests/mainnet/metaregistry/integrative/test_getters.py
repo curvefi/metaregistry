@@ -71,7 +71,7 @@ def test_is_registered(metaregistry, registry_pool_index_iterator, pool_id):
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_is_meta(metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id):
+def test_is_meta(metaregistry, registry_pool_index_iterator, base_pool_registry_updated, pool_id):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
@@ -81,7 +81,10 @@ def test_is_meta(metaregistry, registry_pool_index_iterator, base_pool_registry,
         coins = registry.get_coins(pool)
         actual_output = False
         for i in range(len(coins)):
-            if base_pool_registry.get_base_pool_for_lp_token(coins[i]) != brownie.ZERO_ADDRESS:
+            if (
+                base_pool_registry_updated.get_base_pool_for_lp_token(coins[i])
+                != brownie.ZERO_ADDRESS
+            ):
                 actual_output = True
                 break
     else:
@@ -284,7 +287,7 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
     assert tuple(actual_output) == metaregistry_output
 
 
-def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registry, pool):
+def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registry_updated, pool):
 
     if registry_id in [
         METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
@@ -303,11 +306,11 @@ def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registr
 
         for idx, coin in enumerate(coins):
 
-            base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+            base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
 
             if base_pool != brownie.ZERO_ADDRESS:
 
-                basepool_coins = base_pool_registry.get_coins(base_pool)
+                basepool_coins = base_pool_registry_updated.get_coins(base_pool)
 
                 for bp_coin in basepool_coins:
 
@@ -328,7 +331,7 @@ def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registr
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_coins(
-    metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id
+    metaregistry, registry_pool_index_iterator, base_pool_registry_updated, pool_id
 ):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
@@ -338,7 +341,7 @@ def test_get_underlying_coins(
 
     if metaregistry.is_meta(pool):
         actual_output = _get_underlying_coins_from_registry(
-            registry_id, registry, base_pool_registry, pool
+            registry_id, registry, base_pool_registry_updated, pool
         )
     else:
         actual_output = registry.get_coins(pool)
@@ -361,7 +364,7 @@ def test_get_balances(metaregistry, registry_pool_index_iterator, pool_id):
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_underlying_balances(
-    metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id
+    metaregistry, registry_pool_index_iterator, base_pool_registry_updated, pool_id
 ):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
@@ -388,9 +391,9 @@ def test_get_underlying_balances(
         pool_balances = [0] * MAX_COINS
 
         for idx, coin in enumerate(coins):
-            base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+            base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
             if base_pool != brownie.ZERO_ADDRESS:
-                basepool_coins = base_pool_registry.get_coins(base_pool)
+                basepool_coins = base_pool_registry_updated.get_coins(base_pool)
                 basepool_contract = brownie.Contract(base_pool)
                 basepool_lp_token_balance = v2_pool.balances(idx)
                 lp_token_supply = brownie.interfaces.ERC20(coin).totalSupply()
@@ -460,7 +463,7 @@ def test_get_n_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
 def test_get_n_underlying_coins(
-    metaregistry, registry_pool_index_iterator, base_pool_registry, pool_id
+    metaregistry, registry_pool_index_iterator, base_pool_registry_updated, pool_id
 ):
 
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
@@ -474,9 +477,9 @@ def test_get_n_underlying_coins(
     for idx, coin in enumerate(coins):
         if coin == brownie.ZERO_ADDRESS:
             break
-        base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+        base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
         if base_pool != brownie.ZERO_ADDRESS:
-            basepool_coins = base_pool_registry.get_coins(base_pool)
+            basepool_coins = base_pool_registry_updated.get_coins(base_pool)
             num_bp_coins = sum([1 for i in basepool_coins if i != brownie.ZERO_ADDRESS])
             num_coins += num_bp_coins
         else:
