@@ -20,21 +20,11 @@ def test_revert_add_base_pool_if_user_is_not_admin(base_pool_registry, charlie):
         base_pool_registry.add_base_pool(
             TRIPOOL,
             TRIPOOL_LPTOKEN,
-            2,
+            3,
+            False,
+            False,
             False,
             {"from": charlie},
-        )
-
-
-def test_revert_add_nonexistent_base_pool(base_pool_registry, owner):
-
-    with brownie.reverts():
-        base_pool_registry.add_base_pool(
-            DAI,  # should be a pool
-            TRIPOOL_LPTOKEN,
-            2,
-            False,
-            {"from": owner},
         )
 
 
@@ -46,6 +36,8 @@ def test_add_basepool(base_pool_registry, owner):
         TRIPOOL,
         TRIPOOL_LPTOKEN,
         3,
+        False,
+        False,
         False,
         {"from": owner},
     )
@@ -77,6 +69,8 @@ def test_add_basepool_with_legacy_abi(base_pool_registry, owner):
         BTC_BASEPOOL_LP_TOKEN_MAINNET,
         3,
         True,
+        False,
+        False,
         {"from": owner},
     )
 
@@ -88,3 +82,26 @@ def test_add_basepool_with_legacy_abi(base_pool_registry, owner):
     assert base_pool_coins[2] == SBTC
     assert base_pool_coins[3] == brownie.ZERO_ADDRESS
     assert base_pool_registry.get_n_coins(BTC_BASEPOOL_MAINNET) == 3
+
+
+def test_revert_unauthorised_remove_base_pool(base_pool_registry_updated, charlie):
+
+    assert base_pool_registry_updated.get_lp_token(TRIPOOL) != brownie.ZERO_ADDRESS
+    with brownie.reverts():
+        base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": charlie})
+
+
+def test_remove_base_pool(base_pool_registry_updated, owner):
+
+    base_pool_count = base_pool_registry_updated.base_pool_count()
+    base_pool_location = base_pool_registry_updated.get_location(TRIPOOL)
+    base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": owner})
+
+    assert base_pool_registry_updated.base_pool_count() == base_pool_count - 1
+    assert base_pool_registry_updated.get_lp_token(TRIPOOL) == brownie.ZERO_ADDRESS
+    assert (
+        base_pool_registry_updated.get_base_pool_for_lp_token(TRIPOOL_LPTOKEN)
+        == brownie.ZERO_ADDRESS
+    )
+    assert base_pool_registry_updated.base_pool_list(base_pool_location) == brownie.ZERO_ADDRESS
+    assert base_pool_registry_updated.get_n_coins(TRIPOOL) == 0

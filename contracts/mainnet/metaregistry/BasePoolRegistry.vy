@@ -110,6 +110,12 @@ def get_n_coins(_pool: address) -> uint256:
 
 @external
 @view
+def get_location(_pool: address) -> uint256:
+    return self.base_pool[_pool].location
+
+
+@external
+@view
 def is_legacy(_pool: address) -> bool:
     return self.base_pool[_pool].is_legacy
 
@@ -127,13 +133,12 @@ def is_lending(_pool: address) -> bool:
 
 
 @external
-def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_legacy: bool, _is_lending: bool = False, _is_v2: bool = False) -> bool:
+def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_legacy: bool, _is_lending: bool, _is_v2: bool):
     """
     @notice Add a base pool to the registry
     @dev this is needed since paired base pools might be in a different registry
     """
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
-    assert ZERO_ADDRESS not in [_pool, _lp_token]
     assert self.base_pool[_pool].lp_token == ZERO_ADDRESS  # dev: pool exists
 
     # add pool to base_pool_list
@@ -153,24 +158,26 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
     self.base_pool_count = base_pool_count + 1
     log BasePoolAdded(_pool)
 
-    return True
-
 
 @external
-def remove_base_pool(_pool: address) -> bool:
+def remove_base_pool(_pool: address):
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
     assert _pool != ZERO_ADDRESS
-    assert self.base_pool[_pool].lp_token != ZERO_ADDRESS  # dev: no such pool
+    assert self.base_pool[_pool].lp_token != ZERO_ADDRESS  # dev: pool doesn't exist
 
+    # reset pool <> lp_token mappings
     self.get_base_pool_for_lp_token[self.base_pool[_pool].lp_token] = ZERO_ADDRESS
     self.base_pool[_pool].lp_token = ZERO_ADDRESS
+
+    # remove base_pool from base_pool_list
     location: uint256 = self.base_pool[_pool].location
+    length: uint256 = self.base_pool_count - 1
+
+    self.base_pool_count = length
+
+    # we set ZERO_ADDRESS at _pool's location
     self.base_pool_list[location] = ZERO_ADDRESS
-    self.base_pool[_pool].location = 101  # some very large number so the index is invalid
     self.base_pool[_pool].n_coins = 0
 
     self.last_updated = block.timestamp
-    self.base_pool_count -= 1
     log BasePoolRemoved(_pool)
-
-    return True

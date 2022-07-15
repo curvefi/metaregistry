@@ -2,7 +2,12 @@ import brownie
 import pytest
 
 from tests.abis import address_provider, crypto_factory, stable_factory, stable_registry
-from tests.utils.constants import BTC_BASEPOOL_LP_TOKEN_MAINNET, BTC_BASEPOOL_MAINNET, TRIPOOL, TRIPOOL_LPTOKEN
+from tests.utils.constants import (
+    BTC_BASEPOOL_LP_TOKEN_MAINNET,
+    BTC_BASEPOOL_MAINNET,
+    TRIPOOL,
+    TRIPOOL_LPTOKEN,
+)
 
 
 @pytest.fixture(scope="session")
@@ -39,6 +44,8 @@ def base_pool_registry_updated(base_pool_registry, owner):
         TRIPOOL_LPTOKEN,
         3,
         False,
+        False,
+        False,
         {"from": owner},
     )
 
@@ -47,6 +54,8 @@ def base_pool_registry_updated(base_pool_registry, owner):
         "0xdcef968d416a41cdac0ed8702fac8128a64241a2",
         "0x3175df0976dfa876431c2e9ee6bc45b65d3473cc",
         2,
+        False,
+        False,
         False,
         {"from": owner},
     )
@@ -57,6 +66,8 @@ def base_pool_registry_updated(base_pool_registry, owner):
         BTC_BASEPOOL_LP_TOKEN_MAINNET,
         3,
         True,
+        False,
+        False,
         {"from": owner},
     )
 
