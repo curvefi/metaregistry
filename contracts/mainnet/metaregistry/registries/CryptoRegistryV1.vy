@@ -806,7 +806,7 @@ def add_pool(
         _coins[i] = CurvePool(_pool).coins(convert(i, uint256))
 
     assert _coins[0] != ZERO_ADDRESS
-    
+
     self.pool_data[_pool].coins = _coins
     self.pool_data[_pool].decimals = self._get_decimals(_coins)
 
