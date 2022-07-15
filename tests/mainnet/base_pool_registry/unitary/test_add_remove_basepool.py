@@ -14,7 +14,7 @@ from tests.utils.constants import (
 )
 
 
-def test_revert_add_base_pool_if_user_is_not_admin(base_pool_registry, charlie):
+def test_revert_unauthorised_add_base_pool(base_pool_registry, unauthorised_account):
 
     with brownie.reverts():
         base_pool_registry.add_base_pool(
@@ -24,7 +24,7 @@ def test_revert_add_base_pool_if_user_is_not_admin(base_pool_registry, charlie):
             False,
             False,
             False,
-            {"from": charlie},
+            {"from": unauthorised_account},
         )
 
 
@@ -84,11 +84,11 @@ def test_add_basepool_with_legacy_abi(base_pool_registry, owner):
     assert base_pool_registry.get_n_coins(BTC_BASEPOOL_MAINNET) == 3
 
 
-def test_revert_unauthorised_remove_base_pool(base_pool_registry_updated, charlie):
+def test_revert_unauthorised_remove_base_pool(base_pool_registry_updated, unauthorised_account):
 
     assert base_pool_registry_updated.get_lp_token(TRIPOOL) != brownie.ZERO_ADDRESS
     with brownie.reverts():
-        base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": charlie})
+        base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": unauthorised_account})
 
 
 def test_remove_base_pool(base_pool_registry_updated, owner):

@@ -23,7 +23,7 @@ struct PoolArray:
     coins: address[MAX_COINS]
     n_coins: uint256
     name: String[64]
-    has_positive_rebasing_tokens: uint256
+    has_positive_rebasing_tokens: bool
 
 
 interface AddressProvider:
@@ -58,6 +58,7 @@ interface StableSwapLegacy:
 
 interface LiquidityGauge:
     def lp_token() -> address: view
+    def is_killed() -> bool: view
 
 interface GaugeController:
     def gauge_types(gauge: address) -> int128: view
@@ -79,6 +80,8 @@ event BasePoolAdded:
 event PoolRemoved:
     pool: indexed(address)
 
+
+GAUGE_CONTROLLER: constant(address) = 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB
 
 address_provider: public(AddressProvider)
 base_pool_registry: public(BasePoolRegistry)
@@ -140,6 +143,8 @@ def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_COINS]:
             _underlying_coins[i] = self.pool_data[_pool].coins[i]
         else:
             _underlying_coins[i] = base_pool_coins[i - base_coin_offset]
+
+    assert _underlying_coins[0] != ZERO_ADDRESS
 
     return _underlying_coins
 
@@ -255,6 +260,29 @@ def _get_coin_indices(
             found_market = True
 
     return result
+
+
+@internal
+@view
+def _get_gauge_type(_gauge: address) -> int128:
+
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        GAUGE_CONTROLLER,
+        concat(
+            method_id("gauge_type(address)"),
+            convert(_gauge, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+
+    if success and not LiquidityGauge(_gauge).is_killed():
+        return convert(response, int128)
+
+    return 0
 
 
 # targetted external getters, optimized for on-chain calls
@@ -381,6 +409,7 @@ def get_gauges(_pool: address) -> (address[10], int128[10]):
         if gauge == ZERO_ADDRESS:
             break
         liquidity_gauges[i] = gauge
+        gauge_types[i] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauge)
 
     return liquidity_gauges, gauge_types
 
@@ -730,6 +759,7 @@ def add_pool(
     _lp_token: address,
     _gauge: address,
     _zap: address,
+    _n_coins: uint256,
     _name: String[64],
     _base_pool: address = ZERO_ADDRESS,
     _has_positive_rebasing_tokens: bool = False
@@ -768,31 +798,15 @@ def add_pool(
     self.get_lp_token[_pool] = _lp_token
 
     # add coins:
-    _coins: address[MAX_COINS] = empty(address[MAX_COINS])
-    _coin: address = ZERO_ADDRESS
-    _n_coins: uint256 = 0
-    for i in range(MAX_COINS):
-
-        success: bool = False
-        response: Bytes[32] = b""
-        success, response = raw_call(
-            _pool,
-            concat(
-                method_id("coins(uint256)"),
-                convert(i, bytes32),
-            ),
-            max_outsize=32,
-            revert_on_failure=False,
-            is_static_call=True
-        )
-
-        if success:
-            _coins[i] = _coin
-        else:
-            _n_coins = convert(i, uint256)
-            break
-
     self.pool_data[_pool].n_coins = _n_coins
+    _coins: address[MAX_COINS] = empty(address[MAX_COINS])
+    for i in range(MAX_COINS):
+        if i == convert(_n_coins, int128):
+            break
+        _coins[i] = CurvePool(_pool).coins(convert(i, uint256))
+
+    assert _coins[0] != ZERO_ADDRESS
+    
     self.pool_data[_pool].coins = _coins
     self.pool_data[_pool].decimals = self._get_decimals(_coins)
 
@@ -808,7 +822,7 @@ def add_pool(
         self._add_coins_to_market(_pool, _underlying_coins)
 
     if _has_positive_rebasing_tokens:
-        self.pool_data[_pool].has_positive_rebasing_tokens = 1
+        self.pool_data[_pool].has_positive_rebasing_tokens = True
 
     # log pool added:
     self.last_updated = block.timestamp
@@ -887,8 +901,8 @@ def remove_pool(_pool: address):
                 key: uint256 = bitwise_xor(convert(ucoin, uint256), convert(ucoinx, uint256))
                 self._unregister_coin_pair(ucoin, ucoinx, key)
 
-    if self.pool_data[_pool].has_positive_rebasing_tokens > 0:
-        self.pool_data[_pool].has_positive_rebasing_tokens = 0
+    if self.pool_data[_pool].has_positive_rebasing_tokens:
+        self.pool_data[_pool].has_positive_rebasing_tokens = False
 
     if self.get_zap[_pool] != ZERO_ADDRESS:
         self.get_zap[_pool] = ZERO_ADDRESS
