@@ -103,4 +103,7 @@ def test_revert_unauthorised_remove_pool(crypto_registry_updated, unauthorised_a
 
 def test_remove_pool(crypto_registry_updated, owner):
 
-    pass
+    assert crypto_registry_updated.pool_list(0) == TRICRYPTO2_MAINNET
+    crypto_registry_updated.remove_pool(TRICRYPTO2_MAINNET, {"from": owner})
+
+    assert crypto_registry_updated.pool_list(0) == brownie.ZERO_ADDRESS

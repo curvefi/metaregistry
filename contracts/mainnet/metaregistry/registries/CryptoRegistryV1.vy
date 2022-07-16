@@ -18,9 +18,7 @@ struct CoinInfo:
 
 struct PoolArray:
     location: uint256
-    decimals: uint256[MAX_COINS]
     base_pool: address
-    coins: address[MAX_COINS]
     n_coins: uint256
     name: String[64]
     has_positive_rebasing_tokens: bool
@@ -129,6 +127,36 @@ def __init__(_address_provider: address, _base_pool_registry: address):
 
 # internal functionality for getters
 
+@internal
+@view
+def _get_coins(_pool: address) -> address[MAX_COINS]:
+    _coins: address[MAX_COINS] = empty(address[MAX_COINS])
+    for i in range(MAX_COINS):
+        if i == convert(self.pool_data[_pool].n_coins, int128):
+            break
+        _coins[i] = CurvePool(_pool).coins(convert(i, uint256))
+    return _coins
+
+
+@view
+@internal
+def _get_decimals(_coins: address[MAX_COINS]) -> uint256[MAX_COINS]:
+    decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
+    value: uint256 = 0
+    for i in range(MAX_COINS):
+        if _coins[i] == ZERO_ADDRESS:
+            break
+        coin: address = _coins[i]
+        if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+            value = 18
+        else:
+            value = ERC20(coin).decimals()
+            assert value < 256  # dev: decimal overflow
+
+        decimals[i] = value
+
+    return decimals
+
 
 @view
 @internal
@@ -137,10 +165,11 @@ def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_COINS]:
     base_pool_coins: address[MAX_COINS] = self.base_pool_registry.get_coins(self.pool_data[_pool].base_pool)
     _underlying_coins: address[MAX_COINS] = empty(address[MAX_COINS])
     base_coin_offset: int128 = convert(self.pool_data[_pool].n_coins - 1, int128)
+    _coins: address[MAX_COINS] = self._get_coins(_pool)
 
     for i in range(MAX_COINS):
         if i < base_coin_offset:
-            _underlying_coins[i] = self.pool_data[_pool].coins[i]
+            _underlying_coins[i] = _coins[i]
         else:
             _underlying_coins[i] = base_pool_coins[i - base_coin_offset]
 
@@ -153,8 +182,9 @@ def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_COINS]:
 @internal
 def _get_balances(_pool: address) -> uint256[MAX_COINS]:
     balances: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
+    _coins: address[MAX_COINS] = self._get_coins(_pool)
     for i in range(MAX_COINS):
-        if self.pool_data[_pool].coins[i] == ZERO_ADDRESS:
+        if _coins[i] == ZERO_ADDRESS:
             assert i != 0
             break
 
@@ -216,12 +246,12 @@ def _get_coin_indices(
     # the return value is stored as `uint256[3]` to reduce gas costs
     # from index, to index, is the market underlying?
     result: uint256[3] = empty(uint256[3])
-
+    _coins: address[MAX_COINS] = self._get_coins(_pool)
     found_market: bool = False
 
     # check coin markets
     for x in range(MAX_COINS):
-        coin: address = self.pool_data[_pool].coins[x]
+        coin: address = _coins[x]
         if coin == ZERO_ADDRESS:
             # if we reach the end of the coins, reset `found_market` and try again
             # with the underlying coins
@@ -338,14 +368,7 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
     @param _pool Pool address
     @return List of coin addresses
     """
-    coins: address[MAX_COINS] = empty(address[MAX_COINS])
-    n_coins: int128 = convert(self.pool_data[_pool].n_coins, int128)
-    for i in range(MAX_COINS):
-        if i == n_coins:
-            break
-        coins[i] = self.pool_data[_pool].coins[i]
-
-    return coins
+    return self._get_coins(_pool)
 
 
 @view
@@ -359,7 +382,7 @@ def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
     """
     if self._is_meta(_pool):
         return self._get_underlying_coins_for_metapool(_pool)
-    return self.pool_data[_pool].coins
+    return self._get_coins(_pool)
 
 
 @view
@@ -371,7 +394,8 @@ def get_decimals(_pool: address) -> uint256[MAX_COINS]:
     @param _pool Pool address
     @return uint256 list of decimals
     """
-    return self.pool_data[_pool].decimals
+    _coins: address[MAX_COINS] = self._get_coins(_pool)
+    return self._get_decimals(_coins)
 
 
 @view
@@ -391,7 +415,9 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
                 break
             _decimals[i] = ERC20(_underlying_coins[i]).decimals()
         return _decimals
-    return self.pool_data[_pool].decimals
+
+    _coins: address[MAX_COINS] = self._get_coins(_pool)
+    return self._get_decimals(_coins)
 
 
 @view
@@ -594,31 +620,11 @@ def get_coin_swap_complement(_coin: address, _index: uint256) -> address:
 
 @view
 @external
-def get_pool_data(_pool: address) -> PoolArray:
-    return self.pool_data[_pool]
+def get_num_coin_registrations(_coin: address) -> uint256:
+    return self.coins[_coin].register_count
 
 
 # internal functionality used in admin setters
-
-
-@view
-@internal
-def _get_decimals(_coins: address[MAX_COINS]) -> uint256[MAX_COINS]:
-    decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
-    value: uint256 = 0
-    for i in range(MAX_COINS):
-        if _coins[i] == ZERO_ADDRESS:
-            break
-        coin: address = _coins[i]
-        if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
-            value = 18
-        else:
-            value = ERC20(coin).decimals()
-            assert value < 256  # dev: decimal overflow
-
-        decimals[i] = value
-
-    return decimals
 
 
 @internal
@@ -650,6 +656,7 @@ def _register_coin_pair(_coina: address, _coinb: address, _key: uint256):
 
 @internal
 def _unregister_coin(_coin: address):
+
     self.coins[_coin].register_count -= 1
 
     if self.coins[_coin].register_count == 0:
@@ -701,13 +708,12 @@ def _unregister_coin_pair(_coina: address, _coinb: address, _coinb_idx: uint256)
 @internal
 def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS]):
 
-    # todo: check if this works with the new changes!
-
     for i in range(MAX_COINS):
         if _coin_list[i] == ZERO_ADDRESS:
             break
 
         self._register_coin(_coin_list[i])
+
         # add pool to markets
         i2: int128 = i + 1
         for x in range(i2, i2 + MAX_COINS):
@@ -777,8 +783,7 @@ def add_pool(
     """
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
     assert _lp_token != ZERO_ADDRESS
-    assert self.pool_data[_pool].coins[0] == ZERO_ADDRESS  # dev: pool exists
-    assert self.get_pool_from_lp_token[_lp_token] == ZERO_ADDRESS
+    assert self.get_pool_from_lp_token[_lp_token] == ZERO_ADDRESS  # dev: pool exists
 
     # initialise PoolArray struct
     length: uint256 = self.pool_count
@@ -786,6 +791,7 @@ def add_pool(
     self.pool_count = length + 1
     self.pool_data[_pool].location = length
     self.pool_data[_pool].name = _name
+    self.pool_data[_pool].n_coins = _n_coins
 
     # update public mappings
     if _zap != ZERO_ADDRESS:
@@ -797,19 +803,12 @@ def add_pool(
     self.get_pool_from_lp_token[_lp_token] = _pool
     self.get_lp_token[_pool] = _lp_token
 
-    # add coins:
-    self.pool_data[_pool].n_coins = _n_coins
+    # add coins mappings:
     _coins: address[MAX_COINS] = empty(address[MAX_COINS])
     for i in range(MAX_COINS):
         if i == convert(_n_coins, int128):
             break
         _coins[i] = CurvePool(_pool).coins(convert(i, uint256))
-
-    assert _coins[0] != ZERO_ADDRESS
-
-    self.pool_data[_pool].coins = _coins
-    self.pool_data[_pool].decimals = self._get_decimals(_coins)
-
     self._add_coins_to_market(_pool, _coins)
 
     if _base_pool != ZERO_ADDRESS:
@@ -837,37 +836,13 @@ def remove_pool(_pool: address):
     @param _pool Pool address to remove
     """
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
-    assert self.pool_data[_pool].coins[0] != ZERO_ADDRESS  # dev: pool does not exist
+    assert self.get_lp_token[_pool] != ZERO_ADDRESS  # dev: pool does not exist
 
-    self.get_pool_from_lp_token[self.get_lp_token[_pool]] = ZERO_ADDRESS
-    self.get_lp_token[_pool] = ZERO_ADDRESS
-
-    # remove _pool from pool_list
-    location: uint256 = self.pool_data[_pool].location
-    length: uint256 = self.pool_count - 1
-
-    if location < length:
-        # replace _pool with final value in pool_list
-        addr: address = self.pool_list[length]
-        self.pool_list[location] = addr
-        self.pool_data[addr].location = location
-
-    # delete final pool_list value
-    self.pool_list[length] = ZERO_ADDRESS
-    self.pool_count = length
-
-    self.pool_data[_pool].decimals = empty(uint256[MAX_COINS])
-    self.pool_data[_pool].n_coins = 0
-    self.pool_data[_pool].name = ""
-
-    coins: address[MAX_COINS] = empty(address[MAX_COINS])
+    # remove coin from markets
+    coins: address[MAX_COINS] = self._get_coins(_pool)
     for i in range(MAX_COINS):
-        coins[i] = self.pool_data[_pool].coins[i]
         if coins[i] == ZERO_ADDRESS:
             break
-
-        # delete coin address from pool_data
-        self.pool_data[_pool].coins[i] = ZERO_ADDRESS
         self._unregister_coin(coins[i])
 
     # check if metapool and remove if there are markets:
@@ -900,6 +875,19 @@ def remove_pool(_pool: address):
             if is_meta and not ucoin in coins:
                 key: uint256 = bitwise_xor(convert(ucoin, uint256), convert(ucoinx, uint256))
                 self._unregister_coin_pair(ucoin, ucoinx, key)
+
+    # replace pool data:
+    self.get_pool_from_lp_token[self.get_lp_token[_pool]] = ZERO_ADDRESS
+    self.get_lp_token[_pool] = ZERO_ADDRESS
+
+    # remove _pool from pool_list
+    location: uint256 = self.pool_data[_pool].location
+    length: uint256 = self.pool_count - 1
+
+    self.pool_list[location] = ZERO_ADDRESS
+    self.pool_count = length
+    self.pool_data[_pool].name = ""
+    self.pool_data[_pool].n_coins = 0
 
     if self.pool_data[_pool].has_positive_rebasing_tokens:
         self.pool_data[_pool].has_positive_rebasing_tokens = False
