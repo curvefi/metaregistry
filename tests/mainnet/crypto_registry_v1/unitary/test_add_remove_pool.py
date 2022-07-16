@@ -95,5 +95,12 @@ def test_add_pool(crypto_registry_v1, owner):
     assert crypto_registry_v1.find_pool_for_coins(USDT, WBTC, 0) == TRICRYPTO2_MAINNET
 
 
+def test_revert_unauthorised_remove_pool(crypto_registry_updated, unauthorised_account):
+
+    with brownie.reverts():
+        crypto_registry_updated.remove_pool(TRICRYPTO2_MAINNET, {"from": unauthorised_account})
+
+
 def test_remove_pool(crypto_registry_updated, owner):
+
     pass

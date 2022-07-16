@@ -150,8 +150,13 @@ def _get_n_coins(_pool: address) -> uint256:
 @internal
 @view
 def _get_base_pool(_pool: address) -> address:
-    _coin: address = self.base_registry.get_coins(_pool)[1]
-    return self.base_pool_registry.get_base_pool_for_lp_token(_coin)
+    _coins: address[2] = self.base_registry.get_coins(_pool)
+    _base_pool: address = ZERO_ADDRESS
+    for coin in _coins:
+        _base_pool = self.base_pool_registry.get_base_pool_for_lp_token(coin)
+        if _base_pool != ZERO_ADDRESS:
+            return _base_pool
+    return ZERO_ADDRESS
 
 
 @view

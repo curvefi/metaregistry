@@ -240,11 +240,11 @@ def crypto_factory_handler(
     owner,
     metaregistry,
     address_provider_updated,
-    base_pool_registry,
+    base_pool_registry_updated,
     crypto_registry_handler,
 ):
     handler = CryptoFactoryHandler.deploy(
-        metaregistry, address_provider_updated, 6, base_pool_registry, {"from": owner}
+        metaregistry, address_provider_updated, 6, base_pool_registry_updated, {"from": owner}
     )
     metaregistry.add_registry_by_address_provider_id(6, handler, {"from": owner})
     yield handler
