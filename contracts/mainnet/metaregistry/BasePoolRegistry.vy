@@ -40,20 +40,12 @@ event BasePoolRemoved:
     basepool: indexed(address)
 
 
-ADDRESS_PROVIDER: immutable(address)
+ADDRESS_PROVIDER: constant(address) = 0x0000000022D53366457F9d5E68Ec105046FC4383
 base_pool: HashMap[address, BasePool]
 base_pool_list: public(address[100])
 get_base_pool_for_lp_token: public(HashMap[address, address])
 base_pool_count: public(uint256)
 last_updated: public(uint256)
-
-
-@external
-def __init__(_address_provider: address):
-    """
-    @notice Constructor function
-    """
-    ADDRESS_PROVIDER = _address_provider
 
 
 @internal

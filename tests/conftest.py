@@ -26,14 +26,16 @@ def owner():
 
 @pytest.fixture(scope="module")
 def base_pool_registry(BasePoolRegistry, owner):
-    yield BasePoolRegistry.deploy(address_provider().address, {"from": owner})
+    yield BasePoolRegistry.deploy({"from": owner})
 
 
 @pytest.fixture(scope="module")
-def base_pool_registry_updated(base_pool_registry, owner):
+def base_pool_registry_updated(BasePoolRegistry, owner):
+
+    registry = BasePoolRegistry.deploy({"from": owner})
 
     # add 3pool
-    base_pool_registry.add_base_pool(
+    registry.add_base_pool(
         TRIPOOL,
         TRIPOOL_LPTOKEN,
         3,
@@ -44,7 +46,7 @@ def base_pool_registry_updated(base_pool_registry, owner):
     )
 
     # add fraxusdc pool
-    base_pool_registry.add_base_pool(
+    registry.add_base_pool(
         "0xdcef968d416a41cdac0ed8702fac8128a64241a2",
         "0x3175df0976dfa876431c2e9ee6bc45b65d3473cc",
         2,
@@ -55,7 +57,7 @@ def base_pool_registry_updated(base_pool_registry, owner):
     )
 
     # add sbtc pool
-    base_pool_registry.add_base_pool(
+    registry.add_base_pool(
         BTC_BASEPOOL_MAINNET,
         BTC_BASEPOOL_LP_TOKEN_MAINNET,
         3,
@@ -65,7 +67,7 @@ def base_pool_registry_updated(base_pool_registry, owner):
         {"from": owner},
     )
 
-    yield base_pool_registry
+    yield registry
 
 
 @pytest.fixture(scope="module")
