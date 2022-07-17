@@ -710,10 +710,19 @@ def _unregister_coin_pair(_coina: address, _coinb: address, _coinb_idx: uint256)
 
 
 @internal
-def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS]):
+def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS], _is_underlying: bool = False):
 
     for i in range(MAX_COINS):
+
         if _coin_list[i] == ZERO_ADDRESS:
+            break
+
+        # we dont want underlying <> underlying markets
+        # since that should be covered by the base_pool
+        # and not _pool: underlying <> underlying swaps
+        # happen at the base_pool level, not at the _pool
+        # level:
+        if _is_underlying and i > 0:
             break
 
         self._register_coin(_coin_list[i])
@@ -721,6 +730,7 @@ def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS]):
         # add pool to markets
         i2: int128 = i + 1
         for x in range(i2, i2 + MAX_COINS):
+
             if _coin_list[x] == ZERO_ADDRESS:
                 break
 
@@ -824,6 +834,8 @@ def add_pool(
         _coins[i] = CurvePool(_pool).coins(convert(i, uint256))
     self._add_coins_to_market(_pool, _coins)
 
+    # the following does not add basepool_lp_token <> underlying_coin mapping
+    # since that is redundant:
     if _base_pool != ZERO_ADDRESS:
         assert self.base_pool_registry.get_lp_token(_base_pool) != ZERO_ADDRESS
         self.pool_data[_pool].base_pool = _base_pool
