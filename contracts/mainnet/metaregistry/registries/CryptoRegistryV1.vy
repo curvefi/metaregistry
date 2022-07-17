@@ -858,6 +858,11 @@ def remove_pool(_pool: address):
     location: uint256 = self.pool_data[_pool].location
     length: uint256 = self.pool_count - 1
 
+    # because self.pool_list is a static array,
+    # we can replace the last index with ZERO_ADDRESS
+    # and replace the first index with the pool
+    # that was previously in the last index.
+    # we skip this step if location == last index
     if location < length:
         # replace _pool with final value in pool_list
         addr: address = self.pool_list[length]
@@ -896,6 +901,7 @@ def remove_pool(_pool: address):
             if ZERO_ADDRESS not in [coins[i], ucoins[j]]:
                 self._remove_market(_pool, coins[i], ucoins[j])
 
+    # reset remaining mappings:
     self.pool_data[_pool].base_pool = ZERO_ADDRESS
     self.pool_data[_pool].n_coins = 0
     self.pool_data[_pool].name = ""

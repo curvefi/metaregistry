@@ -160,23 +160,28 @@ def remove_base_pool(_pool: address):
     # reset pool <> lp_token mappings
     self.get_base_pool_for_lp_token[self.base_pool[_pool].lp_token] = ZERO_ADDRESS
     self.base_pool[_pool].lp_token = ZERO_ADDRESS
+    self.base_pool[_pool].n_coins = 0
 
     # remove base_pool from base_pool_list
     location: uint256 = self.base_pool[_pool].location
     length: uint256 = self.base_pool_count - 1
+    assert location < length
+
+    # because self.base_pool_list is a static array,
+    # we can replace the last index with ZERO_ADDRESS
+    # and replace the first index with the base pool
+    # that was previously in the last index.
+    # we skip this step if location == last index
     if location < length:
         # replace _pool with final value in pool_list
         addr: address = self.base_pool_list[length]
+        assert addr != ZERO_ADDRESS
         self.base_pool_list[location] = addr
         self.base_pool[addr].location = location
 
     # delete final pool_list value
     self.base_pool_list[length] = ZERO_ADDRESS
     self.base_pool_count = length
-
-    # we set ZERO_ADDRESS at _pool's location
-    self.base_pool_list[location] = ZERO_ADDRESS
-    self.base_pool[_pool].n_coins = 0
 
     self.last_updated = block.timestamp
     log BasePoolRemoved(_pool)
