@@ -657,7 +657,8 @@ def _register_coin_pair(_coina: address, _coinb: address, _key: uint256):
 @internal
 def _unregister_coin(_coin: address):
 
-    self.coins[_coin].register_count -= 1
+    if self.coins[_coin].register_count > 0:
+        self.coins[_coin].register_count -= 1
 
     if self.coins[_coin].register_count == 0:
         self.coin_count -= 1
@@ -679,6 +680,9 @@ def _unregister_coin_pair(_coina: address, _coinb: address, _coinb_idx: uint256)
     @param _coinb_idx the index of _coinb in _coina's array of unique coin's
     """
     # decrement swap counts for both coins
+    assert _coina != ZERO_ADDRESS
+    assert _coinb != ZERO_ADDRESS
+    assert self.coins[_coina].swap_count > 0
     self.coins[_coina].swap_count -= 1
 
     # retrieve the last currently occupied index in coina's array
@@ -753,6 +757,15 @@ def _remove_market(_pool: address, _coina: address, _coinb: address):
                 self.markets[key][i] = self.markets[key][length]
             self.markets[key][length] = ZERO_ADDRESS
             self.market_counts[key] = length
+            break
+
+
+@internal
+def _remove_liquidity_gauges(_pool: address):
+    for i in range(10):
+        if self.liquidity_gauges[_pool][i] != ZERO_ADDRESS:
+            self.liquidity_gauges[_pool][i] = ZERO_ADDRESS
+        else:
             break
 
 
@@ -838,45 +851,6 @@ def remove_pool(_pool: address):
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
     assert self.get_lp_token[_pool] != ZERO_ADDRESS  # dev: pool does not exist
 
-    # remove coin from markets
-    coins: address[MAX_COINS] = self._get_coins(_pool)
-    for i in range(MAX_COINS):
-        if coins[i] == ZERO_ADDRESS:
-            break
-        self._unregister_coin(coins[i])
-
-    # check if metapool and remove if there are markets:
-    is_meta: bool = self.pool_data[_pool].base_pool != ZERO_ADDRESS
-    ucoins: address[MAX_COINS] = empty(address[MAX_COINS])
-    if is_meta:
-        ucoins = self._get_underlying_coins_for_metapool(_pool)
-        self.pool_data[_pool].base_pool = ZERO_ADDRESS
-
-    for i in range(MAX_COINS):
-        coin: address = coins[i]
-        ucoin: address = ucoins[i]
-        if coin == ZERO_ADDRESS and ucoin == ZERO_ADDRESS:
-            break
-
-        # remove pool from markets
-        i2: int128 = i + 1
-        for x in range(i2, i2 + MAX_COINS):
-            ucoinx: address = ucoins[x]
-            if ucoinx == ZERO_ADDRESS:
-                break
-
-            coinx: address = coins[x]
-            if coinx != ZERO_ADDRESS:
-                self._remove_market(_pool, coin, coinx)
-
-            if coin != ucoin or coinx != ucoinx:
-                self._remove_market(_pool, ucoin, ucoinx)
-
-            if is_meta and not ucoin in coins:
-                key: uint256 = bitwise_xor(convert(ucoin, uint256), convert(ucoinx, uint256))
-                self._unregister_coin_pair(ucoin, ucoinx, key)
-
-    # replace pool data:
     self.get_pool_from_lp_token[self.get_lp_token[_pool]] = ZERO_ADDRESS
     self.get_lp_token[_pool] = ZERO_ADDRESS
 
@@ -884,16 +858,49 @@ def remove_pool(_pool: address):
     location: uint256 = self.pool_data[_pool].location
     length: uint256 = self.pool_count - 1
 
-    self.pool_list[location] = ZERO_ADDRESS
+    if location < length:
+        # replace _pool with final value in pool_list
+        addr: address = self.pool_list[length]
+        self.pool_list[location] = addr
+        self.pool_data[addr].location = location
+
+    # delete final pool_list value
+    self.pool_list[length] = ZERO_ADDRESS
     self.pool_count = length
-    self.pool_data[_pool].name = ""
+
+    coins: address[MAX_COINS] = self._get_coins(_pool)
+    ucoins: address[MAX_COINS] = empty(address[MAX_COINS])
+    is_meta: bool = self._is_meta(_pool)
+    if is_meta:
+        ucoins = self._get_underlying_coins_for_metapool(_pool)
+
+    for i in range(MAX_COINS):
+
+        if coins[i] == ZERO_ADDRESS and ucoins[i] == ZERO_ADDRESS:
+            break
+
+        if coins[i] != ZERO_ADDRESS:
+            self._unregister_coin(coins[i])
+
+        if ucoins[i] != ZERO_ADDRESS:
+            self._unregister_coin(ucoins[i])
+
+        for j in range(MAX_COINS):
+
+            if not j > i:
+                continue
+
+            if ZERO_ADDRESS not in [coins[i], coins[j]]:
+                self._remove_market(_pool, coins[i], coins[j])
+
+            if ZERO_ADDRESS not in [coins[i], ucoins[j]]:
+                self._remove_market(_pool, coins[i], ucoins[j])
+
+    self.pool_data[_pool].base_pool = ZERO_ADDRESS
     self.pool_data[_pool].n_coins = 0
-
-    if self.pool_data[_pool].has_positive_rebasing_tokens:
-        self.pool_data[_pool].has_positive_rebasing_tokens = False
-
-    if self.get_zap[_pool] != ZERO_ADDRESS:
-        self.get_zap[_pool] = ZERO_ADDRESS
+    self.pool_data[_pool].name = ""
+    self.get_zap[_pool] = ZERO_ADDRESS
+    self._remove_liquidity_gauges(_pool)
 
     self.last_updated = block.timestamp
     log PoolRemoved(_pool)

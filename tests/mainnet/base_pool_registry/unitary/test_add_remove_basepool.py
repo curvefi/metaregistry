@@ -94,6 +94,7 @@ def test_revert_unauthorised_remove_base_pool(base_pool_registry_updated, unauth
 def test_remove_base_pool(base_pool_registry_updated, owner):
 
     base_pool_count = base_pool_registry_updated.base_pool_count()
+    last_base_pool = base_pool_registry_updated.base_pool_list(base_pool_count - 1)
     base_pool_location = base_pool_registry_updated.get_location(TRIPOOL)
     base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": owner})
 
@@ -103,5 +104,5 @@ def test_remove_base_pool(base_pool_registry_updated, owner):
         base_pool_registry_updated.get_base_pool_for_lp_token(TRIPOOL_LPTOKEN)
         == brownie.ZERO_ADDRESS
     )
-    assert base_pool_registry_updated.base_pool_list(base_pool_location) == brownie.ZERO_ADDRESS
+    assert base_pool_registry_updated.base_pool_list(base_pool_location) == last_base_pool
     assert base_pool_registry_updated.get_n_coins(TRIPOOL) == 0

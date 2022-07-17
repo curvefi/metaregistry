@@ -164,7 +164,14 @@ def remove_base_pool(_pool: address):
     # remove base_pool from base_pool_list
     location: uint256 = self.base_pool[_pool].location
     length: uint256 = self.base_pool_count - 1
+    if location < length:
+        # replace _pool with final value in pool_list
+        addr: address = self.base_pool_list[length]
+        self.base_pool_list[location] = addr
+        self.base_pool[addr].location = location
 
+    # delete final pool_list value
+    self.base_pool_list[length] = ZERO_ADDRESS
     self.base_pool_count = length
 
     # we set ZERO_ADDRESS at _pool's location
