@@ -143,8 +143,7 @@ def update_registry_handler(_index: uint256, _registry_handler: address):
     assert msg.sender == self.owner  # dev: only owner
     assert _index < self.registry_length
 
-    registry: address = self.get_registry[_index]
-    self._update_single_registry(_index, registry)
+    self._update_single_registry(_index, _registry_handler)
 
 
 # ---- view methods (API) of the contract ---- #
