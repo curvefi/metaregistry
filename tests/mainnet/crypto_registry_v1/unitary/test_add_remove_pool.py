@@ -136,7 +136,7 @@ def test_remove_pool(crypto_registry_v1, owner):
     assert crypto_registry_v1.get_n_coins(TRICRYPTO2_MAINNET) == 0
     assert crypto_registry_v1.get_decimals(TRICRYPTO2_MAINNET) == [0] * MAX_COINS
     assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[0][0] == brownie.ZERO_ADDRESS
-    assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[1][0] == 0  # gauge type is 5
+    assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[1][0] == 0
 
     assert crypto_registry_v1.get_coins(TRICRYPTO2_MAINNET) == [brownie.ZERO_ADDRESS] * MAX_COINS
 

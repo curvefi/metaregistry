@@ -622,6 +622,15 @@ def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS], _is_und
 
 
 @internal
+@view
+def _market_exists(_pool: address, _coina: address, _coinb: address) -> bool:
+    key: uint256 = bitwise_xor(convert(_coina, uint256), convert(_coinb, uint256))
+    if self.market_counts[key] == 0:
+        return False
+    return True
+
+
+@internal
 def _remove_market(_pool: address, _coina: address, _coinb: address):
 
     key: uint256 = bitwise_xor(convert(_coina, uint256), convert(_coinb, uint256))
@@ -769,10 +778,10 @@ def remove_pool(_pool: address):
             if not j > i:
                 continue
 
-            if ZERO_ADDRESS not in [coins[i], coins[j]]:
+            if ZERO_ADDRESS not in [coins[i], coins[j]] and self._market_exists(_pool, coins[i], coins[j]):
                 self._remove_market(_pool, coins[i], coins[j])
 
-            if ZERO_ADDRESS not in [coins[i], ucoins[j]]:
+            if ZERO_ADDRESS not in [coins[i], ucoins[j]] and self._market_exists(_pool, coins[i], ucoins[j]):
                 self._remove_market(_pool, coins[i], ucoins[j])
 
     # reset remaining mappings:

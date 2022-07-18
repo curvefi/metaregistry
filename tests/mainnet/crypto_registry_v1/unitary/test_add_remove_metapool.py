@@ -1,8 +1,8 @@
 import brownie
-from tests.abis import gauge_controller
 
+from tests.abis import gauge_controller
 from tests.utils.constants import (
-    # CRV3CRYPTO_MAINNET,
+    CRV3CRYPTO_MAINNET,
     CRVEURTUSD,
     DAI,
     EURT,
@@ -10,15 +10,13 @@ from tests.utils.constants import (
     EURTUSD_MAINNET,
     EURTUSD_ZAP,
     MAX_COINS,
-    # TRICRYPTO2_GAUGE,
-    # TRICRYPTO2_MAINNET,
+    TRICRYPTO2_GAUGE,
+    TRICRYPTO2_MAINNET,
     TRICRYPTO2_ZAP,
     TRIPOOL,
     TRIPOOL_LPTOKEN,
     USDC,
     USDT,
-    # WBTC,
-    # WETH,
 )
 
 
@@ -122,4 +120,70 @@ def test_add_metapool(crypto_registry_v1, owner):
 
 def test_remove_metapool(crypto_registry_v1, owner):
 
-    pass
+    # add EURT3CRV pool
+    crypto_registry_v1.add_pool(
+        EURTUSD_MAINNET,
+        CRVEURTUSD,
+        EURTUSD_GAUGE,
+        EURTUSD_ZAP,
+        2,
+        "eurtusd",
+        TRIPOOL,
+        False,
+        {"from": owner},
+    )
+
+    # add tricrypto2 as the last pool:
+    crypto_registry_v1.add_pool(
+        TRICRYPTO2_MAINNET,
+        CRV3CRYPTO_MAINNET,
+        TRICRYPTO2_GAUGE,
+        TRICRYPTO2_ZAP,
+        3,
+        "tricrypto2",
+        brownie.ZERO_ADDRESS,
+        False,
+        {"from": owner},
+    )
+
+    pool_count = crypto_registry_v1.pool_count()
+    last_pool = crypto_registry_v1.pool_list(pool_count - 1)
+
+    assert crypto_registry_v1.pool_list(0) == EURTUSD_MAINNET
+
+    crypto_registry_v1.remove_pool(EURTUSD_MAINNET, {"from": owner})
+
+    assert crypto_registry_v1.pool_list(0) == last_pool
+    assert crypto_registry_v1.pool_count() == pool_count - 1  # one pool should be gone
+
+    assert crypto_registry_v1.get_zap(EURTUSD_MAINNET) == brownie.ZERO_ADDRESS
+    assert crypto_registry_v1.get_lp_token(EURTUSD_MAINNET) == brownie.ZERO_ADDRESS
+    assert crypto_registry_v1.get_pool_from_lp_token(CRVEURTUSD) == brownie.ZERO_ADDRESS
+    assert crypto_registry_v1.get_base_pool(EURTUSD_MAINNET) == brownie.ZERO_ADDRESS
+    assert not crypto_registry_v1.is_meta(EURTUSD_MAINNET)
+    assert crypto_registry_v1.get_pool_name(EURTUSD_MAINNET) == ""
+
+    assert crypto_registry_v1.get_n_coins(EURTUSD_MAINNET) == 0
+    assert crypto_registry_v1.get_n_underlying_coins(EURTUSD_MAINNET) == 0
+    assert crypto_registry_v1.get_decimals(EURTUSD_MAINNET) == [0] * MAX_COINS
+    assert crypto_registry_v1.get_underlying_decimals(EURTUSD_MAINNET) == [0] * 8
+
+    # gauge checks:
+    assert crypto_registry_v1.get_gauges(EURTUSD_MAINNET)[0][0] == brownie.ZERO_ADDRESS
+    assert crypto_registry_v1.get_gauges(EURTUSD_MAINNET)[1][0] == 0
+
+    # coin checks:
+    assert crypto_registry_v1.get_coins(EURTUSD_MAINNET) == [brownie.ZERO_ADDRESS] * 8
+    assert crypto_registry_v1.get_underlying_coins(EURTUSD_MAINNET) == [brownie.ZERO_ADDRESS] * 8
+
+    # find pool for coins:
+    for coin_a in [EURT, TRIPOOL_LPTOKEN, DAI, USDT, USDC]:
+        for coin_b in [EURT, TRIPOOL_LPTOKEN, DAI, USDC, USDT]:
+
+            assert crypto_registry_v1.get_coin_indices(EURTUSD_MAINNET, coin_a, coin_b) == [
+                0,
+                0,
+                False,
+            ]
+
+            assert crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == brownie.ZERO_ADDRESS
