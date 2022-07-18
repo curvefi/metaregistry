@@ -289,44 +289,54 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
 def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registry_updated, pool):
 
-    if registry_id in [
-        METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX,
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-    ]:
+    coins = registry.get_coins(pool)
+    underlying_coins = [brownie.ZERO_ADDRESS] * MAX_COINS
 
-        return registry.get_underlying_coins(pool)
+    for idx, coin in enumerate(coins):
 
-    else:
+        base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
 
-        # crypto factory does not have underlying coins methods,
-        # so we need to find it out the long way:
-        coins = registry.get_coins(pool)
-        underlying_coins = [brownie.ZERO_ADDRESS] * MAX_COINS
+        if base_pool == brownie.ZERO_ADDRESS:
 
-        for idx, coin in enumerate(coins):
+            underlying_coins[idx] = coin
 
-            base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
+        else:
 
-            if base_pool != brownie.ZERO_ADDRESS:
+            basepool_coins = base_pool_registry_updated.get_coins(base_pool)
 
-                basepool_coins = base_pool_registry_updated.get_coins(base_pool)
+            for bp_coin in basepool_coins:
 
-                for bp_coin in basepool_coins:
+                if bp_coin == brownie.ZERO_ADDRESS:
+                    break
 
-                    if bp_coin == brownie.ZERO_ADDRESS:
-                        break
+                underlying_coins[idx] = bp_coin
+                idx += 1
 
-                    underlying_coins[idx] = bp_coin
-                    idx += 1
+            break
 
-                break
+    if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
 
-            else:
+        try:
 
-                underlying_coins[idx] = coin
+            registry_underlying_coins = registry.get_underlying_coins(pool)
+            if registry_underlying_coins != underlying_coins:
+                warnings.warn(f"Pool {pool} might be a lending pool.")
+                return registry_underlying_coins
 
-        return underlying_coins
+        except brownie.exceptions.VirtualMachineError:
+            # virtual machine errors prop up for registry.get_underlying_coins if pool
+            # is completely depegged. We check this by setting up a revert check and
+            # then returning underlying_coins:
+            balances = registry.get_balances(pool)
+            decimals = registry.get_decimals(pool)
+
+            float_balances = [balances[i] / 10 ** decimals[i] for i in range(len(decimals))]
+            if min(float_balances) < 1:
+                with brownie.reverts():
+                    registry.get_underlying_coins(pool)
+                return underlying_coins
+
+    return underlying_coins
 
 
 @pytest.mark.parametrize("pool_id", range(MAX_POOLS))
@@ -339,12 +349,9 @@ def test_get_underlying_coins(
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
     metaregistry_output = metaregistry.get_underlying_coins(pool)
 
-    if metaregistry.is_meta(pool):
-        actual_output = _get_underlying_coins_from_registry(
-            registry_id, registry, base_pool_registry_updated, pool
-        )
-    else:
-        actual_output = registry.get_coins(pool)
+    actual_output = _get_underlying_coins_from_registry(
+        registry_id, registry, base_pool_registry_updated, pool
+    )
 
     for idx, registry_value in enumerate(actual_output):
         assert registry_value == metaregistry_output[idx]
