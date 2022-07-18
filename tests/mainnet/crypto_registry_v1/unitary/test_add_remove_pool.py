@@ -80,17 +80,6 @@ def test_add_pool(crypto_registry_v1, owner):
     )
 
     # check if coins and underlying coins (if any) are added to the underlying market:
-    assert crypto_registry_v1.coin_count() == 3
-    assert crypto_registry_v1.get_coin_swap_complement(USDT, 0) == WBTC
-    assert crypto_registry_v1.get_coin_swap_complement(USDT, 1) == WETH
-    assert crypto_registry_v1.get_coin_swap_complement(WBTC, 0) == USDT
-    assert crypto_registry_v1.get_coin_swap_complement(WBTC, 1) == WETH
-    assert crypto_registry_v1.get_coin_swap_complement(WETH, 0) == USDT
-    assert crypto_registry_v1.get_coin_swap_complement(WETH, 1) == WBTC
-
-    for coin in [USDT, WBTC, WETH]:
-        assert crypto_registry_v1.get_coin_swap_count(coin) == 2
-
     assert crypto_registry_v1.get_coin_indices(TRICRYPTO2_MAINNET, USDT, WBTC) == [0, 1, False]
     assert crypto_registry_v1.get_coin_indices(TRICRYPTO2_MAINNET, WBTC, WETH) == [1, 2, False]
     assert crypto_registry_v1.find_pool_for_coins(USDT, WBTC, 0) == TRICRYPTO2_MAINNET
@@ -133,14 +122,12 @@ def test_remove_pool(crypto_registry_v1, owner):
 
     pool_count = crypto_registry_v1.pool_count()
     last_pool = crypto_registry_v1.pool_list(pool_count - 1)
-    coin_count = crypto_registry_v1.coin_count()
 
     assert crypto_registry_v1.pool_list(0) == TRICRYPTO2_MAINNET
     crypto_registry_v1.remove_pool(TRICRYPTO2_MAINNET, {"from": owner})
 
     assert crypto_registry_v1.pool_list(0) == last_pool
     assert crypto_registry_v1.pool_count() == pool_count - 1  # one pool should be gone
-    assert crypto_registry_v1.coin_count() == coin_count - 3  # 3 coins should be gone
     assert crypto_registry_v1.get_zap(TRICRYPTO2_MAINNET) == brownie.ZERO_ADDRESS
     assert crypto_registry_v1.get_lp_token(TRICRYPTO2_MAINNET) == brownie.ZERO_ADDRESS
     assert crypto_registry_v1.get_pool_from_lp_token(CRV3CRYPTO_MAINNET) == brownie.ZERO_ADDRESS
@@ -153,17 +140,9 @@ def test_remove_pool(crypto_registry_v1, owner):
 
     assert crypto_registry_v1.get_coins(TRICRYPTO2_MAINNET) == [brownie.ZERO_ADDRESS] * MAX_COINS
 
-    # check if coins and underlying coins (if any) are added to the underlying market:
-    assert crypto_registry_v1.get_coin_swap_complement(USDT, 0) == brownie.ZERO_ADDRESS
-    assert crypto_registry_v1.get_coin_swap_complement(USDT, 1) == brownie.ZERO_ADDRESS
-    assert crypto_registry_v1.get_coin_swap_complement(WBTC, 0) == brownie.ZERO_ADDRESS
-    assert crypto_registry_v1.get_coin_swap_complement(WBTC, 1) == brownie.ZERO_ADDRESS
-    assert crypto_registry_v1.get_coin_swap_complement(WETH, 0) == brownie.ZERO_ADDRESS
-    assert crypto_registry_v1.get_coin_swap_complement(WETH, 1) == brownie.ZERO_ADDRESS
-
     for coin_i in [USDT, WBTC, WETH]:
-        assert crypto_registry_v1.get_coin_swap_count(coin_i) == 0
         for coin_j in [USDT, WBTC, WETH]:
+
             assert crypto_registry_v1.get_coin_indices(TRICRYPTO2_MAINNET, coin_i, coin_j) == [
                 0,
                 0,

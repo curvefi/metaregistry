@@ -290,3 +290,8 @@ def registry_pool_index_iterator(registries, handlers):
             iterable.append((registry_id, registry_handler, registry, pool))
 
     return iterable
+
+
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass

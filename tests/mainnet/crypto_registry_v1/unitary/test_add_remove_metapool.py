@@ -66,7 +66,6 @@ def test_add_metapool(crypto_registry_v1, owner):
     assert crypto_registry_v1.get_gauges(EURTUSD_MAINNET)[1][0] == gauge_type_actual
 
     # coin checks:
-    assert crypto_registry_v1.coin_count() == 5
     assert (
         crypto_registry_v1.get_coins(EURTUSD_MAINNET)
         == [EURT, TRIPOOL_LPTOKEN] + [brownie.ZERO_ADDRESS] * 6
@@ -75,21 +74,6 @@ def test_add_metapool(crypto_registry_v1, owner):
         crypto_registry_v1.get_underlying_coins(EURTUSD_MAINNET)
         == [EURT, DAI, USDC, USDT] + [brownie.ZERO_ADDRESS] * 4
     )
-
-    # only EURT should have 4 coin_swap_complement, and the rest just 1 (EURT):
-    assert crypto_registry_v1.get_coin_swap_count(EURT) == 4
-    assert crypto_registry_v1.get_coin_swap_complement(EURT, 0) == TRIPOOL_LPTOKEN
-    assert crypto_registry_v1.get_coin_swap_complement(EURT, 1) == DAI
-    assert crypto_registry_v1.get_coin_swap_complement(EURT, 2) == USDC
-    assert crypto_registry_v1.get_coin_swap_complement(EURT, 3) == USDT
-
-    for coin in [TRIPOOL_LPTOKEN, DAI, USDC, USDT]:
-
-        assert crypto_registry_v1.get_coin_swap_count(coin) == 1
-        assert crypto_registry_v1.get_coin_swap_complement(coin, 0) == EURT
-        assert crypto_registry_v1.get_coin_swap_complement(coin, 1) == brownie.ZERO_ADDRESS
-        assert crypto_registry_v1.get_coin_swap_complement(coin, 2) == brownie.ZERO_ADDRESS
-        assert crypto_registry_v1.get_coin_swap_complement(coin, 3) == brownie.ZERO_ADDRESS
 
     assert crypto_registry_v1.get_coin_indices(EURTUSD_MAINNET, EURT, TRIPOOL_LPTOKEN) == [
         0,
@@ -126,6 +110,9 @@ def test_add_metapool(crypto_registry_v1, owner):
             elif TRIPOOL_LPTOKEN in [coin_a, coin_b] and not set([DAI, USDC, USDT]).isdisjoint(
                 [coin_a, coin_b]
             ):
+                crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == brownie.ZERO_ADDRESS
+
+            elif not set([DAI, USDC, USDT]).isdisjoint([coin_a, coin_b]):
                 crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == brownie.ZERO_ADDRESS
 
             # everything else should go to EURTUSD pool:
