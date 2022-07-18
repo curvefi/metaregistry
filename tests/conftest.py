@@ -204,49 +204,34 @@ def metaregistry(MetaRegistry, address_provider_updated, owner):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_registry_handler(StableRegistryHandler, owner, metaregistry, address_provider_updated):
-    handler = StableRegistryHandler.deploy(
-        metaregistry, address_provider_updated, 0, {"from": owner}
-    )
-    metaregistry.add_registry_by_address_provider_id(0, handler, {"from": owner})
+def stable_registry_handler(StableRegistryHandler, metaregistry, owner):
+    handler = StableRegistryHandler.deploy(stable_registry().address, {"from": owner})
+    metaregistry.add_registry_handler(handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_factory_handler(
-    StableFactoryHandler, owner, metaregistry, address_provider_updated, stable_registry_handler
-):  # ensure registry fixtures exec order
+def stable_factory_handler(StableFactoryHandler, metaregistry, base_pool_registry_updated, owner):
     handler = StableFactoryHandler.deploy(
-        metaregistry, address_provider_updated, 3, {"from": owner}
+        stable_factory().address, base_pool_registry_updated, {"from": owner}
     )
-    metaregistry.add_registry_by_address_provider_id(3, handler, {"from": owner})
+    metaregistry.add_registry_handler(handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_handler(
-    CryptoRegistryHandler, owner, metaregistry, address_provider_updated, stable_factory_handler
-):
-    handler = CryptoRegistryHandler.deploy(
-        metaregistry, address_provider_updated, 5, {"from": owner}
-    )
-    metaregistry.add_registry_by_address_provider_id(5, handler, {"from": owner})
+def crypto_registry_handler(CryptoRegistryHandler, owner, metaregistry, crypto_registry_updated):
+    handler = CryptoRegistryHandler.deploy(crypto_registry_updated, {"from": owner})
+    metaregistry.add_registry_handler(handler, {"from": owner})
     yield handler
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_factory_handler(
-    CryptoFactoryHandler,
-    owner,
-    metaregistry,
-    address_provider_updated,
-    base_pool_registry_updated,
-    crypto_registry_handler,
-):
+def crypto_factory_handler(CryptoFactoryHandler, metaregistry, base_pool_registry_updated, owner):
     handler = CryptoFactoryHandler.deploy(
-        metaregistry, address_provider_updated, 6, base_pool_registry_updated, {"from": owner}
+        crypto_factory().address, base_pool_registry_updated, {"from": owner}
     )
-    metaregistry.add_registry_by_address_provider_id(6, handler, {"from": owner})
+    metaregistry.add_registry_handler(handler, {"from": owner})
     yield handler
 
 

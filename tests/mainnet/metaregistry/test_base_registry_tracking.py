@@ -9,7 +9,7 @@ from tests.utils.constants import (
 )
 
 
-def test_new_crypto_factory_pool(fn_isolation, metaregistry, registries, owner):
+def test_new_crypto_factory_pool(metaregistry, registries, owner):
     test_pool_name = "test"
     crypto_factory = registries[METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX]
     assert metaregistry.find_pool_for_coins(DAI, CVXFXS_LPTOKEN) == brownie.ZERO_ADDRESS
@@ -37,7 +37,7 @@ def test_new_crypto_factory_pool(fn_isolation, metaregistry, registries, owner):
     assert metaregistry.find_pool_for_coins(DAI, CVXFXS_LPTOKEN) == new_pool
 
 
-def test_new_stable_factory_pool(fn_isolation, metaregistry, registries, owner):
+def test_new_stable_factory_pool(metaregistry, registries, owner):
     test_pool_name = "test2"
     stable_factory = registries[METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX]
     assert metaregistry.find_pool_for_coins(BVECVX_LPTOKEN, CVXFXS_LPTOKEN) == brownie.ZERO_ADDRESS

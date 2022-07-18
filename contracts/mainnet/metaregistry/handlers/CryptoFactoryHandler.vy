@@ -5,10 +5,6 @@
 """
 
 # ---- interfaces ---- #
-interface AddressProvider:
-    def get_address(_id: uint256) -> address: view
-
-
 interface BaseRegistry:
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_balances(_pool: address) -> uint256[MAX_COINS]: view
@@ -86,17 +82,13 @@ N_COINS: constant(uint256) = 2
 
 # ---- storage variables ---- #
 base_registry: public(BaseRegistry)
-registry_id: uint256
-registry_index: uint256
 base_pool_registry: BasePoolRegistry
 
 
 # ---- constructor ---- #
 @external
-def __init__(_metaregistry: address, _address_provider: address, _id: uint256, _base_pool_registry: address):
-    self.base_registry = BaseRegistry(AddressProvider(_address_provider).get_address(_id))
-    self.registry_id = _id
-    self.registry_index = MetaRegistry(_metaregistry).registry_length()
+def __init__(_registry_address: address, _base_pool_registry: address):
+    self.base_registry = BaseRegistry(_registry_address)
     self.base_pool_registry = BasePoolRegistry(_base_pool_registry)
 
 
@@ -483,6 +475,12 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
             _decimals[i] = ERC20(_underlying_coins[i]).decimals()
         return _decimals
     return self._get_decimals(_pool)
+
+
+@external
+@view
+def get_virtual_price_from_lp_token(_pool: address) -> uint256:
+    return CurvePool(_pool).get_virtual_price()
 
 
 @external

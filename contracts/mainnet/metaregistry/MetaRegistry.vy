@@ -7,9 +7,11 @@
 # ---- interfaces ---- #
 interface AddressProvider:
     def admin() -> address: view
-    def get_address(_id: uint256) -> address: view
-    def get_id_info(_id: uint256) -> ((address, bool, uint256, uint256, String[64])): view
 
+
+# registry and registry handlers are considered to be the same here.
+# registry handlers are just wrapper contracts that simplify/fix underlying registries
+# for integrating it into the Metaregistry.
 interface RegistryHandler:
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_admin_balances(_pool: address) -> uint256[MAX_COINS]: view
@@ -34,10 +36,8 @@ interface RegistryHandler:
     def is_registered(_pool: address) -> bool: view
     def pool_count() -> uint256: view
     def pool_list(_index: uint256) -> address: view
+    def get_virtual_price_from_lp_token(_addr: address) -> uint256: view
 
-
-interface CurvePool:
-    def get_virtual_price() -> uint256: view
 
 # ---- events ---- #
 event CommitNewAdmin:
@@ -46,15 +46,6 @@ event CommitNewAdmin:
 
 event NewAdmin:
     admin: indexed(address)
-
-
-# ---- structs ---- #
-struct Registry:
-    addr: address
-    id: uint256 # id in the address provider
-    registry_handler: address # contract with custom logic to id (sub)categories
-    description: String[64]
-    is_active: bool
 
 
 # ---- constants ---- #
@@ -66,9 +57,10 @@ ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 # ---- storage variables ---- #
 address_provider: public(AddressProvider)
 owner: public(address)
-get_registry: public(HashMap[uint256, Registry]) # get registry by index, index starts at 0
-registry_length: public(uint256)
 
+# get registry/registry_handler by index, index starts at 0:
+get_registry: public(HashMap[uint256, address])
+registry_length: public(uint256)
 
 
 # ---- constructor ---- #
@@ -80,13 +72,13 @@ def __init__(_address_provider: address):
 
 # ---- internal methods ---- #
 @internal
-def _update_single_registry(_index: uint256, _addr: address, _id: uint256, _registry_handler: address, _description: String[64], _is_active: bool):
+def _update_single_registry(_index: uint256, _registry_handler: address):
     assert _index <= self.registry_length
 
     if _index == self.registry_length:
         self.registry_length += 1
 
-    self.get_registry[_index] = Registry({addr: _addr, id: _id, registry_handler: _registry_handler, description: _description, is_active: _is_active})
+    self.get_registry[_index] = _registry_handler
 
 
 @internal
@@ -95,7 +87,7 @@ def _get_pool_from_lp_token(_token: address) -> address:
     for i in range(MAX_REGISTRIES):
         if i == self.registry_length:
             break
-        handler: address = self.get_registry[i].registry_handler
+        handler: address = self.get_registry[i]
         pool: address = RegistryHandler(handler).get_pool_from_lp_token(_token)
         if pool != ZERO_ADDRESS:
             return pool
@@ -118,9 +110,9 @@ def _get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
 
         if i == self.registry_length:
             break
-        handler: address = self.get_registry[i].registry_handler
+        handler: address = self.get_registry[i]
 
-        if self.get_registry[i].is_active and RegistryHandler(handler).is_registered(_pool):
+        if RegistryHandler(handler).is_registered(_pool):
             pool_registry_handler[c] = handler
             c += 1
 
@@ -131,73 +123,14 @@ def _get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
 
 # ---- most used methods: Admin / DAO privileged methods ---- #
 @external
-def add_registry_by_address_provider_id(_id: uint256, _registry_handler: address):
+def add_registry_handler(_registry_handler: address):
     """
     @notice Add a registry from the address provider entry
-    @param _id Id number in the address provider
     @param _registry_handler Address of the handler contract
     """
     assert msg.sender == self.owner  # dev: only owner
 
-    addr: address = ZERO_ADDRESS
-    is_active: bool = False
-    version: uint256 = 0
-    last_modified: uint256 = 0
-    description: String[64] = ""
-
-    (addr, is_active, version, last_modified, description) = self.address_provider.get_id_info(_id)
-    self._update_single_registry(self.registry_length, addr, _id, _registry_handler, description, is_active)
-
-
-@external
-def switch_registry_active_status(_index: uint256):
-    """
-    @notice Disables an active registry (and vice versa)
-    @param _index The index of the registry in get_registry
-    """
-    assert msg.sender == self.owner  # dev: only owner
-    assert _index < self.registry_length
-
-    registry: Registry = self.get_registry[_index]
-    self._update_single_registry(_index, registry.addr, registry.id, registry.registry_handler, registry.description, not registry.is_active)
-
-
-@external
-def update_address_provider(_provider: address):
-    """
-    @notice Update the address provider contract
-    @dev Only callable by admin
-    @param _provider New provider address
-    """
-    assert msg.sender == self.owner  # dev: only owner
-    assert _provider != ZERO_ADDRESS  # dev: not to zero
-    self.address_provider = AddressProvider(_provider)
-
-
-@external
-def update_registry_addresses() -> uint256:
-    """
-    @notice Updates all out-of-date registry addresses from the address provider
-    @return The number of updates applied
-    """
-    assert msg.sender == self.owner  # dev: only owner
-
-    addr: address = ZERO_ADDRESS
-    is_active: bool = False
-    version: uint256 = 0
-    last_modified: uint256 = 0
-    description: String[64] = ""
-    count: uint256 = 0
-
-    for i in range(MAX_REGISTRIES):
-        if i == self.registry_length:
-            break
-        registry: Registry = self.get_registry[i]
-        if registry.is_active and registry.addr != self.address_provider.get_address(registry.id):
-            (addr, is_active, version, last_modified, description) = self.address_provider.get_id_info(i)
-            self._update_single_registry(i, addr, registry.id, registry.registry_handler, description, is_active)
-            count += 1
-    return count
+    self._update_single_registry(self.registry_length, _registry_handler)
 
 
 @external
@@ -210,24 +143,8 @@ def update_registry_handler(_index: uint256, _registry_handler: address):
     assert msg.sender == self.owner  # dev: only owner
     assert _index < self.registry_length
 
-    registry: Registry = self.get_registry[_index]
-    self._update_single_registry(_index, registry.addr, registry.id, _registry_handler, registry.description, registry.is_active)
-
-
-@external
-def update_single_registry(_index: uint256, _addr: address, _id: uint256, _registry_handler: address, _description: String[64], _is_active: bool):
-    """
-    @notice Creates or update a single registry entry
-    @param _index The index of the registry in get_registry, equals to registry_length for new entry
-    @param _addr Address of the registry contract
-    @param _id Id number in the address provider
-    @param _registry_handler Address of the handler contract
-    @param _description Name of the registry
-    @param _is_active Whether registry is active
-    """
-    assert msg.sender == self.owner  # dev: only owner
-
-    self._update_single_registry(_index, _addr, _id, _registry_handler, _description, _is_active)
+    registry: address = self.get_registry[_index]
+    self._update_single_registry(_index, registry)
 
 
 # ---- view methods (API) of the contract ---- #
@@ -247,7 +164,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     for registry_index in range(MAX_REGISTRIES):
         if registry_index == self.registry_length:
             break
-        registry: RegistryHandler = RegistryHandler(self.get_registry[registry_index].registry_handler)
+        registry: RegistryHandler = RegistryHandler(self.get_registry[registry_index])
         for j in range(0, 65536):
             pool = registry.find_pool_for_coins(_from, _to, j)
             if pool == ZERO_ADDRESS:
@@ -438,7 +355,7 @@ def get_pool_params(_pool: address, handler_id: uint256 = 0) -> uint256[20]:
 
 @external
 @view
-def get_registry_handlers_from_pool(_pool: address, handler_id: uint256 = 0) -> address[MAX_REGISTRIES]:
+def get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
     return self._get_registry_handlers_from_pool(_pool)
 
 
@@ -480,13 +397,25 @@ def get_underlying_decimals(_pool: address, handler_id: uint256 = 0) -> uint256[
 
 @external
 @view
-def get_virtual_price_from_lp_token(_token: address, handler_id: uint256 = 0) -> uint256:
+def get_virtual_price_from_lp_token(_token: address) -> uint256:
     """
     @notice Get the virtual price of a pool LP token
     @param _token LP token address
     @return uint256 Virtual price
     """
-    return CurvePool(self._get_pool_from_lp_token(_token)).get_virtual_price()
+    registry_handler: address = ZERO_ADDRESS
+    virtual_price: uint256 = 0
+    for i in range(MAX_REGISTRIES):
+
+        registry_handler = self.get_registry[i]
+        if registry_handler == ZERO_ADDRESS:
+            break
+        virtual_price = RegistryHandler(registry_handler).get_virtual_price_from_lp_token(_token)
+
+        if virtual_price != 0:
+            return virtual_price
+
+    return 0
 
 
 @external
@@ -521,7 +450,7 @@ def pool_count() -> uint256:
     for i in range(MAX_REGISTRIES):
         if i == self.registry_length:
             break
-        handler: address = self.get_registry[i].registry_handler
+        handler: address = self.get_registry[i]
         total_pools += RegistryHandler(handler).pool_count()
     return total_pools
 
@@ -536,7 +465,7 @@ def pool_list(_index: uint256) -> address:
     for i in range(MAX_REGISTRIES):
         if i == self.registry_length:
             break
-        handler: address = self.get_registry[i].registry_handler
+        handler: address = self.get_registry[i]
         count: uint256 = RegistryHandler(handler).pool_count()
         if _index - pools_skip < count:
             return RegistryHandler(handler).pool_list(_index - pools_skip)
