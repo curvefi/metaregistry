@@ -226,6 +226,20 @@ def _find_basepool_for_coin(_coin: address) -> address:
     return ZERO_ADDRESS
 
 
+@internal
+@view
+def _get_pool_from_lp_token(_lp_token: address) -> address:
+    max_pools: uint256 = self.base_registry.pool_count()
+    for i in range(MAX_POOLS):
+        if i == max_pools:
+            break
+        pool: address = self.base_registry.pool_list(i)
+        token: address = self._get_lp_token(pool)
+        if token == _lp_token:
+            return pool
+    return ZERO_ADDRESS
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -479,8 +493,8 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 
 @external
 @view
-def get_virtual_price_from_lp_token(_pool: address) -> uint256:
-    return CurvePool(_pool).get_virtual_price()
+def get_virtual_price_from_lp_token(_token: address) -> uint256:
+    return CurvePool(self._get_pool_from_lp_token(_token)).get_virtual_price()
 
 
 @external
