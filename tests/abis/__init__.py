@@ -6,7 +6,6 @@ from brownie import Contract
 from tests.utils.constants import (
     ADDRESS_PROVIDER,
     CRYPTO_FACTORY,
-    CRYPTO_REGISTRY,
     GAUGE_CONTROLLER,
     STABLE_FACTORY,
     STABLE_REGISTRY,
@@ -24,13 +23,6 @@ with open(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "CryptoFactory.json"), "r"
 ) as fp:
     CRYPTO_FACTORY_ABI = json.load(fp)
-
-
-with open(
-    os.path.join(os.path.dirname(os.path.realpath(__file__)), "CryptoRegistry.json"),
-    "r",
-) as fp:
-    CRYPTO_REGISTRY_ABI = json.load(fp)
 
 
 with open(
@@ -84,12 +76,6 @@ def address_provider() -> Contract:
 def crypto_factory() -> Contract:
     return Contract.from_abi(
         name="Curve Crypto Factory", address=CRYPTO_FACTORY, abi=CRYPTO_FACTORY_ABI
-    )
-
-
-def crypto_registry() -> Contract:
-    return Contract.from_abi(
-        name="Curve Crypto Registry", address=CRYPTO_REGISTRY, abi=CRYPTO_REGISTRY_ABI
     )
 
 

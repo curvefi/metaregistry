@@ -588,7 +588,6 @@ def remove_pool(_pool: address):
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
     assert self.pool_data[_pool].coins[0] != ZERO_ADDRESS  # dev: pool does not exist
 
-
     self.get_pool_from_lp_token[self.get_lp_token[_pool]] = ZERO_ADDRESS
     self.get_lp_token[_pool] = ZERO_ADDRESS
 

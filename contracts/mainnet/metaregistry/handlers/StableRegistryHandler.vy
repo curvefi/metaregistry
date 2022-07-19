@@ -4,10 +4,6 @@
 @license MIT
 """
 # ---- interface ---- #
-interface AddressProvider:
-    def get_address(_id: uint256) -> address: view
-
-
 interface BaseRegistry:
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_admin_balances(_pool: address) -> uint256[MAX_COINS]: view
@@ -49,16 +45,12 @@ MAX_COINS: constant(uint256) = 8
 
 # ---- storage variables ---- #
 base_registry: public(BaseRegistry)
-registry_id: uint256
-registry_index: uint256
 
 
 # ---- constructor ---- #
 @external
-def __init__(_metaregistry: address, _id: uint256):
-    self.base_registry = BaseRegistry(AddressProvider(0x0000000022D53366457F9d5E68Ec105046FC4383).get_address(_id))
-    self.registry_id = _id
-    self.registry_index = MetaRegistry(_metaregistry).registry_length()
+def __init__(_base_registry: address):
+    self.base_registry = BaseRegistry(_base_registry)
 
 
 # ---- internal methods ---- #
