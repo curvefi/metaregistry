@@ -396,25 +396,15 @@ def get_underlying_decimals(_pool: address, handler_id: uint256 = 0) -> uint256[
 
 @external
 @view
-def get_virtual_price_from_lp_token(_token: address) -> uint256:
+def get_virtual_price_from_lp_token(_token: address, handler_id: uint256 = 0) -> uint256:
     """
     @notice Get the virtual price of a pool LP token
     @param _token LP token address
     @return uint256 Virtual price
     """
-    registry_handler: address = ZERO_ADDRESS
-    virtual_price: uint256 = 0
-    for i in range(MAX_REGISTRIES):
-
-        registry_handler = self.get_registry[i]
-        if registry_handler == ZERO_ADDRESS:
-            break
-        virtual_price = RegistryHandler(registry_handler).get_virtual_price_from_lp_token(_token)
-
-        if virtual_price != 0:
-            return virtual_price
-
-    return 0
+    pool: address = self._get_pool_from_lp_token(_token)
+    registry_handler: address = self._get_registry_handlers_from_pool(pool)[handler_id]
+    return RegistryHandler(registry_handler).get_virtual_price_from_lp_token(_token)
 
 
 @external
