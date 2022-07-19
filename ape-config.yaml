@@ -1,0 +1,17 @@
+name: curve-metaregistry
+
+plugins:
+  - vyper
+  - alchemy
+  - hardhat
+
+ethereum:
+  default_network: mainnet-fork
+  mainnet_fork:
+    default_provider: hardhat
+
+hardhat:
+  fork:
+    ethereum:
+      mainnet:
+        upstream_provider: alchemy

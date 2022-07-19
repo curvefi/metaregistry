@@ -1,4 +1,4 @@
-import brownie
+import ape
 
 from tests.utils.constants import (
     BVECVX_LPTOKEN,
@@ -12,7 +12,7 @@ from tests.utils.constants import (
 def test_new_crypto_factory_pool(metaregistry, registries, owner):
     test_pool_name = "test"
     crypto_factory = registries[METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX]
-    assert metaregistry.find_pool_for_coins(DAI, CVXFXS_LPTOKEN) == brownie.ZERO_ADDRESS
+    assert metaregistry.find_pool_for_coins(DAI, CVXFXS_LPTOKEN) == ape.ZERO_ADDRESS
     crypto_factory.deploy_pool(
         test_pool_name,
         test_pool_name,
@@ -31,7 +31,7 @@ def test_new_crypto_factory_pool(metaregistry, registries, owner):
     )
     new_pool = crypto_factory.pool_list(crypto_factory.pool_count() - 1)
     lp_token = crypto_factory.get_token(new_pool)
-    assert metaregistry.get_coins(new_pool) == [DAI, CVXFXS_LPTOKEN] + [brownie.ZERO_ADDRESS] * 6
+    assert metaregistry.get_coins(new_pool) == [DAI, CVXFXS_LPTOKEN] + [ape.ZERO_ADDRESS] * 6
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool
     assert metaregistry.find_pool_for_coins(DAI, CVXFXS_LPTOKEN) == new_pool
@@ -40,11 +40,11 @@ def test_new_crypto_factory_pool(metaregistry, registries, owner):
 def test_new_stable_factory_pool(metaregistry, registries, owner):
     test_pool_name = "test2"
     stable_factory = registries[METAREGISTRY_STABLE_FACTORY_HANDLER_INDEX]
-    assert metaregistry.find_pool_for_coins(BVECVX_LPTOKEN, CVXFXS_LPTOKEN) == brownie.ZERO_ADDRESS
+    assert metaregistry.find_pool_for_coins(BVECVX_LPTOKEN, CVXFXS_LPTOKEN) == ape.ZERO_ADDRESS
     stable_factory.deploy_plain_pool(
         test_pool_name,
         test_pool_name,
-        [BVECVX_LPTOKEN, CVXFXS_LPTOKEN, brownie.ZERO_ADDRESS, brownie.ZERO_ADDRESS],
+        [BVECVX_LPTOKEN, CVXFXS_LPTOKEN, ape.ZERO_ADDRESS, ape.ZERO_ADDRESS],
         10000,
         4000000,
         0,
@@ -55,7 +55,7 @@ def test_new_stable_factory_pool(metaregistry, registries, owner):
     lp_token = new_pool
     assert (
         metaregistry.get_coins(new_pool)
-        == [BVECVX_LPTOKEN, CVXFXS_LPTOKEN] + [brownie.ZERO_ADDRESS] * 6
+        == [BVECVX_LPTOKEN, CVXFXS_LPTOKEN] + [ape.ZERO_ADDRESS] * 6
     )
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool

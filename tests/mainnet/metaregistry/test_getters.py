@@ -1,7 +1,7 @@
 import itertools
 import warnings
 
-import brownie
+import ape
 import pytest
 
 from tests.abis import curve_pool, curve_pool_v2, gauge_controller, liquidity_gauge
@@ -24,13 +24,13 @@ def check_pool_already_registered(
     Args:
         metaregistry (fixture): MetaRegistry contract fixture.
         pool (str): address of pool
-        registry (brownie.Contract): Contract instance of registry.
+        registry (Contract): Contract instance of registry.
         handler_id (int): 0 if pool is registered at only 1 registry, > 0 otherwise.
     """
     registered_handlers = metaregistry.get_registry_handlers_from_pool(pool)
     registry_handlers = []
     for registry_handler in registered_handlers:
-        if registry_handler == brownie.ZERO_ADDRESS:
+        if registry_handler == ape.ZERO_ADDRESS:
             break
         registry_handlers.append(registry_handler)
 
@@ -66,7 +66,7 @@ def test_is_registered(metaregistry, registry_pool_index_iterator, pool_id):
     skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
-    if pool != brownie.ZERO_ADDRESS:
+    if pool != ape.ZERO_ADDRESS:
         assert metaregistry.is_registered(pool)
 
 
@@ -81,10 +81,7 @@ def test_is_meta(metaregistry, registry_pool_index_iterator, base_pool_registry_
         coins = registry.get_coins(pool)
         actual_output = False
         for i in range(len(coins)):
-            if (
-                base_pool_registry_updated.get_base_pool_for_lp_token(coins[i])
-                != brownie.ZERO_ADDRESS
-            ):
+            if base_pool_registry_updated.get_base_pool_for_lp_token(coins[i]) != ape.ZERO_ADDRESS:
                 actual_output = True
                 break
     else:
@@ -144,13 +141,13 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
     lp_token = metaregistry.get_lp_token(pool)
     if sum(pool_balances) == 0:
 
-        with brownie.reverts():
+        with ape.reverts():
             metaregistry.get_virtual_price_from_lp_token(lp_token)
 
         pytest.skip(f"empty pool: {pool}")
 
     elif sum(pool_balances) < 100:  # tiny pool
-        with brownie.reverts():
+        with ape.reverts():
             metaregistry.get_virtual_price_from_lp_token(lp_token)
 
         pytest.skip(f"tiny pool: {pool}")
@@ -163,16 +160,16 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
     pool_balances_float = []
     for i in range(len(pool_balances)):
 
-        if coins[i] == brownie.ZERO_ADDRESS:
+        if coins[i] == ape.ZERO_ADDRESS:
             break
 
         pool_balances_float.append(pool_balances[i] / 10 ** coin_decimals[i])
 
         if (
             coin_decimals[i] == 0
-            and brownie.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
+            and ape.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
         ):
-            with brownie.reverts():
+            with ape.reverts():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)
             pytest.skip(f"skem token {coins[i]} in pool {pool} with zero decimals")
 
@@ -183,7 +180,7 @@ def test_get_virtual_price_from_lp_token(metaregistry, registry_pool_index_itera
         == pytest.approx(max(pool_balances_float))
         and min(pool_balances_float) < 1
     ):
-        with brownie.reverts():
+        with ape.reverts():
             metaregistry.get_virtual_price_from_lp_token(lp_token)
 
         pytest.skip(
@@ -257,10 +254,10 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
         underlying_coins = metaregistry.get_underlying_coins(pool)
         actual_output = []
         for i in range(len(underlying_coins)):
-            if underlying_coins[i] == brownie.ZERO_ADDRESS:
+            if underlying_coins[i] == ape.ZERO_ADDRESS:
                 actual_output.append(0)
             else:
-                actual_output.append(brownie.interface.ERC20(underlying_coins[i]).decimals())
+                actual_output.append(ape.interface.ERC20(underlying_coins[i]).decimals())
 
         assert actual_output[2] != 0  # there has to be a third coin!
     else:
@@ -282,7 +279,7 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
     metaregistry_output = metaregistry.get_coins(pool)
 
     actual_output = list(registry.get_coins(pool))
-    actual_output += [brownie.ZERO_ADDRESS] * (len(metaregistry_output) - len(actual_output))
+    actual_output += [ape.ZERO_ADDRESS] * (len(metaregistry_output) - len(actual_output))
 
     assert tuple(actual_output) == metaregistry_output
 
@@ -290,13 +287,13 @@ def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
 def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registry_updated, pool):
 
     coins = registry.get_coins(pool)
-    underlying_coins = [brownie.ZERO_ADDRESS] * MAX_COINS
+    underlying_coins = [ape.ZERO_ADDRESS] * MAX_COINS
 
     for idx, coin in enumerate(coins):
 
         base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
 
-        if base_pool == brownie.ZERO_ADDRESS:
+        if base_pool == ape.ZERO_ADDRESS:
 
             underlying_coins[idx] = coin
 
@@ -306,7 +303,7 @@ def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registr
 
             for bp_coin in basepool_coins:
 
-                if bp_coin == brownie.ZERO_ADDRESS:
+                if bp_coin == ape.ZERO_ADDRESS:
                     break
 
                 underlying_coins[idx] = bp_coin
@@ -323,16 +320,16 @@ def _get_underlying_coins_from_registry(registry_id, registry, base_pool_registr
                 warnings.warn(f"Pool {pool} might be a lending pool.")
                 return registry_underlying_coins
 
-        except brownie.exceptions.VirtualMachineError:
+        except ape.exceptions.VirtualMachineError:
             # virtual machine errors prop up for registry.get_underlying_coins if pool
             # is completely depegged. We check this by setting up a revert check and
-            # then returning underlying_coins:
+            # then returning underlying_coins:git
             balances = registry.get_balances(pool)
             decimals = registry.get_decimals(pool)
 
             float_balances = [balances[i] / 10 ** decimals[i] for i in range(len(decimals))]
             if min(float_balances) < 1:
-                with brownie.reverts():
+                with ape.reverts():
                     registry.get_underlying_coins(pool)
                 return underlying_coins
 
@@ -399,14 +396,14 @@ def test_get_underlying_balances(
 
         for idx, coin in enumerate(coins):
             base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
-            if base_pool != brownie.ZERO_ADDRESS:
+            if base_pool != ape.ZERO_ADDRESS:
                 basepool_coins = base_pool_registry_updated.get_coins(base_pool)
-                basepool_contract = brownie.Contract(base_pool)
+                basepool_contract = ape.Contract(base_pool)
                 basepool_lp_token_balance = v2_pool.balances(idx)
-                lp_token_supply = brownie.interfaces.ERC20(coin).totalSupply()
+                lp_token_supply = ape.interfaces.ERC20(coin).totalSupply()
                 ratio_in_pool = basepool_lp_token_balance / lp_token_supply
                 for idy, coin in enumerate(basepool_coins):
-                    if coin == brownie.ZERO_ADDRESS:
+                    if coin == ape.ZERO_ADDRESS:
                         break
                     pool_balances[idx] = basepool_contract.balances(idy) * ratio_in_pool
 
@@ -448,7 +445,7 @@ def test_get_n_coins(metaregistry, registry_pool_index_iterator, pool_id):
 
         # registry returns tuple, we want the first one (since the second)
         # index is about basepool n coins
-        if not type(actual_output) == brownie.convert.datatypes.Wei:
+        if not type(actual_output) == ape.convert.datatypes.Wei:
 
             actual_output = actual_output[0]
 
@@ -457,13 +454,13 @@ def test_get_n_coins(metaregistry, registry_pool_index_iterator, pool_id):
         elif actual_output == 0:
 
             coins = registry.get_coins(pool)
-            actual_output = sum([1 for coin in coins if coin != brownie.ZERO_ADDRESS])
+            actual_output = sum([1 for coin in coins if coin != ape.ZERO_ADDRESS])
 
     else:
 
         # do get_coins for crypto factory:
         coins = registry.get_coins(pool)
-        actual_output = sum([1 for coin in coins if coin != brownie.ZERO_ADDRESS])
+        actual_output = sum([1 for coin in coins if coin != ape.ZERO_ADDRESS])
 
     assert actual_output == metaregistry_output
 
@@ -481,13 +478,13 @@ def test_get_n_underlying_coins(
 
     coins = registry.get_coins(pool)
     num_coins = 0
-    for idx, coin in enumerate(coins):
-        if coin == brownie.ZERO_ADDRESS:
+    for coin in coins:
+        if coin == ape.ZERO_ADDRESS:
             break
         base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
-        if base_pool != brownie.ZERO_ADDRESS:
+        if base_pool != ape.ZERO_ADDRESS:
             basepool_coins = base_pool_registry_updated.get_coins(base_pool)
-            num_bp_coins = sum([1 for i in basepool_coins if i != brownie.ZERO_ADDRESS])
+            num_bp_coins = sum([1 for i in basepool_coins if i != ape.ZERO_ADDRESS])
             num_coins += num_bp_coins
         else:
             num_coins += 1
@@ -503,13 +500,13 @@ def test_get_coin_indices(metaregistry, registry_pool_index_iterator, pool_id):
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
     is_meta = metaregistry.is_meta(pool)
-    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != brownie.ZERO_ADDRESS]
+    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.ZERO_ADDRESS]
 
     base_combinations = list(itertools.combinations(pool_coins, 2))
     all_combinations = base_combinations
     if is_meta:
         underlying_coins = [
-            coin for coin in metaregistry.get_underlying_coins(pool) if coin != brownie.ZERO_ADDRESS
+            coin for coin in metaregistry.get_underlying_coins(pool) if coin != ape.ZERO_ADDRESS
         ]
         all_combinations = all_combinations + [(pool_coins[0], coin) for coin in underlying_coins]
 
@@ -588,7 +585,7 @@ def test_get_base_pool(metaregistry, registry_pool_index_iterator, pool_id):
 
     registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    actual_output = brownie.ZERO_ADDRESS
+    actual_output = ape.ZERO_ADDRESS
 
     if registry_id == METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX and registry.is_meta(pool):
         # stable registry does not have get_base_pool method
@@ -634,7 +631,7 @@ def _get_admin_balances_crypto(registry_id, registry, pool, metaregistry, alice)
     elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
         fee_receiver = registry.fee_receiver()
 
-    lp_token = brownie.interface.ERC20(metaregistry.get_lp_token(pool))
+    lp_token = ape.interface.ERC20(metaregistry.get_lp_token(pool))
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
     v2_pool.claim_admin_fees({"from": alice})
     claimed_lp_token_as_fee = lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
@@ -664,7 +661,7 @@ def test_get_admin_balances(metaregistry, registry_pool_index_iterator, pool_id,
     if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip("empty pool: skipping")
 
-    if brownie.interface.ERC20(metaregistry.get_lp_token(pool)).totalSupply() == 0:
+    if ape.interface.ERC20(metaregistry.get_lp_token(pool)).totalSupply() == 0:
         pytest.skip("lp token supply is zero")
 
     if registry_id in [
@@ -697,7 +694,7 @@ def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
         in [METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX, METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX]
         and sum(metaregistry.get_balances(pool)) == 0
     ):
-        with brownie.reverts():
+        with ape.reverts():
             curve_pool_v2(pool).fee()
         pytest.skip(
             f"crypto factory pool {pool} is empty and factory pools tend to "
@@ -744,11 +741,11 @@ def test_get_pool_name(metaregistry, registry_pool_index_iterator, pool_id):
 
     elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
 
-        actual_output = brownie.interface.ERC20(registry.get_token(pool)).name()
+        actual_output = ape.interface.ERC20(registry.get_token(pool)).name()
 
     else:
 
-        actual_output = brownie.interface.ERC20(pool).name()
+        actual_output = ape.interface.ERC20(pool).name()
 
     metaregistry_output = metaregistry.get_pool_name(pool)
     assert actual_output == metaregistry_output
@@ -758,7 +755,7 @@ def _is_dao_onboarded_gauge(_gauge):
 
     try:
         gauge_controller().gauge_types(_gauge)
-    except brownie.exceptions.VirtualMachineError:
+    except ape.exceptions.VirtualMachineError:
         return False
 
     if liquidity_gauge(_gauge).is_killed():
@@ -793,12 +790,12 @@ def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
         # as gauge type is zero. This slows down tests significantly
         if _is_dao_onboarded_gauge(gauge):
             actual_output = (
-                [gauge] + [brownie.ZERO_ADDRESS] * 9,
+                [gauge] + [ape.ZERO_ADDRESS] * 9,
                 [gauge_controller().gauge_types(gauge)] + [0] * 9,
             )
         else:
             actual_output = (
-                [gauge] + [brownie.ZERO_ADDRESS] * 9,
+                [gauge] + [ape.ZERO_ADDRESS] * 9,
                 [0] * 10,
             )
 
@@ -812,15 +809,13 @@ def test_find_pool_for_coins(metaregistry):
     for pool_index in range(pool_count):
 
         pool = metaregistry.pool_list(pool_index)
-        pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != brownie.ZERO_ADDRESS]
+        pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.ZERO_ADDRESS]
         base_combinations = list(itertools.combinations(pool_coins, 2))
         all_combinations = base_combinations
 
         if metaregistry.is_meta(pool):
             underlying_coins = [
-                coin
-                for coin in metaregistry.get_underlying_coins(pool)
-                if coin != brownie.ZERO_ADDRESS
+                coin for coin in metaregistry.get_underlying_coins(pool) if coin != ape.ZERO_ADDRESS
             ]
             all_combinations = all_combinations + [
                 (pool_coins[0], coin) for coin in underlying_coins if pool_coins[0] != coin
@@ -840,7 +835,7 @@ def test_find_pool_for_coins(metaregistry):
                     registered = True
                     break
 
-                if pool_for_the_pair == brownie.ZERO_ADDRESS:
+                if pool_for_the_pair == ape.ZERO_ADDRESS:
                     break
 
             assert registered
