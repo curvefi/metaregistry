@@ -1,149 +1,182 @@
 import ape
 
-from tests.utils.constants import (
-    CRV3CRYPTO_MAINNET,
-    MAX_COINS,
-    TRICRYPTO2_GAUGE,
-    TRICRYPTO2_MAINNET,
-    TRICRYPTO2_ZAP,
-    USDT,
-    WBTC,
-    WETH,
-)
 
+def test_revert_unauthorised_add_pool(
+    crypto_registry_v1, unauthorised_account, crypto_registry_pools
+):
 
-def test_revert_unauthorised_add_pool(crypto_registry_v1, unauthorised_account):
+    pool_data = crypto_registry_pools["tricrypto2"]
 
     with ape.reverts():
         crypto_registry_v1.add_pool(
-            TRICRYPTO2_MAINNET,
-            CRV3CRYPTO_MAINNET,
-            TRICRYPTO2_GAUGE,
-            TRICRYPTO2_ZAP,
-            3,
-            "tricrypto2",
-            ape.utils.ZERO_ADDRESS,
-            False,
-            {"from": unauthorised_account},
+            pool_data["pool"],
+            pool_data["lp_token"],
+            pool_data["gauge"],
+            pool_data["zap"],
+            pool_data["n_coins"],
+            pool_data["name"],
+            pool_data["base_pool"],
+            pool_data["has_positive_rebasing_tokens"],
+            sender=unauthorised_account,
         )
 
 
-def test_revert_add_existing_pool(crypto_registry_updated, owner):
+def test_revert_add_existing_pool(crypto_registry, owner, crypto_registry_pools):
+
+    pool_data = crypto_registry_pools["tricrypto2"]
 
     with ape.reverts():
-        crypto_registry_updated.add_pool(
-            TRICRYPTO2_MAINNET,
-            CRV3CRYPTO_MAINNET,
-            TRICRYPTO2_GAUGE,
-            TRICRYPTO2_ZAP,
-            3,
-            "tricrypto2",
-            ape.utils.ZERO_ADDRESS,
-            False,
-            {"from": owner},
+        crypto_registry.add_pool(
+            pool_data["pool"],
+            pool_data["lp_token"],
+            pool_data["gauge"],
+            pool_data["zap"],
+            pool_data["n_coins"],
+            pool_data["name"],
+            pool_data["base_pool"],
+            pool_data["has_positive_rebasing_tokens"],
+            sender=owner,
         )
 
 
-def test_add_pool(crypto_registry_v1, owner):
+def test_add_pool(
+    crypto_registry_pools, populated_base_pool_registry, address_provider, project, owner, tokens
+):
 
-    pool_count = crypto_registry_v1.pool_count()
-    assert pool_count == 0
-
-    crypto_registry_v1.add_pool(
-        TRICRYPTO2_MAINNET,
-        CRV3CRYPTO_MAINNET,
-        TRICRYPTO2_GAUGE,
-        TRICRYPTO2_ZAP,
-        3,
-        "tricrypto2",
-        ape.utils.ZERO_ADDRESS,
-        False,
-        {"from": owner},
+    crypto_registry = project.CryptoRegistryV1.deploy(
+        address_provider.address, populated_base_pool_registry, sender=owner
     )
 
-    assert crypto_registry_v1.pool_count() == pool_count + 1
-    assert crypto_registry_v1.pool_list(pool_count) == TRICRYPTO2_MAINNET
-    assert crypto_registry_v1.get_zap(TRICRYPTO2_MAINNET) == TRICRYPTO2_ZAP
-    assert crypto_registry_v1.get_lp_token(TRICRYPTO2_MAINNET) == CRV3CRYPTO_MAINNET
-    assert crypto_registry_v1.get_pool_from_lp_token(CRV3CRYPTO_MAINNET) == TRICRYPTO2_MAINNET
-    assert crypto_registry_v1.get_base_pool(TRICRYPTO2_MAINNET) == ape.utils.ZERO_ADDRESS
-    assert not crypto_registry_v1.is_meta(TRICRYPTO2_MAINNET)
-    assert crypto_registry_v1.get_pool_name(TRICRYPTO2_MAINNET) == "tricrypto2"
+    pool_count = crypto_registry.pool_count()
+    assert pool_count == 0
 
-    assert crypto_registry_v1.get_n_coins(TRICRYPTO2_MAINNET) == 3
-    assert crypto_registry_v1.get_decimals(TRICRYPTO2_MAINNET) == [6, 8, 18, 0, 0, 0, 0, 0]
-    assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[0][0] == TRICRYPTO2_GAUGE
-    assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[1][0] == 5  # gauge type is 5
+    pool_data = crypto_registry_pools["tricrypto2"]
+
+    crypto_registry.add_pool(
+        pool_data["pool"],
+        pool_data["lp_token"],
+        pool_data["gauge"],
+        pool_data["zap"],
+        pool_data["n_coins"],
+        pool_data["name"],
+        pool_data["base_pool"],
+        pool_data["has_positive_rebasing_tokens"],
+        sender=owner,
+    )
+
+    assert crypto_registry.pool_count() == pool_count + 1
+    assert crypto_registry.pool_list(pool_count) == pool_data["pool"]
+    assert crypto_registry.get_zap(pool_data["pool"]) == pool_data["zap"]
+    assert crypto_registry.get_lp_token(pool_data["pool"]) == pool_data["lp_token"]
+    assert crypto_registry.get_pool_from_lp_token(pool_data["lp_token"]) == pool_data["pool"]
+    assert crypto_registry.get_base_pool(pool_data["pool"]) == ape.utils.ZERO_ADDRESS
+    assert not crypto_registry.is_meta(pool_data["pool"])
+    assert crypto_registry.get_pool_name(pool_data["pool"]) == "tricrypto2"
+
+    assert crypto_registry.get_n_coins(pool_data["pool"]) == 3
+    assert crypto_registry.get_decimals(pool_data["pool"]) == [6, 8, 18, 0, 0, 0, 0, 0]
+    assert crypto_registry.get_gauges(pool_data["pool"])[0][0] == pool_data["gauge"]
+    assert crypto_registry.get_gauges(pool_data["pool"])[1][0] == 5  # gauge type is 5
     assert (
-        crypto_registry_v1.get_coins(TRICRYPTO2_MAINNET)
-        == [USDT, WBTC, WETH] + [ape.utils.ZERO_ADDRESS] * 5
+        crypto_registry.get_coins(pool_data["pool"])
+        == [tokens["usdt"], tokens["wbtc"], tokens["weth"]] + [ape.utils.ZERO_ADDRESS] * 5
     )
 
     # check if coins and underlying coins (if any) are added to the underlying market:
-    assert crypto_registry_v1.get_coin_indices(TRICRYPTO2_MAINNET, USDT, WBTC) == [0, 1, False]
-    assert crypto_registry_v1.get_coin_indices(TRICRYPTO2_MAINNET, WBTC, WETH) == [1, 2, False]
-    assert crypto_registry_v1.find_pool_for_coins(USDT, WBTC, 0) == TRICRYPTO2_MAINNET
+    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["usdt"], tokens["wbtc"]) == [
+        0,
+        1,
+        False,
+    ]
+    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["wbtc"], tokens["weth"]) == [
+        1,
+        2,
+        False,
+    ]
+    assert (
+        crypto_registry.find_pool_for_coins(tokens["usdt"], tokens["wbtc"], 0) == pool_data["pool"]
+    )
 
 
-def test_revert_unauthorised_remove_pool(crypto_registry_updated, unauthorised_account):
+def test_revert_unauthorised_remove_pool(
+    crypto_registry, unauthorised_account, crypto_registry_pools
+):
 
     with ape.reverts():
-        crypto_registry_updated.remove_pool(TRICRYPTO2_MAINNET, {"from": unauthorised_account})
+        crypto_registry.remove_pool(
+            crypto_registry_pools["tricrypto2"]["pool"], {"from": unauthorised_account}
+        )
 
 
-def test_remove_pool(crypto_registry_v1, owner):
+def test_remove_pool(
+    crypto_registry_pools,
+    address_provider,
+    populated_base_pool_registry,
+    owner,
+    project,
+    max_coins,
+    tokens,
+):
+
+    crypto_registry = project.CryptoRegistryV1.deploy(
+        address_provider.address, populated_base_pool_registry, sender=owner
+    )
 
     # add pool to be removed:
-    crypto_registry_v1.add_pool(
-        TRICRYPTO2_MAINNET,
-        CRV3CRYPTO_MAINNET,
-        TRICRYPTO2_GAUGE,
-        TRICRYPTO2_ZAP,
-        3,
-        "tricrypto2",
-        ape.utils.ZERO_ADDRESS,
-        False,
-        {"from": owner},
+    tricrypto2 = crypto_registry_pools["tricrypto2"]
+
+    crypto_registry.add_pool(
+        tricrypto2["pool"],
+        tricrypto2["lp_token"],
+        tricrypto2["gauge"],
+        tricrypto2["zap"],
+        tricrypto2["n_coins"],
+        tricrypto2["name"],
+        tricrypto2["base_pool"],
+        tricrypto2["has_positive_rebasing_tokens"],
+        sender=owner,
     )
 
     # add EURSUSDC pool as the last pool, since it has no coins overlapping
     # and is not a metapool:
-    crypto_registry_v1.add_pool(
-        "0x98a7F18d4E56Cfe84E3D081B40001B3d5bD3eB8B",  # _pool
-        "0x3D229E1B4faab62F621eF2F6A610961f7BD7b23B",  # _lp_token
-        "0x65CA7Dc5CB661fC58De57B1E1aF404649a27AD35",  # _gauge
-        ape.utils.ZERO_ADDRESS,  # _zap
-        2,  # _n_coins
-        "eursusd",  # _name
-        ape.utils.ZERO_ADDRESS,  # _base_pool
-        False,  # _has_positive_rebasing_tokens
-        {"from": owner},
+    eursusdc = crypto_registry_pools["eursusdc"]
+
+    crypto_registry.add_pool(
+        eursusdc["pool"],
+        eursusdc["lp_token"],
+        eursusdc["gauge"],
+        eursusdc["zap"],
+        eursusdc["n_coins"],
+        eursusdc["name"],
+        eursusdc["base_pool"],
+        eursusdc["has_positive_rebasing_tokens"],
+        sender=owner,
     )
 
-    pool_count = crypto_registry_v1.pool_count()
-    last_pool = crypto_registry_v1.pool_list(pool_count - 1)
+    pool_count = crypto_registry.pool_count()
+    last_pool = crypto_registry.pool_list(pool_count - 1)
 
-    assert crypto_registry_v1.pool_list(0) == TRICRYPTO2_MAINNET
-    crypto_registry_v1.remove_pool(TRICRYPTO2_MAINNET, {"from": owner})
+    assert crypto_registry.pool_list(0) == tricrypto2["pool"]
+    crypto_registry.remove_pool(tricrypto2["pool"], {"from": owner})
 
-    assert crypto_registry_v1.pool_list(0) == last_pool
-    assert crypto_registry_v1.pool_count() == pool_count - 1  # one pool should be gone
-    assert crypto_registry_v1.get_zap(TRICRYPTO2_MAINNET) == ape.utils.ZERO_ADDRESS
-    assert crypto_registry_v1.get_lp_token(TRICRYPTO2_MAINNET) == ape.utils.ZERO_ADDRESS
-    assert crypto_registry_v1.get_pool_from_lp_token(CRV3CRYPTO_MAINNET) == ape.utils.ZERO_ADDRESS
-    assert crypto_registry_v1.get_pool_name(TRICRYPTO2_MAINNET) == ""
+    assert crypto_registry.pool_list(0) == last_pool
+    assert crypto_registry.pool_count() == pool_count - 1  # one pool should be gone
+    assert crypto_registry.get_zap(tricrypto2["pool"]) == ape.utils.ZERO_ADDRESS
+    assert crypto_registry.get_lp_token(tricrypto2["pool"]) == ape.utils.ZERO_ADDRESS
+    assert crypto_registry.get_pool_from_lp_token(tricrypto2["lp_token"]) == ape.utils.ZERO_ADDRESS
+    assert crypto_registry.get_pool_name(tricrypto2["pool"]) == ""
 
-    assert crypto_registry_v1.get_n_coins(TRICRYPTO2_MAINNET) == 0
-    assert crypto_registry_v1.get_decimals(TRICRYPTO2_MAINNET) == [0] * MAX_COINS
-    assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[0][0] == ape.utils.ZERO_ADDRESS
-    assert crypto_registry_v1.get_gauges(TRICRYPTO2_MAINNET)[1][0] == 0
+    assert crypto_registry.get_n_coins(tricrypto2["pool"]) == 0
+    assert crypto_registry.get_decimals(tricrypto2["pool"]) == [0] * max_coins
+    assert crypto_registry.get_gauges(tricrypto2["pool"])[0][0] == ape.utils.ZERO_ADDRESS
+    assert crypto_registry.get_gauges(tricrypto2["pool"])[1][0] == 0
 
-    assert crypto_registry_v1.get_coins(TRICRYPTO2_MAINNET) == [ape.utils.ZERO_ADDRESS] * MAX_COINS
+    assert crypto_registry.get_coins(tricrypto2["pool"]) == [ape.utils.ZERO_ADDRESS] * max_coins
 
-    for coin_i in [USDT, WBTC, WETH]:
-        for coin_j in [USDT, WBTC, WETH]:
+    for coin_i in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:
+        for coin_j in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:
 
-            assert crypto_registry_v1.get_coin_indices(TRICRYPTO2_MAINNET, coin_i, coin_j) == [
+            assert crypto_registry.get_coin_indices(tricrypto2["pool"], coin_i, coin_j) == [
                 0,
                 0,
                 False,

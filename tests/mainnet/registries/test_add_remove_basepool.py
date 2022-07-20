@@ -1,108 +1,111 @@
 import ape
 
-from tests.utils.constants import (
-    BTC_BASEPOOL_LP_TOKEN_MAINNET,
-    BTC_BASEPOOL_MAINNET,
-    DAI,
-    RENBTC,
-    SBTC,
-    TRIPOOL,
-    TRIPOOL_LPTOKEN,
-    USDC,
-    USDT,
-    WBTC,
-)
 
+def test_revert_unauthorised_add_base_pool(base_pool_registry, unauthorised_account, base_pools):
 
-def test_revert_unauthorised_add_base_pool(base_pool_registry, unauthorised_account):
-
+    base_pool_data = base_pools["tripool"]
     with ape.reverts():
         base_pool_registry.add_base_pool(
-            TRIPOOL,
-            TRIPOOL_LPTOKEN,
-            3,
-            False,
-            False,
-            False,
-            {"from": unauthorised_account},
+            base_pool_data["pool"],
+            base_pool_data["lp_token"],
+            base_pool_data["num_coins"],
+            base_pool_data["is_legacy"],
+            base_pool_data["is_lending"],
+            base_pool_data["is_v2"],
+            sender=unauthorised_account,
         )
 
 
-def test_add_basepool(base_pool_registry, owner):
+def test_add_basepool(base_pool_registry, owner, base_pools, tokens):
 
     base_pool_count = base_pool_registry.base_pool_count()
+    base_pool_data = base_pools["tripool"]
+    tripool = base_pool_data["pool"]
+    tripool_lp_token = base_pool_data["lp_token"]
 
     base_pool_registry.add_base_pool(
-        TRIPOOL,
-        TRIPOOL_LPTOKEN,
-        3,
-        False,
-        False,
-        False,
-        {"from": owner},
+        base_pool_data["pool"],
+        base_pool_data["lp_token"],
+        base_pool_data["num_coins"],
+        base_pool_data["is_legacy"],
+        base_pool_data["is_lending"],
+        base_pool_data["is_v2"],
+        sender=owner,
     )
 
     assert base_pool_registry.base_pool_count() == base_pool_count + 1
-    assert base_pool_registry.get_base_pool_for_lp_token(TRIPOOL_LPTOKEN) == TRIPOOL
-    assert base_pool_registry.get_lp_token(TRIPOOL) == TRIPOOL_LPTOKEN
-    assert not base_pool_registry.is_legacy(TRIPOOL)
-    assert not base_pool_registry.is_v2(TRIPOOL)
-    assert not base_pool_registry.is_lending(TRIPOOL)
+    assert base_pool_registry.get_base_pool_for_lp_token(tripool_lp_token) == tripool
+    assert base_pool_registry.get_lp_token(tripool) == tripool_lp_token
+    assert not base_pool_registry.is_legacy(tripool)
+    assert not base_pool_registry.is_v2(tripool)
+    assert not base_pool_registry.is_lending(tripool)
 
-    base_pool_coins = base_pool_registry.get_coins(TRIPOOL)
-    assert base_pool_coins[0] == DAI
-    assert base_pool_coins[1] == USDC
-    assert base_pool_coins[2] == USDT
+    base_pool_coins = base_pool_registry.get_coins(tripool)
+    assert base_pool_coins[0] == tokens["dai"]
+    assert base_pool_coins[1] == tokens["usdc"]
+    assert base_pool_coins[2] == tokens["usdt"]
     assert base_pool_coins[3] == ape.utils.ZERO_ADDRESS
-    assert base_pool_registry.get_n_coins(TRIPOOL) == 3
+    assert base_pool_registry.get_n_coins(tripool) == 3
 
-    base_pool_coin_decimals = base_pool_registry.get_decimals(TRIPOOL)
+    base_pool_coin_decimals = base_pool_registry.get_decimals(tripool)
     assert base_pool_coin_decimals[0] == 18
     assert base_pool_coin_decimals[1] == 6
     assert base_pool_coin_decimals[2] == 6
 
 
-def test_add_basepool_with_legacy_abi(base_pool_registry, owner):
+def test_add_basepool_with_legacy_abi(base_pool_registry, owner, base_pools, tokens):
+
+    base_pool_data = base_pools["sbtc"]
+    assert base_pool_data["is_legacy"] == True
+
+    btc_basepool = base_pool_data["pool"]
 
     base_pool_registry.add_base_pool(
-        BTC_BASEPOOL_MAINNET,
-        BTC_BASEPOOL_LP_TOKEN_MAINNET,
-        3,
-        True,
-        False,
-        False,
-        {"from": owner},
+        base_pool_data["pool"],
+        base_pool_data["lp_token"],
+        base_pool_data["num_coins"],
+        base_pool_data["is_legacy"],
+        base_pool_data["is_lending"],
+        base_pool_data["is_v2"],
+        sender=owner,
     )
 
-    assert base_pool_registry.is_legacy(BTC_BASEPOOL_MAINNET)
+    assert base_pool_registry.is_legacy(btc_basepool)
 
-    base_pool_coins = base_pool_registry.get_coins(BTC_BASEPOOL_MAINNET)
-    assert base_pool_coins[0] == RENBTC
-    assert base_pool_coins[1] == WBTC
-    assert base_pool_coins[2] == SBTC
+    base_pool_coins = base_pool_registry.get_coins(btc_basepool)
+    assert base_pool_coins[0] == tokens["renbtc"]
+    assert base_pool_coins[1] == tokens["wbtc"]
+    assert base_pool_coins[2] == tokens["sbtc"]
     assert base_pool_coins[3] == ape.utils.ZERO_ADDRESS
-    assert base_pool_registry.get_n_coins(BTC_BASEPOOL_MAINNET) == 3
+    assert base_pool_registry.get_n_coins(btc_basepool) == 3
 
 
-def test_revert_unauthorised_remove_base_pool(base_pool_registry_updated, unauthorised_account):
+def test_revert_unauthorised_remove_base_pool(
+    populated_base_pool_registry, unauthorised_account, base_pools
+):
 
-    assert base_pool_registry_updated.get_lp_token(TRIPOOL) != ape.utils.ZERO_ADDRESS
+    tripool_address = base_pools["tripool"]["pool"]
+
+    assert populated_base_pool_registry.get_lp_token(tripool_address) != ape.utils.ZERO_ADDRESS
     with ape.reverts():
-        base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": unauthorised_account})
+        populated_base_pool_registry.remove_base_pool(tripool_address, sender=unauthorised_account)
 
 
-def test_remove_base_pool(base_pool_registry_updated, owner):
+def test_remove_base_pool(populated_base_pool_registry, owner, base_pools):
 
-    base_pool_count = base_pool_registry_updated.base_pool_count()
-    last_base_pool = base_pool_registry_updated.base_pool_list(base_pool_count - 1)
-    base_pool_location = base_pool_registry_updated.get_location(TRIPOOL)
-    base_pool_registry_updated.remove_base_pool(TRIPOOL, {"from": owner})
+    tripool_address = base_pools["tripool"]["pool"]
+    tripool_lp_token = base_pools["tripool"]["lp_token"]
 
-    assert base_pool_registry_updated.base_pool_count() == base_pool_count - 1
-    assert base_pool_registry_updated.get_lp_token(TRIPOOL) == ape.utils.ZERO_ADDRESS
+    base_pool_count = populated_base_pool_registry.base_pool_count()
+    last_base_pool = populated_base_pool_registry.base_pool_list(base_pool_count - 1)
+    base_pool_location = populated_base_pool_registry.get_location(tripool_address)
+    populated_base_pool_registry.remove_base_pool(tripool_address, sender=owner)
+
+    assert populated_base_pool_registry.base_pool_count() == base_pool_count - 1
+    assert populated_base_pool_registry.get_lp_token(tripool_address) == ape.utils.ZERO_ADDRESS
     assert (
-        base_pool_registry_updated.get_base_pool_for_lp_token(TRIPOOL_LPTOKEN)
+        populated_base_pool_registry.get_base_pool_for_lp_token(tripool_lp_token)
         == ape.utils.ZERO_ADDRESS
     )
-    assert base_pool_registry_updated.base_pool_list(base_pool_location) == last_base_pool
-    assert base_pool_registry_updated.get_n_coins(TRIPOOL) == 0
+    assert populated_base_pool_registry.base_pool_list(base_pool_location) == last_base_pool
+    assert populated_base_pool_registry.get_n_coins(tripool_address) == 0

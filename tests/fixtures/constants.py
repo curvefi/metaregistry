@@ -5,7 +5,8 @@ import pytest
 @pytest.fixture(scope="module")
 def base_pools():
 
-    tripool = {
+    base_pool_data = {}
+    base_pool_data["tripool"] = {
         "pool": "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
         "lp_token": "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490",
         "num_coins": 3,
@@ -14,7 +15,7 @@ def base_pools():
         "is_v2": False,
     }
 
-    fraxusdc = {
+    base_pool_data["fraxusdc"] = {
         "pool": "0xdcef968d416a41cdac0ed8702fac8128a64241a2",
         "lp_token": "0x3175df0976dfa876431c2e9ee6bc45b65d3473cc",
         "num_coins": 2,
@@ -23,7 +24,7 @@ def base_pools():
         "is_v2": False,
     }
 
-    sbtc = {
+    base_pool_data["sbtc"] = {
         "pool": "0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714",
         "lp_token": "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3",
         "num_coins": 3,
@@ -32,7 +33,7 @@ def base_pools():
         "is_v2": False,
     }
 
-    return {"tripool": tripool, "fraxusdc": fraxusdc, "sbtc": sbtc}
+    return base_pool_data
 
 
 @pytest.fixture(scope="module")
