@@ -1,7 +1,6 @@
 import ape
 import pytest
 
-
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 
 
@@ -137,3 +136,8 @@ def populated_metaregistry(metaregistry, handlers, owner):
         metaregistry.add_registry_handler(handler.address, sender=owner)
 
     return metaregistry
+
+
+@pytest.fixture(scope="module")
+def stable_registry_handler_index():
+    return 0

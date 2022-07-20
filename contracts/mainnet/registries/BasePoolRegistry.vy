@@ -74,6 +74,21 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
 
 @external
 @view
+def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address:
+
+    _base_pools: address[20] = empty(address[20])
+    _id: uint256 = 0
+    for _pool in self.base_pool_list:
+        _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
+        if _coin in _coins:
+            _base_pools[_id] = _pool
+            _id += 1
+
+    return _base_pools[_idx]
+
+
+@external
+@view
 def get_decimals(_pool: address) -> uint256[MAX_COINS]:
     _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
     _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])

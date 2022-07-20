@@ -77,7 +77,7 @@ def test_crypto_factory_pools(
             break
         pool_balances[idx] = v2_pool.balances(idx)
 
-    if populated_metaregistry.is_meta(pool):
+    if populated_metaregistry.is_meta(crypto_factory_pool):
         assert populated_metaregistry[2] > 0  # it must have a third coin
     else:
         assert populated_metaregistry[1] > 0  # it must have a second coin

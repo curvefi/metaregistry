@@ -56,7 +56,7 @@ def test_add_basepool(base_pool_registry, owner, base_pools, tokens):
 def test_add_basepool_with_legacy_abi(base_pool_registry, owner, base_pools, tokens):
 
     base_pool_data = base_pools["sbtc"]
-    assert base_pool_data["is_legacy"] == True
+    assert base_pool_data["is_legacy"]
 
     btc_basepool = base_pool_data["pool"]
 

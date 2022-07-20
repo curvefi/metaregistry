@@ -26,8 +26,8 @@ def test_update_registry_handler_invalid_registry(populated_metaregistry, random
 
 def test_update_registry_handler(
     populated_metaregistry,
-    stable_registry_handler_index,
     stable_registry_handler,
+    stable_registry_handler_index,
     random_address,
     owner,
 ):

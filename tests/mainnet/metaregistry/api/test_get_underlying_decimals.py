@@ -1,6 +1,5 @@
 import ape
 
-
 EXCEPTIONS = {
     # eth: ankreth pool returns [18, 0] when it should return:
     "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2": [18, 18],

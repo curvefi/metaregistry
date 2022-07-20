@@ -39,8 +39,7 @@ def base_pools():
 @pytest.fixture(scope="module")
 def crypto_registry_pools(base_pools):
 
-    pool_data = []
-
+    pool_data = {}
     pool_data["tricrypto2"] = {
         "pool": "0xD51a44d3FaE010294C616388b506AcdA1bfAAE46",
         "lp_token": "0xc4AD29ba4B3c580e6D59105FFf484999997675Ff",
@@ -159,11 +158,6 @@ def crypto_pool_implementation():
 @pytest.fixture(scope="module")
 def crypto_token_implementation():
     return "0xc08550a4cc5333f40e593ecc4c4724808085d304"
-
-
-@pytest.fixture(scope="module")
-def crypto_token_implementation():
-    return "0xdc892358d55d5ae1ec47a531130d62151eba36e5"
 
 
 @pytest.fixture(scope="module")

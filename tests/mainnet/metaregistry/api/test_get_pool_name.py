@@ -1,4 +1,5 @@
 import pytest
+
 from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 
 

@@ -1,44 +1,45 @@
-import ape
 import itertools
 
+import ape
 
-def test_find_pool_for_coins(metaregistry):
 
-    pool_count = metaregistry.pool_count()
-    for pool_index in range(pool_count):
+def _get_all_combinations(metaregistry, pool):
 
-        pool = metaregistry.pool_list(pool_index)
-        pool_coins = [
-            coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS
+    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS]
+    base_combinations = list(itertools.combinations(pool_coins, 2))
+    all_combinations = base_combinations
+
+    if metaregistry.is_meta(pool):
+        underlying_coins = [
+            coin
+            for coin in metaregistry.get_underlying_coins(pool)
+            if coin != ape.utils.ZERO_ADDRESS
         ]
-        base_combinations = list(itertools.combinations(pool_coins, 2))
-        all_combinations = base_combinations
+        all_combinations = all_combinations + [
+            (pool_coins[0], coin) for coin in underlying_coins if pool_coins[0] != coin
+        ]
 
-        if metaregistry.is_meta(pool):
-            underlying_coins = [
-                coin
-                for coin in metaregistry.get_underlying_coins(pool)
-                if coin != ape.utils.ZERO_ADDRESS
-            ]
-            all_combinations = all_combinations + [
-                (pool_coins[0], coin) for coin in underlying_coins if pool_coins[0] != coin
-            ]
+    return all_combinations
 
-        for combination in all_combinations:
 
-            registered = False
+def test_all(populated_metaregistry, pool):
 
-            for j in range(pool_count):
+    pool_count = populated_metaregistry.pool_count()
+    for combination in _get_all_combinations(populated_metaregistry, pool):
 
-                pool_for_the_pair = metaregistry.find_pool_for_coins(
-                    combination[0], combination[1], j
-                )
+        registered = False
 
-                if pool_for_the_pair == pool:
-                    registered = True
-                    break
+        for i in range(pool_count):
 
-                if pool_for_the_pair == ape.utils.ZERO_ADDRESS:
-                    break
+            pool_for_the_pair = populated_metaregistry.find_pool_for_coins(
+                combination[0], combination[1], i
+            )
 
-            assert registered
+            if pool_for_the_pair == pool:
+                registered = True
+                break
+
+            if pool_for_the_pair == ape.utils.ZERO_ADDRESS:
+                break
+
+        assert registered

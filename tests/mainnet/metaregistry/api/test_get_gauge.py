@@ -1,4 +1,3 @@
-from this import d
 import ape
 import pytest
 

@@ -1,6 +1,6 @@
-from ctypes import create_unicode_buffer
 import ape
 import pytest
+
 from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 
 

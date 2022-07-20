@@ -3,7 +3,6 @@ from typing import Callable
 import ape
 import pytest
 
-
 # ---- Factories ----
 
 

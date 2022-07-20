@@ -1,5 +1,6 @@
-import ape
 import itertools
+
+import ape
 
 
 def _get_coin_combinations(metaregistry, pool):

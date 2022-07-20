@@ -1,7 +1,6 @@
 import ape
 import pytest
 
-
 # ---- sanity checks since vprice getters can revert for specific pools states ----
 
 
@@ -22,7 +21,9 @@ def _check_pool_has_no_liquidity(metaregistry, pool, pool_balances, lp_token):
         pytest.skip(f"tiny pool: {pool}")
 
 
-def _check_skem_tokens_with_weird_decimals(metaregistry, pool, pool_balances, coins, coin_decimals):
+def _check_skem_tokens_with_weird_decimals(
+    metaregistry, pool, lp_token, pool_balances, coins, coin_decimals
+):
 
     # check if pool balances after accounting for decimals is legible.
     # some scam tokens can have weird token properties (e.g. ELONX)
@@ -49,20 +50,21 @@ def _check_pool_is_depegged(
     metaregistry, pool, pool_balances, pool_balances_float, coin_decimals, lp_token
 ):
 
-    # check if pool balances are skewed: vprice calc will bork if one of the coin
-    # balances is close to zero.
-    if (
-        max(pool_balances_float) - min(pool_balances_float)
-        == pytest.approx(max(pool_balances_float))
-        and min(pool_balances_float) < 1
-    ):
-        with ape.reverts():
-            metaregistry.get_virtual_price_from_lp_token(lp_token)
+    for i in range(len(pool_balances)):
+        # check if pool balances are skewed: vprice calc will bork if one of the coin
+        # balances is close to zero.
+        if (
+            max(pool_balances_float) - min(pool_balances_float)
+            == pytest.approx(max(pool_balances_float))
+            and min(pool_balances_float) < 1
+        ):
+            with ape.reverts():
+                metaregistry.get_virtual_price_from_lp_token(lp_token)
 
-        pytest.skip(
-            f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
-            f"{pool_balances[i] / 10 ** coin_decimals[i]}"
-        )
+            pytest.skip(
+                f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
+                f"{pool_balances[i] / 10 ** coin_decimals[i]}"
+            )
 
 
 def pre_test_checks(metaregistry, pool):
@@ -76,7 +78,7 @@ def pre_test_checks(metaregistry, pool):
     coins = metaregistry.get_coins(pool)
 
     pool_balances_float = _check_skem_tokens_with_weird_decimals(
-        metaregistry, pool, pool_balances, coins, coin_decimals
+        metaregistry, pool, lp_token, pool_balances, coins, coin_decimals
     )
 
     _check_pool_is_depegged(

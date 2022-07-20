@@ -1,4 +1,3 @@
-from mmap import ALLOCATIONGRANULARITY
 import ape
 
 

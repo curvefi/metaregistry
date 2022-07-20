@@ -1,7 +1,6 @@
 import ape
 import pytest
 
-
 pytest_plugins = [
     "fixtures.accounts",
     "fixtures.constants",

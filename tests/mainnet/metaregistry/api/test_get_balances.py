@@ -26,7 +26,7 @@ def test_crypto_registry_pools(
     except ape.exceptions.ContractLogicError:
         actual_output = []
         pool = curve_pool_v2(crypto_registry_pool)
-        for i in range(metaregistry_output.get_n_coins(crypto_registry_pool)):
+        for i in range(populated_metaregistry.get_n_coins(crypto_registry_pool)):
             actual_output.append(pool.balances(i))
 
     metaregistry_output = populated_metaregistry.get_balances(crypto_registry_pool)

@@ -25,6 +25,7 @@ interface BasePoolRegistry:
     def get_lp_token(_pool: address) -> address: view
     def is_legacy(_pool: address) -> bool: view
     def base_pool_list(i: uint256) -> address: view
+    def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address: view
 
 
 interface CurvePool:
@@ -211,21 +212,6 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_CO
     return underlying_balances
 
 
-@view
-@internal
-def _find_basepool_for_coin(_coin: address) -> address:
-
-    for i in range(100):
-        base_pool: address = self.base_pool_registry.base_pool_list(i)
-        if base_pool == ZERO_ADDRESS:
-            break
-        base_pool_coins: address[MAX_METAREGISTRY_COINS] = self.base_pool_registry.get_coins(base_pool)
-        if _coin in base_pool_coins:
-            return base_pool
-
-    return ZERO_ADDRESS
-
-
 @internal
 @view
 def _get_pool_from_lp_token(_lp_token: address) -> address:
@@ -251,17 +237,38 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
             pools that have a basepool lp token in them.
     """
     _pool: address = self.base_registry.find_pool_for_coins(_from, _to, i)
-    _base_pool: address = ZERO_ADDRESS
-    for coin in [_from, _to]:
-        _base_pool = self._find_basepool_for_coin(coin)
-        if _pool == ZERO_ADDRESS and _base_pool != ZERO_ADDRESS:
-            base_pool_lp_token: address = self.base_pool_registry.get_lp_token(_base_pool)
-            if coin == _from:
-                return self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, 0)
-            else:
-                return self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, 0)
+    
+    if _pool != ZERO_ADDRESS:
+        return _pool
 
-    return _pool
+    _base_pool: address = ZERO_ADDRESS
+    _pools: address[20] = empty(address[20])
+    _id: uint256 = 0
+    for coin in [_from, _to]:
+
+        for j in range(20):
+
+            _base_pool = self.base_pool_registry.get_basepool_for_coins(coin, j)
+
+            if _base_pool != ZERO_ADDRESS:
+
+                base_pool_lp_token: address = self.base_pool_registry.get_lp_token(_base_pool)
+
+                if coin == _from:
+
+                    _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, i)
+                    if _pool != ZERO_ADDRESS:
+                        _pools[_id] = _pool
+                        _id += 1
+
+                elif coin == _to:
+                    
+                    _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, i)
+                    if _pool != ZERO_ADDRESS:
+                        _pools[_id] = _pool
+                        _id += 1
+    
+    return _pools[i]
 
 
 @external
