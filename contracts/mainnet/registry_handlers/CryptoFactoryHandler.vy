@@ -237,7 +237,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
             pools that have a basepool lp token in them.
     """
     _pool: address = self.base_registry.find_pool_for_coins(_from, _to, i)
-    
+
     if _pool != ZERO_ADDRESS:
         return _pool
 
@@ -269,7 +269,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
                         _id += 1
 
                 elif coin == _to:
-                    
+
                     # check if the basepool cointaining the _to coin has a pair with the _from coin:
                     _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, i)
 
@@ -277,7 +277,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
                     if _pool != ZERO_ADDRESS:
                         _pools[_id] = _pool
                         _id += 1
-    
+
     return _pools[i]
 
 
