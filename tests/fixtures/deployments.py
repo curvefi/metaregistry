@@ -2,12 +2,7 @@ import ape
 import pytest
 
 
-# - on-chain dependencies -
-
-
-@pytest.fixture(scope="module")
-def address_provider():
-    return ape.project.AddressProvider.at("0x0000000022D53366457F9d5E68Ec105046FC4383")
+ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 
 
 @pytest.fixture(scope="module")
@@ -30,16 +25,13 @@ def crypto_factory() -> ape.Contract:
     return ape.project.CryptoFactory.at("0xF18056Bbd320E96A48e3Fbf8bC061322531aac99")
 
 
-# -- contracts to test --
-
-
 @pytest.fixture(scope="module")
 def base_pool_registry(alice, project):
     return project.BasePoolRegistry.deploy(sender=alice)
 
 
 @pytest.fixture(scope="module")
-def base_pool_registry_updated(base_pool_registry, owner, base_pools):
+def populated_base_pool_registry(base_pool_registry, owner, base_pools):
 
     for name, data in base_pools.items():
         base_pool_registry.add_base_pool(
@@ -56,23 +48,17 @@ def base_pool_registry_updated(base_pool_registry, owner, base_pools):
 
 
 @pytest.fixture(scope="module")
-def crypto_registry_v1(base_pool_registry_updated, address_provider, owner, project):
+def crypto_registry(populated_base_pool_registry, owner, project):
     return project.CryptoRegistryV1.deploy(
-        address_provider.address, base_pool_registry_updated, sender=owner
+        ADDRESS_PROVIDER, populated_base_pool_registry, sender=owner
     )
 
 
 @pytest.fixture(scope="module")
-def crypto_registry_updated(
-    base_pool_registry_updated, address_provider, owner, crypto_registry_pools, project
-):
-
-    registry = project.CryptoRegistryV1.deploy(
-        address_provider.address, base_pool_registry_updated, sender=owner
-    )
+def populated_crypto_registry(crypto_registry, owner, crypto_registry_pools):
 
     for name, pool in crypto_registry_pools.items():
-        registry.add_pool(
+        crypto_registry.add_pool(
             pool["pool"],
             pool["lp_token"],
             pool["gauge"],
@@ -84,18 +70,19 @@ def crypto_registry_updated(
             sender=owner,
         )
 
-    return registry
+    return crypto_registry
 
 
 @pytest.fixture(scope="module", autouse=True)
-def address_provider_updated(crypto_registry_updated, address_provider, owner):
-    address_provider.set_address(5, crypto_registry_updated, sender=owner)
-    return address_provider
+def address_provider(populated_crypto_registry, owner):
+    contract = ape.project.AddressProvider.at("0x0000000022D53366457F9d5E68Ec105046FC4383")
+    contract.set_address(5, populated_crypto_registry, sender=owner)
+    return contract
 
 
 @pytest.fixture(scope="module")
-def metaregistry(address_provider_updated, owner, project):
-    return project.MetaRegistry.deploy(address_provider_updated, sender=owner)
+def metaregistry(address_provider, owner, project):
+    return project.MetaRegistry.deploy(address_provider, sender=owner)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -104,25 +91,22 @@ def stable_registry_handler(stable_registry, owner, project):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_factory_handler(base_pool_registry_updated, stable_factory, owner, project):
+def stable_factory_handler(populated_base_pool_registry, stable_factory, owner, project):
     return project.StableFactoryHandler.deploy(
-        stable_factory.address, base_pool_registry_updated, sender=owner
+        stable_factory.address, populated_base_pool_registry, sender=owner
     )
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_handler(owner, crypto_registry_updated, project):
-    return project.CryptoRegistryHandler.deploy(crypto_registry_updated, sender=owner)
+def crypto_registry_handler(owner, populated_crypto_registry, project):
+    return project.CryptoRegistryHandler.deploy(populated_crypto_registry, sender=owner)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_factory_handler(base_pool_registry_updated, crypto_factory, owner, project):
+def crypto_factory_handler(populated_base_pool_registry, crypto_factory, owner, project):
     return project.CryptoFactoryHandler.deploy(
-        crypto_factory.address, base_pool_registry_updated, sender=owner
+        crypto_factory.address, populated_base_pool_registry, sender=owner
     )
-
-
-# ---- grouped registries/handlers ----
 
 
 @pytest.fixture(scope="module")
@@ -153,12 +137,3 @@ def populated_metaregistry(metaregistry, handlers, owner):
         metaregistry.add_registry_handler(handler.address, sender=owner)
 
     return metaregistry
-
-
-@pytest.fixture(scope="module")
-def metaregistry_indices(handlers):
-
-    ordering = {}
-    for i in range(len(handlers)):
-        ordering[handlers[i].address] = i
-    return ordering

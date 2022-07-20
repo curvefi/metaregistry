@@ -174,10 +174,16 @@ def tokens():
         "dai": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
         "usdc": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
         "usdt": "0xdac17f958d2ee523a2206206994597c13d831ec7",
-        "cvxFXSFXS-f": "0xF3A43307DcAFa93275993862Aae628fCB50dC768",
-        "bveCVX-CVX-f": "0x04c90C198b2eFF55716079bc06d7CCc4aa4d7512",
         "renbtc": "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D",
         "wbtc": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
         "sbtc": "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6",
         "eurt": "0xC581b735A1688071A1746c968e0798D642EDE491",
+    }
+
+
+@pytest.fixture(scope="module")
+def lp_tokens():
+    return {
+        "cvxFXSFXS-f": "0xF3A43307DcAFa93275993862Aae628fCB50dC768",
+        "bveCVX-CVX-f": "0x04c90C198b2eFF55716079bc06d7CCc4aa4d7512",
     }

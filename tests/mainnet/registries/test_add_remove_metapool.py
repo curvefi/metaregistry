@@ -49,11 +49,11 @@ def test_add_metapool(crypto_registry_v1, owner):
     # coin checks:
     assert (
         crypto_registry_v1.get_coins(EURTUSD_MAINNET)
-        == [EURT, TRIPOOL_LPTOKEN] + [ape.ZERO_ADDRESS] * 6
+        == [EURT, TRIPOOL_LPTOKEN] + [ape.utils.ZERO_ADDRESS] * 6
     )
     assert (
         crypto_registry_v1.get_underlying_coins(EURTUSD_MAINNET)
-        == [EURT, DAI, USDC, USDT] + [ape.ZERO_ADDRESS] * 4
+        == [EURT, DAI, USDC, USDT] + [ape.utils.ZERO_ADDRESS] * 4
     )
 
     assert crypto_registry_v1.get_coin_indices(EURTUSD_MAINNET, EURT, TRIPOOL_LPTOKEN) == [
@@ -82,16 +82,19 @@ def test_add_metapool(crypto_registry_v1, owner):
 
             # if both coins are the same, then it should return ZERO_ADDRESS:
             if coin_a == coin_b:
-                assert crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.ZERO_ADDRESS
+                assert (
+                    crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0)
+                    == ape.utils.ZERO_ADDRESS
+                )
 
             # if basepool lp token <> underlying, then it should return ZERO_ADDRESS:
             elif TRIPOOL_LPTOKEN in [coin_a, coin_b] and not set([DAI, USDC, USDT]).isdisjoint(
                 [coin_a, coin_b]
             ):
-                crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.ZERO_ADDRESS
+                crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.utils.ZERO_ADDRESS
 
             elif not set([DAI, USDC, USDT]).isdisjoint([coin_a, coin_b]):
-                crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.ZERO_ADDRESS
+                crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.utils.ZERO_ADDRESS
 
             # everything else should go to EURTUSD pool:
             else:
@@ -121,7 +124,7 @@ def test_remove_metapool(crypto_registry_v1, owner):
         TRICRYPTO2_ZAP,
         3,
         "tricrypto2",
-        ape.ZERO_ADDRESS,
+        ape.utils.ZERO_ADDRESS,
         False,
         {"from": owner},
     )
@@ -136,10 +139,10 @@ def test_remove_metapool(crypto_registry_v1, owner):
     assert crypto_registry_v1.pool_list(0) == last_pool
     assert crypto_registry_v1.pool_count() == pool_count - 1  # one pool should be gone
 
-    assert crypto_registry_v1.get_zap(EURTUSD_MAINNET) == ape.ZERO_ADDRESS
-    assert crypto_registry_v1.get_lp_token(EURTUSD_MAINNET) == ape.ZERO_ADDRESS
-    assert crypto_registry_v1.get_pool_from_lp_token(CRVEURTUSD) == ape.ZERO_ADDRESS
-    assert crypto_registry_v1.get_base_pool(EURTUSD_MAINNET) == ape.ZERO_ADDRESS
+    assert crypto_registry_v1.get_zap(EURTUSD_MAINNET) == ape.utils.ZERO_ADDRESS
+    assert crypto_registry_v1.get_lp_token(EURTUSD_MAINNET) == ape.utils.ZERO_ADDRESS
+    assert crypto_registry_v1.get_pool_from_lp_token(CRVEURTUSD) == ape.utils.ZERO_ADDRESS
+    assert crypto_registry_v1.get_base_pool(EURTUSD_MAINNET) == ape.utils.ZERO_ADDRESS
     assert not crypto_registry_v1.is_meta(EURTUSD_MAINNET)
     assert crypto_registry_v1.get_pool_name(EURTUSD_MAINNET) == ""
 
@@ -149,12 +152,12 @@ def test_remove_metapool(crypto_registry_v1, owner):
     assert crypto_registry_v1.get_underlying_decimals(EURTUSD_MAINNET) == [0] * 8
 
     # gauge checks:
-    assert crypto_registry_v1.get_gauges(EURTUSD_MAINNET)[0][0] == ape.ZERO_ADDRESS
+    assert crypto_registry_v1.get_gauges(EURTUSD_MAINNET)[0][0] == ape.utils.ZERO_ADDRESS
     assert crypto_registry_v1.get_gauges(EURTUSD_MAINNET)[1][0] == 0
 
     # coin checks:
-    assert crypto_registry_v1.get_coins(EURTUSD_MAINNET) == [ape.ZERO_ADDRESS] * 8
-    assert crypto_registry_v1.get_underlying_coins(EURTUSD_MAINNET) == [ape.ZERO_ADDRESS] * 8
+    assert crypto_registry_v1.get_coins(EURTUSD_MAINNET) == [ape.utils.ZERO_ADDRESS] * 8
+    assert crypto_registry_v1.get_underlying_coins(EURTUSD_MAINNET) == [ape.utils.ZERO_ADDRESS] * 8
 
     # find pool for coins:
     for coin_a in [EURT, TRIPOOL_LPTOKEN, DAI, USDT, USDC]:
@@ -166,4 +169,6 @@ def test_remove_metapool(crypto_registry_v1, owner):
                 False,
             ]
 
-            assert crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.ZERO_ADDRESS
+            assert (
+                crypto_registry_v1.find_pool_for_coins(coin_a, coin_b, 0) == ape.utils.ZERO_ADDRESS
+            )

@@ -25,16 +25,20 @@ def test_update_registry_handler_invalid_registry(populated_metaregistry, random
 
 
 def test_update_registry_handler(
-    populated_metaregistry, metaregistry_indices, stable_registry_handler, random_address, owner
+    populated_metaregistry,
+    stable_registry_handler_index,
+    stable_registry_handler,
+    random_address,
+    owner,
 ):
-    registry_handler_index = metaregistry_indices[stable_registry_handler.address]
     assert (
-        populated_metaregistry.get_registry(registry_handler_index)
+        populated_metaregistry.get_registry(stable_registry_handler_index)
         == stable_registry_handler.address
     )
+
     populated_metaregistry.update_registry_handler(
-        registry_handler_index,
+        stable_registry_handler_index,
         random_address,
         sender=owner,
     )
-    assert populated_metaregistry.get_registry(registry_handler_index) == random_address
+    assert populated_metaregistry.get_registry(stable_registry_handler_index) == random_address

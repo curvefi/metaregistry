@@ -1,3 +1,4 @@
+import ape
 import pytest
 
 
@@ -17,5 +18,6 @@ def random_address(accounts):
 
 
 @pytest.fixture(scope="module")
-def owner(address_provider, accounts):
+def owner(accounts):
+    address_provider = ape.project.AddressProvider.at("0x0000000022D53366457F9d5E68Ec105046FC4383")
     return accounts[address_provider.admin()]
