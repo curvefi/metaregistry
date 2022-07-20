@@ -1,34 +1,27 @@
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_lp_token(
-    metaregistry,
-    registry_pool_index_iterator,
-    stable_registry_handler_index,
-    stable_factory_handler_index,
-    crypto_registry_handler_index,
-    crypto_factory_handler_index,
-    pool_id,
-):
+def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
+    actual_output = stable_registry.get_lp_token(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_lp_token(stable_registry_pool)
+    assert metaregistry_output == actual_output
 
-    registry_id, _, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # stable_registry and crypto_registry have lp_tokens
-    if registry_id in [
-        stable_registry_handler_index,
-        crypto_registry_handler_index,
-    ]:
+def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
 
-        actual_output = registry.get_lp_token(pool)
+    metaregistry_output = populated_metaregistry.get_lp_token(stable_factory_pool)
 
     # pool == lp_token for stable factory
-    elif registry_id == stable_factory_handler_index:
+    assert stable_factory_pool == metaregistry_output
 
-        actual_output = pool
 
-    else:
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
 
-        actual_output = registry.get_token(pool)
+    actual_output = crypto_registry.get_lp_token(crypto_registry_pool)
+    metaregistry_output = populated_metaregistry.get_lp_token(crypto_registry_pool)
+    assert metaregistry_output == actual_output
 
-    metaregistry_output = metaregistry.get_lp_token(pool)
-    assert actual_output == metaregistry_output
+
+def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory):
+
+    actual_output = crypto_factory.get_token(crypto_factory_pool)
+    metaregistry_output = populated_metaregistry.get_lp_token(crypto_factory_pool)
+    assert metaregistry_output == actual_output

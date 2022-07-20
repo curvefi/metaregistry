@@ -33,7 +33,7 @@ def base_pool_registry(alice, project):
 @pytest.fixture(scope="module")
 def populated_base_pool_registry(base_pool_registry, owner, base_pools):
 
-    for name, data in base_pools.items():
+    for _, data in base_pools.items():
         base_pool_registry.add_base_pool(
             data["pool"],
             data["lp_token"],
@@ -57,7 +57,7 @@ def crypto_registry(populated_base_pool_registry, owner, project):
 @pytest.fixture(scope="module")
 def populated_crypto_registry(crypto_registry, owner, crypto_registry_pools):
 
-    for name, pool in crypto_registry_pools.items():
+    for _, pool in crypto_registry_pools.items():
         crypto_registry.add_pool(
             pool["pool"],
             pool["lp_token"],

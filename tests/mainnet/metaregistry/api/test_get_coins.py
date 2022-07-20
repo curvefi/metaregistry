@@ -1,13 +1,30 @@
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_coins(metaregistry, registry_pool_index_iterator, pool_id):
+def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
+    metaregistry_output = populated_metaregistry.get_coins(stable_registry_pool)
+    actual_output = list(stable_registry.get_coins(stable_registry_pool))
+    for idx, coin in enumerate(actual_output):
+        assert coin == metaregistry_output[idx]
 
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    metaregistry_output = metaregistry.get_coins(pool)
+def test_factory_pools(populated_metaregistry, stable_factory_pool, stable_factory):
 
-    actual_output = list(registry.get_coins(pool))
-    actual_output += [ape.utils.ZERO_ADDRESS] * (len(metaregistry_output) - len(actual_output))
+    metaregistry_output = populated_metaregistry.get_coins(stable_factory_pool)
+    actual_output = list(stable_factory.get_coins(stable_factory_pool))
+    for idx, coin in enumerate(actual_output):
+        assert coin == metaregistry_output[idx]
 
-    assert tuple(actual_output) == metaregistry_output
+
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
+
+    metaregistry_output = populated_metaregistry.get_coins(crypto_registry_pool)
+    actual_output = list(crypto_registry.get_coins(crypto_registry_pool))
+    for idx, coin in enumerate(actual_output):
+        assert coin == metaregistry_output[idx]
+
+
+def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory):
+
+    metaregistry_output = populated_metaregistry.get_coins(crypto_factory_pool)
+    actual_output = list(crypto_factory.get_coins(crypto_factory_pool))
+    for idx, coin in enumerate(actual_output):
+        assert coin == metaregistry_output[idx]

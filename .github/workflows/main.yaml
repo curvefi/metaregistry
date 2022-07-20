@@ -6,7 +6,7 @@ env:
   ETHERSCAN_TOKEN: ${{ secrets.ETHERSKEM_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   WEB3_INFURA_PROJECT_ID: ${{ secrets.INFURA_TOKEN }}
-  ALCHEMY_API_KEY: ${{secrets.ALCHEMY_API_KEY}}
+  WEB3_ALCHEMY_PROJECT_ID: ${{secrets.ALCHEMY_API_KEY}}
 
 jobs:
   unitary:
@@ -40,4 +40,3 @@ jobs:
 
       - name: Run Tests
         run: ape test
-        timeout-minutes: 10

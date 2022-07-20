@@ -1,4 +1,11 @@
-def _is_dao_onboarded_gauge(_gauge):
+from this import d
+import ape
+import pytest
+
+from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
+
+
+def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
 
     try:
         gauge_controller().gauge_types(_gauge)
@@ -11,40 +18,93 @@ def _is_dao_onboarded_gauge(_gauge):
     return True
 
 
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_gauges(metaregistry, registry_pool_index_iterator, pool_id):
+def _get_factory_gauge(registry, pool, gauge_controller, liquidity_gauge):
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
+    gauge = registry.get_gauge(pool)
 
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
+    # we check if the gauge is dao onboarded, else
+    # gauge_controller().gauge_types(gauge) will revert
+    # as gauge type is zero. This slows down tests significantly
+    if _is_dao_onboarded_gauge(gauge, gauge_controller, liquidity_gauge):
+        return (
+            [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
+            [gauge_controller.gauge_types(gauge)] + [0] * 9,
+        )
+    else:
+        return (
+            [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
+            [0] * 10,
+        )
 
-    if check_pool_already_registered(metaregistry, pool, registry_handler):
+
+def test_stable_registry_pools(
+    populated_metaregistry,
+    stable_registry_pool,
+    stable_registry,
+    stable_registry_handler,
+):
+
+    if check_pool_already_registered(
+        populated_metaregistry, stable_registry_pool, stable_registry_handler
+    ):
         pytest.skip()
 
-    if registry_id in [
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-    ]:
+    actual_output = stable_registry.get_gauges(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_gauges(stable_registry_pool)
+    assert actual_output == metaregistry_output
 
-        actual_output = registry.get_gauges(pool)
 
-    else:  # for factory pools, some checks need to be done
+def test_stable_factory_pools(
+    populated_metaregistry,
+    stable_factory_pool,
+    stable_factory,
+    stable_factory_handler,
+    gauge_controller,
+    liquidity_gauge,
+):
 
-        gauge = registry.get_gauge(pool)
+    if check_pool_already_registered(
+        populated_metaregistry, stable_factory_pool, stable_factory_handler
+    ):
+        pytest.skip()
 
-        # we check if the gauge is dao onboarded, else
-        # gauge_controller().gauge_types(gauge) will revert
-        # as gauge type is zero. This slows down tests significantly
-        if _is_dao_onboarded_gauge(gauge):
-            actual_output = (
-                [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
-                [gauge_controller().gauge_types(gauge)] + [0] * 9,
-            )
-        else:
-            actual_output = (
-                [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
-                [0] * 10,
-            )
+    actual_output = _get_factory_gauge(
+        stable_factory, stable_factory_pool, gauge_controller, liquidity_gauge
+    )
+    metaregistry_output = populated_metaregistry.get_gauges(stable_factory_pool)
+    assert actual_output == metaregistry_output
 
-    metaregistry_output = metaregistry.get_gauges(pool)
+
+def test_crypto_registry_pools(
+    populated_metaregistry, crypto_registry_pool, crypto_registry, crypto_registry_handler
+):
+
+    if check_pool_already_registered(
+        populated_metaregistry, crypto_registry_pool, crypto_registry_handler
+    ):
+        pytest.skip("crypto registry pool already registered")
+
+    actual_output = crypto_registry.get_gauges(crypto_registry_pool)
+    metaregistry_output = populated_metaregistry.get_gauges(crypto_registry_pool)
+    assert actual_output == metaregistry_output
+
+
+def test_crypto_factory_pools(
+    populated_metaregistry,
+    crypto_factory_pool,
+    crypto_factory,
+    crypto_factory_handler,
+    gauge_controller,
+    liquidity_gauge,
+):
+
+    if check_pool_already_registered(
+        populated_metaregistry, crypto_factory_pool, crypto_factory_handler
+    ):
+        pytest.skip()
+
+    actual_output = _get_factory_gauge(
+        crypto_factory, crypto_factory_pool, gauge_controller, liquidity_gauge
+    )
+    metaregistry_output = populated_metaregistry.get_gauges(crypto_factory_pool)
     assert actual_output == metaregistry_output

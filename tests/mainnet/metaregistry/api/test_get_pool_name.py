@@ -1,27 +1,52 @@
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_pool_name(metaregistry, registry_pool_index_iterator, pool_id):
+import pytest
+from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, stable_registry, stable_registry_handler
+):
 
-    if check_pool_already_registered(metaregistry, pool, registry_handler):
+    if check_pool_already_registered(
+        populated_metaregistry, stable_registry_pool, stable_registry_handler
+    ):
         pytest.skip()
 
-    if registry_id in [
-        METAREGISTRY_STABLE_REGISTRY_HANDLER_INDEX,
-        METAREGISTRY_CRYPTO_REGISTRY_HANDLER_INDEX,
-    ]:
+    assert populated_metaregistry.get_pool_name(
+        stable_registry_pool
+    ) == stable_registry.get_pool_name(stable_registry_pool)
 
-        actual_output = registry.get_pool_name(pool)
 
-    elif registry_id == METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
+def test_stable_factory_pools(
+    populated_metaregistry, stable_factory_pool, stable_factory_handler, project
+):
 
-        actual_output = ape.interface.ERC20(registry.get_token(pool)).name()
+    if check_pool_already_registered(
+        populated_metaregistry, stable_factory_pool, stable_factory_handler
+    ):
+        pytest.skip()
 
-    else:
+    assert (
+        populated_metaregistry.get_pool_name(stable_factory_pool)
+        == project.ERC20.at(stable_factory_pool).name()
+    )
 
-        actual_output = ape.interface.ERC20(pool).name()
 
-    metaregistry_output = metaregistry.get_pool_name(pool)
-    assert actual_output == metaregistry_output
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
+
+    if check_pool_already_registered(populated_metaregistry, crypto_registry_pool, crypto_registry):
+        pytest.skip()
+
+    assert populated_metaregistry.get_pool_name(
+        crypto_registry_pool
+    ) == crypto_registry.get_pool_name(crypto_registry_pool)
+
+
+def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory, project):
+
+    if check_pool_already_registered(populated_metaregistry, crypto_factory_pool, crypto_factory):
+        pytest.skip()
+
+    assert (
+        populated_metaregistry.get_pool_name(crypto_factory_pool)
+        == project.ERC20.at(crypto_factory.get_token(crypto_factory_pool)).name()
+    )

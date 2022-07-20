@@ -1,13 +1,7 @@
-import ape
 import pytest
 
-from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 
-
-def pre_test_checks(metaregistry, pool, handler, project):
-
-    # if check_pool_already_registered(metaregistry, pool, handler):
-    #     pytest.skip()
+def pre_test_checks(metaregistry, pool, project):
 
     if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip("empty pool: skipping")

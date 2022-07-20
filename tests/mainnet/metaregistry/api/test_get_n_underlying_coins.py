@@ -1,25 +1,57 @@
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_n_underlying_coins(
-    metaregistry, registry_pool_index_iterator, base_pool_registry_updated, pool_id
-):
+import ape
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
-
-    metaregistry_output = metaregistry.get_n_underlying_coins(pool)
+def _get_num_coins(registry, pool, populated_base_pool_registry):
 
     coins = registry.get_coins(pool)
     num_coins = 0
     for coin in coins:
         if coin == ape.utils.ZERO_ADDRESS:
             break
-        base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
+        base_pool = populated_base_pool_registry.get_base_pool_for_lp_token(coin)
         if base_pool != ape.utils.ZERO_ADDRESS:
-            basepool_coins = base_pool_registry_updated.get_coins(base_pool)
+            basepool_coins = populated_base_pool_registry.get_coins(base_pool)
             num_bp_coins = sum([1 for i in basepool_coins if i != ape.utils.ZERO_ADDRESS])
             num_coins += num_bp_coins
         else:
             num_coins += 1
 
-    assert num_coins == metaregistry_output
+    return num_coins
+
+
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, stable_registry, populated_base_pool_registry
+):
+
+    metaregistry_output = populated_metaregistry.get_n_underlying_coins(stable_registry_pool)
+    num_coins = _get_num_coins(stable_registry, stable_registry_pool, populated_base_pool_registry)
+
+    assert metaregistry_output == num_coins
+
+
+def test_stable_factory_pools(
+    populated_metaregistry, stable_factory_pool, stable_factory, populated_base_pool_registry
+):
+
+    metaregistry_output = populated_metaregistry.get_n_underlying_coins(stable_factory_pool)
+    num_coins = _get_num_coins(stable_factory, stable_factory_pool, populated_base_pool_registry)
+
+    assert metaregistry_output == num_coins
+
+
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
+
+    metaregistry_output = populated_metaregistry.get_n_underlying_coins(crypto_registry_pool)
+    num_coins = _get_num_coins(crypto_registry, crypto_registry_pool, None)
+
+    assert metaregistry_output == num_coins
+
+
+def test_crypto_factory_pools(
+    populated_metaregistry, crypto_factory_pool, crypto_factory, populated_base_pool_registry
+):
+
+    metaregistry_output = populated_metaregistry.get_n_underlying_coins(crypto_factory_pool)
+    num_coins = _get_num_coins(crypto_factory, crypto_factory_pool, populated_base_pool_registry)
+
+    assert metaregistry_output == num_coins

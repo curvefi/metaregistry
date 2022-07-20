@@ -1,39 +1,96 @@
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_fees(metaregistry, registry_pool_index_iterator, pool_id):
+from ctypes import create_unicode_buffer
+import ape
+import pytest
+from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
 
-    # curve v2 pools need to calculates self.xp() for getting self.fee(), and that is not
-    # possible if the pool is empty.
-    if (
-        registry_id
-        in [METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX, METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX]
-        and sum(metaregistry.get_balances(pool)) == 0
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, stable_registry, stable_registry_handler
+):
+
+    if check_pool_already_registered(
+        populated_metaregistry, stable_registry_pool, stable_registry_handler
     ):
+        pytest.skip()
+
+    actual_output = stable_registry.get_fees(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_fees(stable_registry_pool)
+
+    assert actual_output == metaregistry_output
+
+
+def test_stable_factory_pools(
+    populated_metaregistry, stable_factory_pool, stable_factory, stable_factory_handler
+):
+
+    if check_pool_already_registered(
+        populated_metaregistry, stable_factory_pool, stable_factory_handler
+    ):
+        pytest.skip()
+
+    actual_output = stable_factory.get_fees(stable_factory_pool)
+    metaregistry_output = populated_metaregistry.get_fees(stable_factory_pool)
+
+    assert actual_output == metaregistry_output
+
+
+def test_crypto_registry_pools(
+    populated_metaregistry,
+    crypto_registry_pool,
+    crypto_registry,
+    crypto_registry_handler,
+    curve_pool_v2,
+):
+
+    if sum(crypto_registry.get_balances(crypto_registry_pool)) == 0:
         with ape.reverts():
-            curve_pool_v2(pool).fee()
+            curve_pool_v2(crypto_registry_pool).fee()
         pytest.skip(
-            f"crypto factory pool {pool} is empty and factory pools tend to "
+            f"crypto factory pool {crypto_registry_pool} is empty and factory pools tend to "
             "revert for `fee()` since calcs are needed and they can't be done "
             "for an empty pool"
         )
 
-    if check_pool_already_registered(metaregistry, pool, registry_handler):
-        pytest.skip()
+    if check_pool_already_registered(
+        populated_metaregistry, crypto_registry_pool, crypto_registry_handler
+    ):
+        pytest.skip("crypto registry pool already registered")
 
-    # get_fees
-    if registry_id != METAREGISTRY_CRYPTO_FACTORY_HANDLER_INDEX:
-        actual_output = registry.get_fees(pool)
-    else:
-        curve_contract = curve_pool_v2(pool)
-        actual_output = [
-            curve_contract.fee(),
-            curve_contract.admin_fee(),
-            curve_contract.mid_fee(),
-            curve_contract.out_fee(),
-        ]
+    actual_output = crypto_registry.get_fees(crypto_registry_pool)
+    metaregistry_output = populated_metaregistry.get_fees(crypto_registry_pool)
+    for j, output in enumerate(actual_output):
+        assert output == metaregistry_output[j]
 
-    metaregistry_output = metaregistry.get_fees(pool)
+
+def test_crypto_factory_pools(
+    populated_metaregistry,
+    crypto_factory_pool,
+    crypto_factory,
+    crypto_factory_handler,
+    curve_pool_v2,
+):
+
+    if sum(crypto_factory.get_balances(crypto_factory_pool)) == 0:
+        with ape.reverts():
+            curve_pool_v2(crypto_factory_pool).fee()
+        pytest.skip(
+            f"crypto factory pool {crypto_factory_pool} is empty and factory pools tend to "
+            "revert for `fee()` since calcs are needed and they can't be done "
+            "for an empty pool"
+        )
+
+    if check_pool_already_registered(
+        populated_metaregistry, crypto_factory_pool, crypto_factory_handler
+    ):
+        pytest.skip("crypto factory pool already registered")
+
+    curve_contract = curve_pool_v2(crypto_factory_pool)
+    actual_output = [
+        curve_contract.fee(),
+        curve_contract.admin_fee(),
+        curve_contract.mid_fee(),
+        curve_contract.out_fee(),
+    ]
+    metaregistry_output = populated_metaregistry.get_fees(crypto_factory_pool)
     for j, output in enumerate(actual_output):
         assert output == metaregistry_output[j]

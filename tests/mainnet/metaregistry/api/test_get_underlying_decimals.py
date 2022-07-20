@@ -1,31 +1,27 @@
-@pytest.mark.parametrize("pool_id", range(MAX_POOLS))
-def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, pool_id):
+import ape
 
-    skip_if_pool_id_gte_max_pools_in_registry(pool_id, registry_pool_index_iterator)
 
-    registry_id, registry_handler, registry, pool = registry_pool_index_iterator[pool_id]
+EXCEPTIONS = {
+    # eth: ankreth pool returns [18, 0] when it should return:
+    "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2": [18, 18],
+    # compound pools. ctokens are 8 decimals. underlying is dai usdc:
+    "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56": [18, 6],
+    # cream-yearn cytokens are 8 decimals, whereas underlying is
+    # dai usdc usdt:
+    "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF": [18, 6, 6],
+    # usdt pool has cDAI, cUSDC and USDT (which is [8, 8, 6]):
+    "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C": [18, 6, 6],
+}
 
-    # metaregistry underlying decimals:
+
+def _test_underlying_decimals_getter(metaregistry, registry, pool):
+
     metaregistry_output = metaregistry.get_underlying_decimals(pool)
     assert metaregistry_output[1] != 0  # there has to be a second coin!
 
-    # get actual decimals: first try registry
-    # todo: include CryptoRegistryHandler when CryptoRegistry gets updated
     pool_is_metapool = metaregistry.is_meta(pool)
-    pool_underlying_decimals_exceptions = {
-        # eth: ankreth pool returns [18, 0] when it should return:
-        "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2": [18, 18],
-        # compound pools. ctokens are 8 decimals. underlying is dai usdc:
-        "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56": [18, 6],
-        # cream-yearn cytokens are 8 decimals, whereas underlying is
-        # dai usdc usdt:
-        "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF": [18, 6, 6],
-        # usdt pool has cDAI, cUSDC and USDT (which is 8, 8, 6):
-        "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C": [18, 6, 6],
-    }
-
-    if pool in pool_underlying_decimals_exceptions:
-        actual_output = pool_underlying_decimals_exceptions[pool]
+    if pool in EXCEPTIONS:
+        actual_output = EXCEPTIONS[pool]
     elif pool_is_metapool:
         underlying_coins = metaregistry.get_underlying_coins(pool)
         actual_output = []
@@ -33,13 +29,27 @@ def test_get_underlying_decimals(metaregistry, registry_pool_index_iterator, poo
             if underlying_coins[i] == ape.utils.ZERO_ADDRESS:
                 actual_output.append(0)
             else:
-                actual_output.append(ape.interface.ERC20(underlying_coins[i]).decimals())
+                actual_output.append(ape.project.ERC20.at(underlying_coins[i]).decimals())
 
         assert actual_output[2] != 0  # there has to be a third coin!
     else:
         actual_output = list(registry.get_decimals(pool))
 
-    # pad zeros to match metaregistry_output length
-    actual_output += [0] * (len(metaregistry_output) - len(actual_output))
+    for idx, decimals in enumerate(actual_output):
+        assert decimals == metaregistry_output[idx]
 
-    assert metaregistry_output == tuple(actual_output)
+
+def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
+    _test_underlying_decimals_getter(populated_metaregistry, stable_registry, stable_registry_pool)
+
+
+def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, stable_factory):
+    _test_underlying_decimals_getter(populated_metaregistry, stable_factory, stable_factory_pool)
+
+
+def test_crypto_registry_pools(populated_metaregistry, stable_registry_pool, crypto_registry):
+    _test_underlying_decimals_getter(populated_metaregistry, crypto_registry, stable_registry_pool)
+
+
+def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory):
+    _test_underlying_decimals_getter(populated_metaregistry, crypto_factory, crypto_factory_pool)
