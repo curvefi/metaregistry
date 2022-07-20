@@ -241,29 +241,39 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     if _pool != ZERO_ADDRESS:
         return _pool
 
+    # could not find a pool for the coins, check if they are in a base pool:
     _base_pool: address = ZERO_ADDRESS
     _pools: address[20] = empty(address[20])
     _id: uint256 = 0
+
     for coin in [_from, _to]:
 
+        # we need to loop over several base pools because a coin can exist in multiple base pools
         for j in range(20):
 
             _base_pool = self.base_pool_registry.get_basepool_for_coins(coin, j)
 
+            # found a base pool, but is it the right one?
             if _base_pool != ZERO_ADDRESS:
 
                 base_pool_lp_token: address = self.base_pool_registry.get_lp_token(_base_pool)
 
                 if coin == _from:
 
+                    # check if the basepool cointaining the _from coin has a pair with the _to coin:
                     _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, i)
+
+                    # only append if a pool is found:
                     if _pool != ZERO_ADDRESS:
                         _pools[_id] = _pool
                         _id += 1
 
                 elif coin == _to:
                     
+                    # check if the basepool cointaining the _to coin has a pair with the _from coin:
                     _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, i)
+
+                    # only append if a pool is found:
                     if _pool != ZERO_ADDRESS:
                         _pools[_id] = _pool
                         _id += 1
