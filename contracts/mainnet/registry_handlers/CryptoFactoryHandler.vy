@@ -234,17 +234,21 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     @notice checks if either of the two coins are in a base pool and then checks
             if the basepool lp token and the other coin have a pool.
             This is done because the factory does not have `underlying` methods in
-            pools that have a basepool lp token in them.
+            pools that have a basepool lp token in them
+    @dev    This is a hacky way to find the pool for a pair of coins and can be slow
+    @param _from Address of the _from coin
+    @param _to Address of the _to coin
+    @param i Index of the pool to return
     """
     _pool: address = self.base_registry.find_pool_for_coins(_from, _to, i)
 
     if _pool != ZERO_ADDRESS:
         return _pool
 
-    # could not find a pool for the coins, check if they are in a base pool:
+    # could not find a pool for the coins for `i`. check if they are in a base pool:
     _base_pool: address = ZERO_ADDRESS
     _pools: address[20] = empty(address[20])
-    _id: uint256 = 0
+    _num_metapool_pairs: uint256 = 0
 
     for coin in [_from, _to]:
 
@@ -261,24 +265,43 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
                 if coin == _from:
 
                     # check if the basepool cointaining the _from coin has a pair with the _to coin:
-                    _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, i)
+                    _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, 0)
 
                     # only append if a pool is found:
                     if _pool != ZERO_ADDRESS:
-                        _pools[_id] = _pool
-                        _id += 1
+                        _pools[_num_metapool_pairs] = _pool
+                        _num_metapool_pairs += 1
 
                 elif coin == _to:
 
                     # check if the basepool cointaining the _to coin has a pair with the _from coin:
-                    _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, i)
+                    _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, 0)
 
                     # only append if a pool is found:
                     if _pool != ZERO_ADDRESS:
-                        _pools[_id] = _pool
-                        _id += 1
+                        _pools[_num_metapool_pairs] = _pool
+                        _num_metapool_pairs += 1
 
-    return _pools[i]
+    # say we found a pair for _from and _to in the base registry without a basepool combination already
+    # then that pool will be returned when i == 0. But if that same pair exists in a base pool then
+    # i == 1 will return ZERO_ADDRESS in the base_registry query, but i = 0 for _pools will return
+    # the metapool pair. But if we keep i == 1 for _pools, it would return ZERO_ADDRESS (unless there)
+    # is another metapool pair of course. So, we first check how many direct pairs exist:
+
+    num_pairs: uint256 = 0
+    for k in range(20):
+        _pool = self.base_registry.find_pool_for_coins(_from, _to, k)
+        if _pool == ZERO_ADDRESS:
+            break
+        num_pairs += 1
+    
+    # now we check if the queried pair index `i` is higher than num_pairs. e.g. if num_pairs == 1 and i == 1,
+    # and _num_metapool_pairs == 1, then i >= num_pairs, and we return _pools[1 - num_pairs]. If there are
+    # no metapool pairs, then it will automatically return ZERO_ADDRESS:
+    if i >= num_pairs:
+        return _pools[i - num_pairs]
+    else:
+        return _pools[i]
 
 
 @external
