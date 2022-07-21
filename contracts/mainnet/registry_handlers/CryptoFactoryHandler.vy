@@ -294,7 +294,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
         if _pool == ZERO_ADDRESS:
             break
         num_pairs += 1
-    
+
     # now we check if the queried pair index `i` is higher than num_pairs. e.g. if num_pairs == 1 and i == 1,
     # and _num_metapool_pairs == 1, then i >= num_pairs, and we return _pools[1 - num_pairs]. If there are
     # no metapool pairs, then it will automatically return ZERO_ADDRESS:
