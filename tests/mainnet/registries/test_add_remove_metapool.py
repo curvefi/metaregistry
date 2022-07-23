@@ -12,7 +12,7 @@ def test_add_metapool(
     tokens,
 ):
 
-    crypto_registry = project.CryptoRegistryV1.deploy(
+    crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider.address, populated_base_pool_registry, sender=owner
     )
 
@@ -151,7 +151,7 @@ def test_remove_metapool(
     tokens,
 ):
 
-    crypto_registry = project.CryptoRegistryV1.deploy(
+    crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider.address, populated_base_pool_registry, sender=owner
     )
 
@@ -188,7 +188,7 @@ def test_remove_metapool(
 
     assert crypto_registry.pool_list(0) == eurt3crv["pool"]
 
-    crypto_registry.remove_pool(eurt3crv["pool"], {"from": owner})
+    crypto_registry.remove_pool(eurt3crv["pool"], sender=owner)
 
     assert crypto_registry.pool_list(0) == last_pool
     assert crypto_registry.pool_count() == pool_count - 1  # one pool should be gone

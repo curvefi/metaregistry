@@ -1,4 +1,3 @@
-from brownie import MetaRegistry, interface
 from tabulate import tabulate
 
 MISSING = "\033[33m✖\033[0m"

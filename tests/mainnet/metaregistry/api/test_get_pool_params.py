@@ -1,8 +1,8 @@
 def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
 
-    metaregistry_output = populated_metaregistry.get_pool_params(stable_registry_pool)
     actual_pool_params = [0] * 20
     actual_pool_params[0] = stable_registry.get_A(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_pool_params(stable_registry_pool)
 
     assert actual_pool_params == metaregistry_output
 

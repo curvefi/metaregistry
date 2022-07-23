@@ -11,10 +11,10 @@ def pre_test_checks(metaregistry, pool, project):
 
 
 def test_stable_registry_pools(
-    populated_metaregistry, stable_registry_pool, stable_registry, stable_registry_handler, project
+    populated_metaregistry, stable_registry_pool, stable_registry, project
 ):
 
-    pre_test_checks(populated_metaregistry, stable_registry_pool, stable_registry_handler, project)
+    pre_test_checks(populated_metaregistry, stable_registry_pool, project)
 
     actual_output = stable_registry.get_admin_balances(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_admin_balances(stable_registry_pool)
@@ -25,12 +25,11 @@ def test_stable_registry_pools(
 def test_stable_factory_pools(
     populated_metaregistry,
     stable_factory_pool,
-    stable_factory_handler,
     project,
     curve_pool,
 ):
 
-    pre_test_checks(populated_metaregistry, stable_factory_pool, stable_factory_handler, project)
+    pre_test_checks(populated_metaregistry, stable_factory_pool, project)
 
     pool = curve_pool(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_admin_balances(stable_factory_pool)
@@ -66,14 +65,13 @@ def _get_crypto_pool_admin_fees(populated_metaregistry, pool, fee_receiver, proj
 def test_crypto_registry_pools(
     populated_metaregistry,
     crypto_registry_pool,
-    crypto_registry_handler,
     curve_pool_v2,
     alice,
     chain,
     project,
 ):
 
-    pre_test_checks(populated_metaregistry, crypto_registry_pool, crypto_registry_handler, project)
+    pre_test_checks(populated_metaregistry, crypto_registry_pool, project)
 
     pool = curve_pool_v2(crypto_registry_pool)
     fee_receiver = pool.admin_fee_receiver()
@@ -90,14 +88,13 @@ def test_crypto_factory_pools(
     populated_metaregistry,
     crypto_factory_pool,
     crypto_factory,
-    crypto_factory_handler,
     curve_pool_v2,
     alice,
     chain,
     project,
 ):
 
-    pre_test_checks(populated_metaregistry, crypto_factory, crypto_factory_handler, project)
+    pre_test_checks(populated_metaregistry, crypto_factory_pool, project)
 
     pool = curve_pool_v2(crypto_factory_pool)
     fee_receiver = crypto_factory.fee_receiver()

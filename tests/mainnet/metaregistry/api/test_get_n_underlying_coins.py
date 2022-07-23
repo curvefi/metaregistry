@@ -1,19 +1,25 @@
 import ape
 
 
-def _get_num_coins(registry, pool, populated_base_pool_registry):
+def _get_num_coins(registry, pool, base_pool_registry):
 
     coins = registry.get_coins(pool)
     num_coins = 0
     for coin in coins:
+
         if coin == ape.utils.ZERO_ADDRESS:
             break
-        base_pool = populated_base_pool_registry.get_base_pool_for_lp_token(coin)
+
+        base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
+
         if base_pool != ape.utils.ZERO_ADDRESS:
-            basepool_coins = populated_base_pool_registry.get_coins(base_pool)
+
+            basepool_coins = base_pool_registry.get_coins(base_pool)
             num_bp_coins = sum([1 for i in basepool_coins if i != ape.utils.ZERO_ADDRESS])
             num_coins += num_bp_coins
+
         else:
+
             num_coins += 1
 
     return num_coins
@@ -39,10 +45,12 @@ def test_stable_factory_pools(
     assert metaregistry_output == num_coins
 
 
-def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
+def test_crypto_registry_pools(
+    populated_metaregistry, crypto_registry_pool, crypto_registry, populated_base_pool_registry
+):
 
     metaregistry_output = populated_metaregistry.get_n_underlying_coins(crypto_registry_pool)
-    num_coins = _get_num_coins(crypto_registry, crypto_registry_pool, None)
+    num_coins = _get_num_coins(crypto_registry, crypto_registry_pool, populated_base_pool_registry)
 
     assert metaregistry_output == num_coins
 

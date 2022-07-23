@@ -74,7 +74,7 @@ def populated_crypto_registry(crypto_registry, owner, crypto_registry_pools):
 
 @pytest.fixture(scope="module", autouse=True)
 def address_provider(populated_crypto_registry, owner):
-    contract = ape.project.AddressProvider.at("0x0000000022D53366457F9d5E68Ec105046FC4383")
+    contract = ape.project.AddressProvider.at(ADDRESS_PROVIDER)
     contract.set_address(5, populated_crypto_registry, sender=owner)
     return contract
 

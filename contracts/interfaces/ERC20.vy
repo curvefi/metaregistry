@@ -1,3 +1,4 @@
+# @version 0.3.3
 # @dev Implementation of ERC-20 token standard.
 # @author Takayuki Jimba (@yudetamago)
 # https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md

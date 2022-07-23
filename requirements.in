@@ -1,9 +1,10 @@
+eth-ape
+ape-vyper
 ape-alchemy
 ape-hardhat
-ape-vyper
 black
-eth-ape
 flake8
 isort
 pip-tools
 pre-commit
+tabulate

@@ -42,6 +42,7 @@ interface CurveLegacyPool:
 
 
 interface CurvePool:
+    def admin_balances(i: uint256) -> uint256: view
     def balances(i: uint256) -> uint256: view
     def get_virtual_price() -> uint256: view
 
@@ -196,7 +197,18 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
 @external
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
-    return self._pad_uint_array(self.base_registry.get_admin_balances(_pool))
+    """
+    @notice Get the balances of the admin of the pool
+    @dev does not use base registry admin_balances because that has errors
+         in the getter for n_coins (some pools show zero, so admin balances is zero)
+    """
+    n_coins: uint256 = self._get_n_coins(_pool)
+    admin_balances: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
+    for i in range(MAX_METAREGISTRY_COINS):
+        if i == n_coins:
+            break
+        admin_balances[i] = CurvePool(_pool).admin_balances(i)
+    return admin_balances
 
 
 @external

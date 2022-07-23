@@ -7,7 +7,7 @@ from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
 
     try:
-        gauge_controller().gauge_types(_gauge)
+        gauge_controller.gauge_types(_gauge)
     except ape.exceptions.VirtualMachineError:
         return False
 
@@ -22,7 +22,7 @@ def _get_factory_gauge(registry, pool, gauge_controller, liquidity_gauge):
     gauge = registry.get_gauge(pool)
 
     # we check if the gauge is dao onboarded, else
-    # gauge_controller().gauge_types(gauge) will revert
+    # gauge_controller.gauge_types(gauge) will revert
     # as gauge type is zero. This slows down tests significantly
     if _is_dao_onboarded_gauge(gauge, gauge_controller, liquidity_gauge):
         return (

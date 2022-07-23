@@ -1,7 +1,10 @@
 import ape
 import pytest
 
-from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
+from tests.mainnet.metaregistry.api.utils import (
+    check_dissimilar_length_array_elements_are_equal,
+    check_pool_already_registered,
+)
 
 
 def test_stable_registry_pools(
@@ -15,8 +18,7 @@ def test_stable_registry_pools(
 
     actual_output = stable_registry.get_fees(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_registry_pool)
-
-    assert actual_output == metaregistry_output
+    check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
 
 
 def test_stable_factory_pools(
@@ -30,8 +32,7 @@ def test_stable_factory_pools(
 
     actual_output = stable_factory.get_fees(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_factory_pool)
-
-    assert actual_output == metaregistry_output
+    check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
 
 
 def test_crypto_registry_pools(
@@ -58,8 +59,7 @@ def test_crypto_registry_pools(
 
     actual_output = crypto_registry.get_fees(crypto_registry_pool)
     metaregistry_output = populated_metaregistry.get_fees(crypto_registry_pool)
-    for j, output in enumerate(actual_output):
-        assert output == metaregistry_output[j]
+    check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
 
 
 def test_crypto_factory_pools(
@@ -92,5 +92,4 @@ def test_crypto_factory_pools(
         curve_contract.out_fee(),
     ]
     metaregistry_output = populated_metaregistry.get_fees(crypto_factory_pool)
-    for j, output in enumerate(actual_output):
-        assert output == metaregistry_output[j]
+    check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)

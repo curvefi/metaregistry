@@ -51,6 +51,7 @@ event NewAdmin:
 # ---- constants ---- #
 MAX_REGISTRIES: constant(uint256) = 64
 MAX_COINS: constant(uint256) = 8
+MAX_POOL_PARAMS: constant(uint256) = 20
 ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
 
@@ -264,13 +265,25 @@ def get_fees(_pool: address, handler_id: uint256 = 0) -> uint256[10]:
 
 @external
 @view
-def get_gauges(_pool: address, handler_id: uint256 = 0) -> (address[10], int128[10]):
+def get_gauge(_pool: address, gauge_idx: uint256 = 0, handler_id: uint256 = 0) -> address:
     """
-    @notice Get a list of LiquidityGauge contracts associated with a pool
+    @notice Get a single liquidity gauge contract associated with a pool
     @param _pool Pool address
-    @return address[10] of gauge addresses, int128[10] of gauge types
+    @param gauge_idx Index of gauge to return
+    @param handler_id id of registry handler
+    @return Address of gauge
     """
-    return RegistryHandler(self._get_registry_handlers_from_pool(_pool)[handler_id]).get_gauges(_pool)
+    registry_handler: RegistryHandler = RegistryHandler(self._get_registry_handlers_from_pool(_pool)[handler_id])
+    handler_output: address[10] = registry_handler.get_gauges(_pool)[0]
+    return handler_output[gauge_idx]
+
+
+@external
+@view
+def get_gauge_type(_pool: address, gauge_idx: uint256 = 0, handler_id: uint256 = 0) -> int128:
+    registry_handler: RegistryHandler = RegistryHandler(self._get_registry_handlers_from_pool(_pool)[handler_id])
+    handler_output: int128[10] = registry_handler.get_gauges(_pool)[1]
+    return handler_output[gauge_idx]
 
 
 @external
@@ -332,6 +345,13 @@ def get_pool_from_lp_token(_token: address, handler_id: uint256 = 0) -> address:
 
 @external
 @view
+def get_pool_params(_pool: address, _handler_id: uint256 = 0) -> uint256[MAX_POOL_PARAMS]:
+    registry_handler: address = self._get_registry_handlers_from_pool(_pool)[_handler_id]
+    return RegistryHandler(registry_handler).get_pool_params(_pool)
+
+
+@external
+@view
 def get_pool_name(_pool: address, handler_id: uint256 = 0) -> String[64]:
     """
     @notice Get the given name for a pool
@@ -339,17 +359,6 @@ def get_pool_name(_pool: address, handler_id: uint256 = 0) -> String[64]:
     @return The name of a pool
     """
     return RegistryHandler(self._get_registry_handlers_from_pool(_pool)[handler_id]).get_pool_name(_pool)
-
-
-@external
-@view
-def get_pool_params(_pool: address, handler_id: uint256 = 0) -> uint256[20]:
-    """
-    @notice Return pool parameters for a
-    @param _pool address of the pool
-    @return uint256[20] zero-padded array containing pool params
-    """
-    return RegistryHandler(self._get_registry_handlers_from_pool(_pool)[handler_id]).get_pool_params(_pool)
 
 
 @external

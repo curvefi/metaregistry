@@ -29,3 +29,8 @@ def check_pool_already_registered(
         return True
 
     return False
+
+
+def check_dissimilar_length_array_elements_are_equal(output_a, output_b):
+    for i in range(min(len(output_a), len(output_b))):
+        assert output_a[i] == output_b[i]

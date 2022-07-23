@@ -7,24 +7,24 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def curve_pool() -> Callable:
+def curve_pool(CurvePool) -> Callable:
     def _initialise(_pool: str) -> ape.Contract:
-        return ape.project.CurvePool.at(_pool)
+        return CurvePool(_pool)
 
     return _initialise
 
 
 @pytest.fixture(scope="module")
-def curve_pool_v2() -> Callable:
+def curve_pool_v2(CurvePoolV2) -> Callable:
     def _initialise(_pool: str) -> ape.Contract:
-        return ape.project.CurvePoolV2.at(_pool)
+        return CurvePoolV2(_pool)
 
     return _initialise
 
 
 @pytest.fixture(scope="module")
-def liquidity_gauge() -> Callable:
+def liquidity_gauge(LiquidityGauge) -> Callable:
     def _initialise(_gauge: str) -> ape.Contract:
-        return ape.project.LiquidityGauge.at(_gauge)
+        return LiquidityGauge(_gauge)
 
     return _initialise

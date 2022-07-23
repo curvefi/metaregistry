@@ -43,7 +43,7 @@ def test_add_pool(
     crypto_registry_pools, populated_base_pool_registry, address_provider, project, owner, tokens
 ):
 
-    crypto_registry = project.CryptoRegistryV1.deploy(
+    crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider.address, populated_base_pool_registry, sender=owner
     )
 
@@ -104,7 +104,7 @@ def test_revert_unauthorised_remove_pool(
 
     with ape.reverts():
         crypto_registry.remove_pool(
-            crypto_registry_pools["tricrypto2"]["pool"], {"from": unauthorised_account}
+            crypto_registry_pools["tricrypto2"]["pool"], sender=unauthorised_account
         )
 
 
@@ -118,7 +118,7 @@ def test_remove_pool(
     tokens,
 ):
 
-    crypto_registry = project.CryptoRegistryV1.deploy(
+    crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider.address, populated_base_pool_registry, sender=owner
     )
 
@@ -157,7 +157,7 @@ def test_remove_pool(
     last_pool = crypto_registry.pool_list(pool_count - 1)
 
     assert crypto_registry.pool_list(0) == tricrypto2["pool"]
-    crypto_registry.remove_pool(tricrypto2["pool"], {"from": owner})
+    crypto_registry.remove_pool(tricrypto2["pool"], sender=owner)
 
     assert crypto_registry.pool_list(0) == last_pool
     assert crypto_registry.pool_count() == pool_count - 1  # one pool should be gone

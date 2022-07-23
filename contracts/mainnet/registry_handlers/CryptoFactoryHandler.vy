@@ -9,7 +9,6 @@ interface BaseRegistry:
     def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address: view
     def get_balances(_pool: address) -> uint256[MAX_COINS]: view
     def get_coins(_pool: address) -> address[MAX_COINS]: view
-    def get_coin_indices(_pool: address, _from: address, _to: address) -> uint256[2]: view
     def get_decimals(_pool: address) -> uint256[MAX_COINS]: view
     def get_gauge(_pool: address) -> address: view
     def get_n_coins(_pool: address) -> uint256: view
@@ -285,8 +284,8 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     # say we found a pair for _from and _to in the base registry without a basepool combination already
     # then that pool will be returned when i == 0. But if that same pair exists in a base pool then
     # i == 1 will return ZERO_ADDRESS in the base_registry query, but i = 0 for _pools will return
-    # the metapool pair. But if we keep i == 1 for _pools, it would return ZERO_ADDRESS (unless there)
-    # is another metapool pair of course. So, we first check how many direct pairs exist:
+    # the metapool pair. But if we keep i == 1 for _pools, it would return ZERO_ADDRESS (unless there
+    # is another metapool pair of course). So, we first check how many direct pairs exist:
 
     num_pairs: uint256 = 0
     for k in range(20):
@@ -360,9 +359,57 @@ def get_base_pool(_pool: address) -> address:
 
 @view
 @external
-def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool):
-    indices: uint256[2] = self.base_registry.get_coin_indices(_pool, _from, _to)
-    return convert(indices[0], int128), convert(indices[1], int128), False
+def get_coin_indices(_pool: address, _from: address, _to: address) -> (uint256, uint256, bool):
+    """
+    Convert coin addresses to indices for use with pool methods
+    """
+    # the return value is stored as `uint256[3]` to reduce gas costs
+    # from index, to index, is the market underlying?
+    result: uint256[3] = empty(uint256[3])
+    _coins: address[MAX_METAREGISTRY_COINS] = self._get_coins(_pool)
+    found_market: bool = False
+
+    # check coin markets
+    for x in range(MAX_METAREGISTRY_COINS):
+        coin: address = _coins[x]
+        if coin == ZERO_ADDRESS:
+            # if we reach the end of the coins, reset `found_market` and try again
+            # with the underlying coins
+            found_market = False
+            break
+        if coin == _from:
+            result[0] = convert(x, uint256)
+        elif coin == _to:
+            result[1] = convert(x, uint256)
+        else:
+            continue
+
+        if found_market:
+            # the second time we find a match, break out of the loop
+            break
+        # the first time we find a match, set `found_market` to True
+        found_market = True
+
+    if not found_market and self._is_meta(_pool):
+        # check underlying coin markets
+        underlying_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins_for_metapool(_pool)
+        for x in range(MAX_METAREGISTRY_COINS):
+            coin: address = underlying_coins[x]
+            if coin == ZERO_ADDRESS:
+                raise "No available market"
+            if coin == _from:
+                result[0] = convert(x, uint256)
+            elif coin == _to:
+                result[1] = convert(x, uint256)
+            else:
+                continue
+
+            if found_market:
+                result[2] = 1
+                break
+            found_market = True
+
+    return result[0], result[1], result[2] > 0
 
 
 @external
