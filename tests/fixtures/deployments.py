@@ -4,32 +4,32 @@ import pytest
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def gauge_controller() -> ape.Contract:
     return ape.project.GaugeController.at("0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def stable_registry() -> ape.Contract:
     return ape.project.StableRegistry.at("0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def stable_factory() -> ape.Contract:
     return ape.project.StableFactory.at("0xB9fC157394Af804a3578134A6585C0dc9cc990d4")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def crypto_factory() -> ape.Contract:
     return ape.project.CryptoFactory.at("0xF18056Bbd320E96A48e3Fbf8bC061322531aac99")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def base_pool_registry(alice, project):
     return project.BasePoolRegistry.deploy(sender=alice)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def populated_base_pool_registry(base_pool_registry, owner, base_pools):
 
     for _, data in base_pools.items():
@@ -46,7 +46,7 @@ def populated_base_pool_registry(base_pool_registry, owner, base_pools):
     return base_pool_registry
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def crypto_registry(populated_base_pool_registry, owner, crypto_registry_pools):
 
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
@@ -76,7 +76,7 @@ def address_provider(crypto_registry, owner):
     return contract
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def metaregistry(address_provider, owner, project):
     return project.MetaRegistry.deploy(address_provider, sender=owner)
 
