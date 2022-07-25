@@ -46,8 +46,8 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, stabl
     _test_underlying_decimals_getter(populated_metaregistry, stable_factory, stable_factory_pool)
 
 
-def test_crypto_registry_pools(populated_metaregistry, stable_registry_pool, crypto_registry):
-    _test_underlying_decimals_getter(populated_metaregistry, crypto_registry, stable_registry_pool)
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
+    _test_underlying_decimals_getter(populated_metaregistry, crypto_registry, crypto_registry_pool)
 
 
 def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory):
