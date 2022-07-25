@@ -3,17 +3,16 @@ import ape
 
 def test_add_metapool(
     owner,
-    project,
+    gauge_controller,
     address_provider,
     populated_base_pool_registry,
-    gauge_controller,
     crypto_registry_pools,
     base_pools,
     tokens,
 ):
 
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        address_provider.address, populated_base_pool_registry, sender=owner
+        address_provider, populated_base_pool_registry, sender=owner
     )
 
     pool_count = crypto_registry.pool_count()
@@ -26,7 +25,7 @@ def test_add_metapool(
         pool_data["lp_token"],
         pool_data["gauge"],
         pool_data["zap"],
-        pool_data["n_coins"],
+        pool_data["num_coins"],
         pool_data["name"],
         pool_data["base_pool"],
         pool_data["has_positive_rebasing_tokens"],
@@ -35,21 +34,27 @@ def test_add_metapool(
 
     assert crypto_registry.pool_count() == pool_count + 1
 
-    assert crypto_registry.pool_list(pool_count) == pool_data["pool"]
-    assert crypto_registry.get_zap(pool_data["pool"]) == pool_data["zap"]
-    assert crypto_registry.get_lp_token(pool_data["pool"]) == pool_data["lp_token"]
-    assert crypto_registry.get_pool_from_lp_token(pool_data["lp_token"]) == pool_data["pool"]
-    assert crypto_registry.get_base_pool(pool_data["pool"]) == base_pools["tripool"]["pool"]
-    assert crypto_registry.is_meta(pool_data["pool"])
-    assert crypto_registry.get_pool_name(pool_data["pool"]) == "eurtusd"
+    assert crypto_registry.pool_list(pool_count).lower() == pool_data["pool"].lower()
+    assert crypto_registry.get_zap(pool_data["pool"]).lower() == pool_data["zap"].lower()
+    assert crypto_registry.get_lp_token(pool_data["pool"]).lower() == pool_data["lp_token"].lower()
+    assert (
+        crypto_registry.get_pool_from_lp_token(pool_data["lp_token"]).lower()
+        == pool_data["pool"].lower()
+    )
+    assert (
+        crypto_registry.get_base_pool(pool_data["pool"]).lower()
+        == base_pools["tripool"]["pool"].lower()
+    )
+    assert crypto_registry.get_pool_name(pool_data["pool"]).lower() == "eurtusd".lower()
 
+    assert crypto_registry.is_meta(pool_data["pool"])
     assert crypto_registry.get_n_coins(pool_data["pool"]) == 2
     assert crypto_registry.get_n_underlying_coins(pool_data["pool"]) == 4
     assert crypto_registry.get_decimals(pool_data["pool"]) == [6, 18] + [0] * 6
     assert crypto_registry.get_underlying_decimals(pool_data["pool"]) == [6, 18, 6, 6] + [0] * 4
 
     # gauge checks:
-    assert crypto_registry.get_gauges(pool_data["pool"])[0][0] == pool_data["gauge"]
+    assert crypto_registry.get_gauges(pool_data["pool"])[0][0].lower() == pool_data["gauge"].lower()
     # special check: eurtusd has gauge_type 0 but it should be 5! The following check
     # will pass regardless:
     gauge_type_actual = gauge_controller.gauge_types(pool_data["gauge"])
@@ -59,47 +64,48 @@ def test_add_metapool(
     assert crypto_registry.get_gauges(pool_data["pool"])[1][0] == gauge_type_actual
 
     # coin checks:
-    assert (
-        crypto_registry.get_coins(pool_data["pool"])
-        == [tokens["eurt"], base_pools["tripool"]["lp_token"]] + [ape.utils.ZERO_ADDRESS] * 6
-    )
-    assert (
-        crypto_registry.get_underlying_coins(pool_data["pool"])
-        == [tokens["eurt"], tokens["dai"], tokens["usdc"], tokens["usdt"]]
-        + [ape.utils.ZERO_ADDRESS] * 4
-    )
+    assert [i.lower() for i in crypto_registry.get_coins(pool_data["pool"])] == [
+        tokens["eurt"].lower(),
+        base_pools["tripool"]["lp_token"].lower(),
+    ] + [ape.utils.ZERO_ADDRESS] * 6
+    assert [i.lower() for i in crypto_registry.get_underlying_coins(pool_data["pool"])] == [
+        tokens["eurt"].lower(),
+        tokens["dai"].lower(),
+        tokens["usdc"].lower(),
+        tokens["usdt"].lower(),
+    ] + [ape.utils.ZERO_ADDRESS] * 4
 
     assert crypto_registry.get_coin_indices(
         pool_data["pool"], tokens["eurt"], base_pools["tripool"]["lp_token"]
-    ) == [
+    ) == (
         0,
         1,
         False,
-    ]
+    )
     assert crypto_registry.get_coin_indices(
         pool_data["pool"], base_pools["tripool"]["lp_token"], tokens["eurt"]
-    ) == [
+    ) == (
         1,
         0,
         False,
-    ]
+    )
 
     # for exchange_underlying:
-    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["eurt"], tokens["dai"]) == [
+    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["eurt"], tokens["dai"]) == (
         0,
         1,
         True,
-    ]
-    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["eurt"], tokens["usdc"]) == [
+    )
+    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["eurt"], tokens["usdc"]) == (
         0,
         2,
         True,
-    ]
-    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["eurt"], tokens["usdt"]) == [
+    )
+    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["eurt"], tokens["usdt"]) == (
         0,
         3,
         True,
-    ]
+    )
     # the following should revert since we didn't add any basepool lp token <> coin pairs:
     for coin in [tokens["dai"], tokens["usdc"], tokens["usdt"]]:
         with ape.reverts():
@@ -137,14 +143,16 @@ def test_add_metapool(
 
             # everything else should go to EURTUSD pool:
             else:
-                assert crypto_registry.find_pool_for_coins(coin_a, coin_b, 0) == pool_data["pool"]
+                assert (
+                    crypto_registry.find_pool_for_coins(coin_a, coin_b, 0).lower()
+                    == pool_data["pool"].lower()
+                )
 
 
 def test_remove_metapool(
-    owner,
-    project,
     address_provider,
     populated_base_pool_registry,
+    owner,
     crypto_registry_pools,
     max_coins,
     base_pools,
@@ -152,7 +160,7 @@ def test_remove_metapool(
 ):
 
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        address_provider.address, populated_base_pool_registry, sender=owner
+        address_provider, populated_base_pool_registry, sender=owner
     )
 
     # add EURT3CRV pool
@@ -162,7 +170,7 @@ def test_remove_metapool(
         eurt3crv["lp_token"],
         eurt3crv["gauge"],
         eurt3crv["zap"],
-        eurt3crv["n_coins"],
+        eurt3crv["num_coins"],
         eurt3crv["name"],
         eurt3crv["base_pool"],
         eurt3crv["has_positive_rebasing_tokens"],
@@ -176,7 +184,7 @@ def test_remove_metapool(
         tricrypto2["lp_token"],
         tricrypto2["gauge"],
         tricrypto2["zap"],
-        tricrypto2["n_coins"],
+        tricrypto2["num_coins"],
         tricrypto2["name"],
         tricrypto2["base_pool"],
         tricrypto2["has_positive_rebasing_tokens"],
@@ -186,11 +194,11 @@ def test_remove_metapool(
     pool_count = crypto_registry.pool_count()
     last_pool = crypto_registry.pool_list(pool_count - 1)
 
-    assert crypto_registry.pool_list(0) == eurt3crv["pool"]
+    assert crypto_registry.pool_list(0).lower() == eurt3crv["pool"].lower()
 
     crypto_registry.remove_pool(eurt3crv["pool"], sender=owner)
 
-    assert crypto_registry.pool_list(0) == last_pool
+    assert crypto_registry.pool_list(0).lower() == last_pool.lower()
     assert crypto_registry.pool_count() == pool_count - 1  # one pool should be gone
 
     assert crypto_registry.get_zap(eurt3crv["pool"]) == ape.utils.ZERO_ADDRESS
@@ -224,10 +232,10 @@ def test_remove_metapool(
     for coin_a in coins:
         for coin_b in coins:
 
-            assert crypto_registry.get_coin_indices(eurt3crv["pool"], coin_a, coin_b) == [
+            assert crypto_registry.get_coin_indices(eurt3crv["pool"], coin_a, coin_b) == (
                 0,
                 0,
                 False,
-            ]
+            )
 
             assert crypto_registry.find_pool_for_coins(coin_a, coin_b, 0) == ape.utils.ZERO_ADDRESS

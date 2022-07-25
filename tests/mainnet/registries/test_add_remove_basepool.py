@@ -1,7 +1,9 @@
 import ape
 
 
-def test_revert_unauthorised_add_base_pool(base_pool_registry, unauthorised_account, base_pools):
+def test_revert_unauthorised_add_base_pool(owner, unauthorised_account, base_pools):
+
+    base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
     base_pool_data = base_pools["tripool"]
     with ape.reverts():
@@ -16,7 +18,9 @@ def test_revert_unauthorised_add_base_pool(base_pool_registry, unauthorised_acco
         )
 
 
-def test_add_basepool(base_pool_registry, owner, base_pools, tokens):
+def test_add_basepool(owner, base_pools, tokens):
+
+    base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
     base_pool_count = base_pool_registry.base_pool_count()
     base_pool_data = base_pools["tripool"]
@@ -41,9 +45,9 @@ def test_add_basepool(base_pool_registry, owner, base_pools, tokens):
     assert not base_pool_registry.is_lending(tripool)
 
     base_pool_coins = base_pool_registry.get_coins(tripool)
-    assert base_pool_coins[0] == tokens["dai"]
-    assert base_pool_coins[1] == tokens["usdc"]
-    assert base_pool_coins[2] == tokens["usdt"]
+    assert base_pool_coins[0].lower() == tokens["dai"].lower()
+    assert base_pool_coins[1].lower() == tokens["usdc"].lower()
+    assert base_pool_coins[2].lower() == tokens["usdt"].lower()
     assert base_pool_coins[3] == ape.utils.ZERO_ADDRESS
     assert base_pool_registry.get_n_coins(tripool) == 3
 
@@ -53,7 +57,9 @@ def test_add_basepool(base_pool_registry, owner, base_pools, tokens):
     assert base_pool_coin_decimals[2] == 6
 
 
-def test_add_basepool_with_legacy_abi(base_pool_registry, owner, base_pools, tokens):
+def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
+
+    base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
     base_pool_data = base_pools["sbtc"]
     assert base_pool_data["is_legacy"]
@@ -73,9 +79,9 @@ def test_add_basepool_with_legacy_abi(base_pool_registry, owner, base_pools, tok
     assert base_pool_registry.is_legacy(btc_basepool)
 
     base_pool_coins = base_pool_registry.get_coins(btc_basepool)
-    assert base_pool_coins[0] == tokens["renbtc"]
-    assert base_pool_coins[1] == tokens["wbtc"]
-    assert base_pool_coins[2] == tokens["sbtc"]
+    assert base_pool_coins[0].lower() == tokens["renbtc"].lower()
+    assert base_pool_coins[1].lower() == tokens["wbtc"].lower()
+    assert base_pool_coins[2].lower() == tokens["sbtc"].lower()
     assert base_pool_coins[3] == ape.utils.ZERO_ADDRESS
     assert base_pool_registry.get_n_coins(btc_basepool) == 3
 

@@ -47,14 +47,11 @@ def populated_base_pool_registry(base_pool_registry, owner, base_pools):
 
 
 @pytest.fixture(scope="module")
-def crypto_registry(populated_base_pool_registry, owner, project):
-    return project.CryptoRegistryV1.deploy(
+def crypto_registry(populated_base_pool_registry, owner, crypto_registry_pools):
+
+    crypto_registry = ape.project.CryptoRegistryV1.deploy(
         ADDRESS_PROVIDER, populated_base_pool_registry, sender=owner
     )
-
-
-@pytest.fixture(scope="module")
-def populated_crypto_registry(crypto_registry, owner, crypto_registry_pools):
 
     for _, pool in crypto_registry_pools.items():
         crypto_registry.add_pool(
@@ -73,9 +70,9 @@ def populated_crypto_registry(crypto_registry, owner, crypto_registry_pools):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def address_provider(populated_crypto_registry, owner):
+def address_provider(crypto_registry, owner):
     contract = ape.project.AddressProvider.at(ADDRESS_PROVIDER)
-    contract.set_address(5, populated_crypto_registry, sender=owner)
+    contract.set_address(5, crypto_registry, sender=owner)
     return contract
 
 
@@ -97,8 +94,8 @@ def stable_factory_handler(populated_base_pool_registry, stable_factory, owner, 
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_handler(owner, populated_crypto_registry, project):
-    return project.CryptoRegistryHandler.deploy(populated_crypto_registry, sender=owner)
+def crypto_registry_handler(owner, crypto_registry, project):
+    return project.CryptoRegistryHandler.deploy(crypto_registry, sender=owner)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -109,11 +106,11 @@ def crypto_factory_handler(populated_base_pool_registry, crypto_factory, owner, 
 
 
 @pytest.fixture(scope="module")
-def registries(stable_registry, stable_factory, crypto_registry_v1, crypto_factory):
+def registries(stable_registry, stable_factory, crypto_registry, crypto_factory):
     return [
         stable_registry,
         stable_factory,
-        crypto_registry_v1,
+        crypto_registry,
         crypto_factory,
     ]
 
