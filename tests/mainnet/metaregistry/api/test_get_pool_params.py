@@ -24,7 +24,7 @@ def test_crypto_registry_pools(
     v2_pool = curve_pool_v2(crypto_registry_pool)
 
     actual_pool_params = [0] * 20
-    actual_pool_params[0] = crypto_registry_pool.get_A(crypto_registry_pool)
+    actual_pool_params[0] = crypto_registry.get_A(crypto_registry_pool)
     actual_pool_params[1] = crypto_registry.get_D(crypto_registry_pool)
     actual_pool_params[2] = crypto_registry.get_gamma(crypto_registry_pool)
     actual_pool_params[3] = v2_pool.allowed_extra_profit()

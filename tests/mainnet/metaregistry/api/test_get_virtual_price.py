@@ -37,7 +37,7 @@ def _check_skem_tokens_with_weird_decimals(
 
         if (
             coin_decimals[i] == 0
-            and ape.interface.ERC20(metaregistry.get_coins(pool)[0]).decimals() == 0
+            and ape.project.ERC20.at(metaregistry.get_coins(pool)[0]).decimals() == 0
         ):
             with ape.reverts():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)
@@ -104,10 +104,14 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, curve
 
     # if checks fail, pytest skips, else lp_token is returned:
     lp_token = pre_test_checks(populated_metaregistry, stable_factory_pool)
-    actual_output = curve_pool(stable_factory_pool).get_virtual_price()
 
-    metaregistry_output = populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
-    assert actual_output == metaregistry_output
+    try:
+        actual_output = curve_pool(stable_factory_pool).get_virtual_price()
+        metaregistry_output = populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
+        assert actual_output == metaregistry_output
+    except ape.exceptions.ContractLogicError:
+        with ape.reverts():
+            populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
 
 
 def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
