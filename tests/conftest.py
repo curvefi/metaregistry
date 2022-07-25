@@ -21,7 +21,7 @@ def pytest_sessionstart(session):
     global CRYPTO_FACTORY_POOLS
     global STABLE_FACTORY_POOLS
     global STABLE_REGISTRY_POOLS
-    global ALL_POOL
+    global ALL_POOLS
 
     # fetch the pytest ape runner plugin
     ape_runner = session.config.pluginmanager.getplugin("ape-test")
@@ -38,19 +38,19 @@ def pytest_sessionstart(session):
     # when generating tests:
 
     # stable registry:
-    registry = ape.project.StableRegistry("0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
+    registry = ape.project.StableRegistry.at("0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
     STABLE_REGISTRY_POOLS = [registry.pool_list(i) for i in range(registry.pool_count())]
 
     # stable_factory:
-    registry = ape.project.StableFactory("0xB9fC157394Af804a3578134A6585C0dc9cc990d4")
+    registry = ape.project.StableFactory.at("0xB9fC157394Af804a3578134A6585C0dc9cc990d4")
     STABLE_FACTORY_POOLS = [registry.pool_list(i) for i in range(registry.pool_count())]
 
     # crypto_registry:
-    registry = ape.project.CryptoRegistry("0x8F942C20D02bEfc377D41445793068908E2250D0")
+    registry = ape.project.CryptoRegistry.at("0x8F942C20D02bEfc377D41445793068908E2250D0")
     CRYPTO_REGISTRY_POOLS = [registry.pool_list(i) for i in range(registry.pool_count())]
 
     # crypto_factory:
-    registry = ape.project.CryptoFactory("0xF18056Bbd320E96A48e3Fbf8bC061322531aac99")
+    registry = ape.project.CryptoFactory.at("0xF18056Bbd320E96A48e3Fbf8bC061322531aac99")
     CRYPTO_FACTORY_POOLS = [registry.pool_list(i) for i in range(registry.pool_count())]
 
     ALL_POOLS = (

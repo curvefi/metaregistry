@@ -1,7 +1,4 @@
 import ape
-import pytest
-
-from tests.mainnet.metaregistry.api.utils import check_pool_already_registered
 
 
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
@@ -40,70 +37,75 @@ def test_stable_registry_pools(
     populated_metaregistry,
     stable_registry_pool,
     stable_registry,
-    stable_registry_handler,
 ):
 
-    if check_pool_already_registered(
-        populated_metaregistry, stable_registry_pool, stable_registry_handler
-    ):
-        pytest.skip()
-
     actual_output = stable_registry.get_gauges(stable_registry_pool)
-    metaregistry_output = populated_metaregistry.get_gauges(stable_registry_pool)
-    assert actual_output == metaregistry_output
+    metaregistry_output_gauge = populated_metaregistry.get_gauge(stable_registry_pool)
+    metaregistry_output_gauge_type = populated_metaregistry.get_gauge_type(stable_registry_pool)
+
+    assert actual_output[0][0] == metaregistry_output_gauge
+    assert actual_output[1][0] == metaregistry_output_gauge_type
 
 
 def test_stable_factory_pools(
     populated_metaregistry,
     stable_factory_pool,
     stable_factory,
-    stable_factory_handler,
     gauge_controller,
     liquidity_gauge,
 ):
 
-    if check_pool_already_registered(
-        populated_metaregistry, stable_factory_pool, stable_factory_handler
-    ):
-        pytest.skip()
-
     actual_output = _get_factory_gauge(
         stable_factory, stable_factory_pool, gauge_controller, liquidity_gauge
     )
-    metaregistry_output = populated_metaregistry.get_gauges(stable_factory_pool)
-    assert actual_output == metaregistry_output
+
+    # lots of stable registry pools were actually factory pools which then got moved
+    # over to the stable factory's storage. During this process, gauge data was not
+    # moved over properly. For these pools, the metaregistry automatically goes to
+    # the stable registry handler (where the correct gauge data is stored), but the
+    # stable factory will not have the right data. We therefore do a manual check for
+    # this case:
+    pool_registry_handlers = populated_metaregistry.get_registry_handlers_from_pool(
+        stable_factory_pool
+    )
+    num_registry_handlers = len(
+        list(filter((ape.utils.ZERO_ADDRESS).__ne__, pool_registry_handlers))
+    )
+
+    metaregistry_output_gauge = populated_metaregistry.get_gauge(
+        stable_factory_pool, 0, num_registry_handlers - 1
+    )
+    metaregistry_output_gauge_type = populated_metaregistry.get_gauge_type(
+        stable_factory_pool, 0, num_registry_handlers - 1
+    )
+
+    assert actual_output[0][0] == metaregistry_output_gauge
+    assert actual_output[1][0] == metaregistry_output_gauge_type
 
 
-def test_crypto_registry_pools(
-    populated_metaregistry, crypto_registry_pool, crypto_registry, crypto_registry_handler
-):
-
-    if check_pool_already_registered(
-        populated_metaregistry, crypto_registry_pool, crypto_registry_handler
-    ):
-        pytest.skip("crypto registry pool already registered")
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
 
     actual_output = crypto_registry.get_gauges(crypto_registry_pool)
-    metaregistry_output = populated_metaregistry.get_gauges(crypto_registry_pool)
-    assert actual_output == metaregistry_output
+    metaregistry_output_gauge = populated_metaregistry.get_gauge(crypto_registry_pool)
+    metaregistry_output_gauge_type = populated_metaregistry.get_gauge_type(crypto_registry_pool)
+
+    assert actual_output[0][0] == metaregistry_output_gauge
+    assert actual_output[1][0] == metaregistry_output_gauge_type
 
 
 def test_crypto_factory_pools(
     populated_metaregistry,
     crypto_factory_pool,
     crypto_factory,
-    crypto_factory_handler,
     gauge_controller,
     liquidity_gauge,
 ):
 
-    if check_pool_already_registered(
-        populated_metaregistry, crypto_factory_pool, crypto_factory_handler
-    ):
-        pytest.skip()
-
     actual_output = _get_factory_gauge(
         crypto_factory, crypto_factory_pool, gauge_controller, liquidity_gauge
     )
-    metaregistry_output = populated_metaregistry.get_gauges(crypto_factory_pool)
-    assert actual_output == metaregistry_output
+    metaregistry_output_gauge = populated_metaregistry.get_gauge(crypto_factory_pool)
+    metaregistry_output_gauge_type = populated_metaregistry.get_gauge_type(crypto_factory_pool)
+
+    assert actual_output[0][0] == metaregistry_output_gauge
+    assert actual_output[1][0] == metaregistry_output_gauge_type

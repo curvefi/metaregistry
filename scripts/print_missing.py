@@ -1,3 +1,4 @@
+import ape
 from tabulate import tabulate
 
 MISSING = "\033[33m✖\033[0m"
@@ -14,7 +15,9 @@ def main():
             if registry_selectors[k] in view_fns
         }
 
-    function_index = get_non_indexed_view_functions(MetaRegistry.selectors, MetaRegistry.abi, {})
+    function_index = get_non_indexed_view_functions(
+        ape.project.MetaRegistry.selectors, ape.project.MetaRegistry.abi, {}
+    )
     registry_coverage = [[PRESENT] * len(function_index)]
     registry_names = [f"{a}{b}" for a in ["Crypto", "Stable"] for b in ["Factory", "Registry"]]
 
