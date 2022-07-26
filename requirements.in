@@ -1,7 +1,10 @@
+eth-ape
+ape-vyper
+ape-alchemy
+ape-hardhat
 black
-eth-brownie
-flake8==3.9.2
+flake8
 isort
 pip-tools
 pre-commit
-tabulate==0.8.9
+tabulate
