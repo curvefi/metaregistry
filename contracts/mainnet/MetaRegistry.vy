@@ -105,7 +105,7 @@ def _get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
          registered in and not the first, as manual registries are first
          and factories come later
     @param _pool address of the pool
-    @returns registry_handlers: address[MAX_REGISTRIES]
+    @return registry_handlers: address[MAX_REGISTRIES]
     """
 
     pool_registry_handler: address[MAX_REGISTRIES] = empty(address[MAX_REGISTRIES])

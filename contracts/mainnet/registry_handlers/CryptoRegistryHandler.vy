@@ -131,7 +131,6 @@ def get_base_pool(_pool: address) -> address:
 def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool):
     """
     @notice Get the indices of the coins in the given pool.
-    @dev 
     @param _pool The address of the pool.
     @param _from The _from coin address.
     @param _to The _to coin address.

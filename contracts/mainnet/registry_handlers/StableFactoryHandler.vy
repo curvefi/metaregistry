@@ -224,7 +224,7 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     @notice Get the balances of the admin of the pool
     @dev does not use base registry admin_balances because that has errors
          in the getter for n_coins (some pools show zero, so admin balances is zero)
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return balances of the admin of the pool
     """
     n_coins: uint256 = self._get_n_coins(_pool)
@@ -241,7 +241,7 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
     @notice Get the balances of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return balances of the pool
     """
     return self._get_balances(_pool)
@@ -252,7 +252,7 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 def get_base_pool(_pool: address) -> address:
     """
     @notice Get the base pool of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return base pool of the pool
     """
     return self._get_base_pool(_pool)
@@ -263,9 +263,9 @@ def get_base_pool(_pool: address) -> address:
 def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool):
     """
     @notice Get the indices of the coins in the pool
-    @param _pool: address of the pool
-    @param _from: address of the coin
-    @param _to: address of the coin
+    @param _pool address of the pool
+    @param _from address of the coin
+    @param _to address of the coin
     @return coin indices and whether the coin swap involves an underlying market or not
     """
     coin1: int128 = 0
@@ -291,7 +291,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
 def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
     """
     @notice Get the coins of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return coins of the pool
     """
     return self._get_coins(_pool)
@@ -302,7 +302,7 @@ def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
     @notice Get the decimals of coins in the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return decimals of coins in the pool
     """
     return self._get_decimals(_pool)
@@ -313,7 +313,7 @@ def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 def get_fees(_pool: address) -> uint256[10]:
     """
     @notice Get the fees of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return fees of the pool
     """
     fees: uint256[10] = empty(uint256[10])
@@ -328,7 +328,7 @@ def get_fees(_pool: address) -> uint256[10]:
 def get_virtual_price_from_lp_token(_pool: address) -> uint256:
     """
     @notice Get the virtual price of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return virtual price of the pool
     """
     return CurvePool(_pool).get_virtual_price()
@@ -339,7 +339,7 @@ def get_virtual_price_from_lp_token(_pool: address) -> uint256:
 def get_gauges(_pool: address) -> (address[10], int128[10]):
     """
     @notice Get the gauges and gauge types of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return gauges of the pool
     """
     gauges: address[10] = empty(address[10])
@@ -355,7 +355,7 @@ def get_lp_token(_pool: address) -> address:
     """
     @notice Get the lp token of the pool
     @dev for stableswap factory pools, the pool is the lp token itself
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return lp token of the pool
     """
     return _pool
@@ -366,7 +366,7 @@ def get_lp_token(_pool: address) -> address:
 def get_n_coins(_pool: address) -> uint256:
     """
     @notice Get the number of coins in the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return number of coins in the pool
     """
     return self._get_n_coins(_pool)
@@ -377,7 +377,7 @@ def get_n_coins(_pool: address) -> uint256:
 def get_n_underlying_coins(_pool: address) -> uint256:
     """
     @notice Get the number of underlying coins in the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return number of underlying coins in the pool
     """
     if self._is_meta(_pool):
@@ -392,7 +392,7 @@ def get_pool_asset_type(_pool: address) -> uint256:
     """
     @notice Get the asset type of the coins in the pool
     @dev 0 = USD, 1 = ETH, 2 = BTC, 3 = Other
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return pool asset type of the pool
     """
     return self.base_registry.get_pool_asset_type(_pool)
@@ -405,7 +405,7 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
     @notice Get the pool of the lp token
     @dev This is more or less like a pass through method. Can be ignored but
          We leave it in for consistency across registry handlers.
-    @param _lp_token: address of the lp token (which is also the pool)
+    @param _lp_token address of the lp token (which is also the pool)
     @return pool of the lp token
     """
     if self._get_n_coins(_lp_token) > 0:
@@ -432,7 +432,7 @@ def get_pool_name(_pool: address) -> String[64]:
 def get_pool_params(_pool: address) -> uint256[20]:
     """
     @notice Get the parameters of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return parameters of the pool
     """
     stableswap_pool_params: uint256[20] = empty(uint256[20])
@@ -445,7 +445,7 @@ def get_pool_params(_pool: address) -> uint256[20]:
 def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
     @notice Get the underlying balances of the pool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return underlying balances of the pool
     """
     if not self._is_meta(_pool):
@@ -488,7 +488,7 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 def is_meta(_pool: address) -> bool:
     """
     @notice Check if the pool is a metapool
-    @param _pool: address of the pool
+    @param _pool address of the pool
     @return True if the pool is a metapool
     """
     return self._is_meta(_pool)

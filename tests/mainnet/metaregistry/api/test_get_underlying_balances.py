@@ -1,7 +1,7 @@
-import ape
-import pytest
 import warnings
 
+import ape
+import pytest
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
 

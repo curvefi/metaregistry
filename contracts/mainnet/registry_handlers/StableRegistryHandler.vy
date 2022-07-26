@@ -123,7 +123,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     @param _pool address of pool.
     @param _from address of coin.
     @param _to address of coin.
-    @return index of _from, index of _to, bool indicating whether the 
+    @return index of _from, index of _to, bool indicating whether the
             coins are in an underlying market
     """
     return self.base_registry.get_coin_indices(_pool, _from, _to)

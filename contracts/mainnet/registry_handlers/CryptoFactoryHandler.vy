@@ -402,7 +402,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (uint256, 
     @param _pool Address of the pool
     @param _from Address of the from coin
     @param _to Address of the to coin
-    @return (uint256, uint256, bool) Tuple of indices of the coins in the pool, 
+    @return (uint256, uint256, bool) Tuple of indices of the coins in the pool,
             and whether the market is an underlying market or not.
     """
     # the return value is stored as `uint256[3]` to reduce gas costs

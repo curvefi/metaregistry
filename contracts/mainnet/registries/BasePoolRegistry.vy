@@ -72,7 +72,7 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
     """
     @notice Gets coins in a base pool
     @param _pool Address of the base pool
-    @returns address[MAX_COINS] with coin addresses
+    @return address[MAX_COINS] with coin addresses
     """
     return self._get_basepool_coins(_pool)
 
@@ -82,11 +82,11 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
 def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address:
     """
     @notice Gets the base pool for a coin
-    @dev Some coins can be in multiple base pools, this function returns 
+    @dev Some coins can be in multiple base pools, this function returns
          the base pool for a coin at a specific index
     @param _coin Address of the coin
     @param _idx Index of base pool that holds the coin
-    @returns basepool address
+    @return basepool address
     """
     _base_pools: address[20] = empty(address[20])
     _id: uint256 = 0
@@ -105,7 +105,7 @@ def get_decimals(_pool: address) -> uint256[MAX_COINS]:
     """
     @notice Gets decimals of coins in a base pool
     @param _pool Address of the base pool
-    @returns uint256[MAX_COINS] containing coin decimals 
+    @return uint256[MAX_COINS] containing coin decimals
     """
     _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
     _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
@@ -126,7 +126,7 @@ def get_lp_token(_pool: address) -> address:
     """
     @notice Gets the LP token of a base pool
     @param _pool Address of the base pool
-    @returns address of the LP token 
+    @return address of the LP token
     """
     return self.base_pool[_pool].lp_token
 
@@ -137,7 +137,7 @@ def get_n_coins(_pool: address) -> uint256:
     """
     @notice Gets the number of coins in a base pool
     @param _pool Address of the base pool
-    @returns uint256 number of coins
+    @return uint256 number of coins
     """
     return self.base_pool[_pool].n_coins
 
@@ -146,10 +146,10 @@ def get_n_coins(_pool: address) -> uint256:
 @view
 def get_location(_pool: address) -> uint256:
     """
-    @notice Gets the index where a base pool's 
+    @notice Gets the index where a base pool's
             data is stored in the registry
     @param _pool Address of the base pool
-    @returns uint256 index of the base pool
+    @return uint256 index of the base pool
     """
     return self.base_pool[_pool].location
 
@@ -162,7 +162,7 @@ def is_legacy(_pool: address) -> bool:
     @dev Legacy abi includes int128 indices whereas the newer
          abi uses uint256 indices
     @param _pool Address of the base pool
-    @returns bool True if legacy abi is used
+    @return bool True if legacy abi is used
     """
     return self.base_pool[_pool].is_legacy
 
@@ -173,7 +173,7 @@ def is_v2(_pool: address) -> bool:
     """
     @notice Checks if a base pool is a Curve CryptoSwap pool
     @param _pool Address of the base pool
-    @returns bool True if the pool is a Curve CryptoSwap pool
+    @return bool True if the pool is a Curve CryptoSwap pool
     """
     return self.base_pool[_pool].is_v2
 
@@ -184,7 +184,7 @@ def is_lending(_pool: address) -> bool:
     """
     @notice Checks if a base pool is a Curve Lending pool
     @param _pool Address of the base pool
-    @returns bool True if the pool is a Curve Lending pool
+    @return bool True if the pool is a Curve Lending pool
     """
     return self.base_pool[_pool].is_lending
 
