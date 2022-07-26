@@ -482,6 +482,7 @@ def is_registered(_pool: address, _handler_id: uint256 = 0) -> bool:
 def pool_count() -> uint256:
     """
     @notice Return the total number of pools tracked by the metaregistry
+    @return uint256 The number of pools in the metaregistry
     """
     total_pools: uint256 = 0
     for i in range(MAX_REGISTRIES):

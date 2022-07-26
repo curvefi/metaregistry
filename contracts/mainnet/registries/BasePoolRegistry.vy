@@ -69,13 +69,25 @@ def _get_basepool_coins(_pool: address) -> address[MAX_COINS]:
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
+    """
+    @notice Gets coins in a base pool
+    @param _pool Address of the base pool
+    @returns address[MAX_COINS] with coin addresses
+    """
     return self._get_basepool_coins(_pool)
 
 
 @external
 @view
 def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address:
-
+    """
+    @notice Gets the base pool for a coin
+    @dev Some coins can be in multiple base pools, this function returns 
+         the base pool for a coin at a specific index
+    @param _coin Address of the coin
+    @param _idx Index of base pool that holds the coin
+    @returns basepool address
+    """
     _base_pools: address[20] = empty(address[20])
     _id: uint256 = 0
     for _pool in self.base_pool_list:
@@ -90,6 +102,11 @@ def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address:
 @external
 @view
 def get_decimals(_pool: address) -> uint256[MAX_COINS]:
+    """
+    @notice Gets decimals of coins in a base pool
+    @param _pool Address of the base pool
+    @returns uint256[MAX_COINS] containing coin decimals 
+    """
     _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
     _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     for i in range(MAX_COINS):
@@ -106,36 +123,69 @@ def get_decimals(_pool: address) -> uint256[MAX_COINS]:
 @external
 @view
 def get_lp_token(_pool: address) -> address:
+    """
+    @notice Gets the LP token of a base pool
+    @param _pool Address of the base pool
+    @returns address of the LP token 
+    """
     return self.base_pool[_pool].lp_token
 
 
 @external
 @view
 def get_n_coins(_pool: address) -> uint256:
+    """
+    @notice Gets the number of coins in a base pool
+    @param _pool Address of the base pool
+    @returns uint256 number of coins
+    """
     return self.base_pool[_pool].n_coins
 
 
 @external
 @view
 def get_location(_pool: address) -> uint256:
+    """
+    @notice Gets the index where a base pool's 
+            data is stored in the registry
+    @param _pool Address of the base pool
+    @returns uint256 index of the base pool
+    """
     return self.base_pool[_pool].location
 
 
 @external
 @view
 def is_legacy(_pool: address) -> bool:
+    """
+    @notice Checks if a base pool uses Curve's legacy abi
+    @dev Legacy abi includes int128 indices whereas the newer
+         abi uses uint256 indices
+    @param _pool Address of the base pool
+    @returns bool True if legacy abi is used
+    """
     return self.base_pool[_pool].is_legacy
 
 
 @external
 @view
 def is_v2(_pool: address) -> bool:
+    """
+    @notice Checks if a base pool is a Curve CryptoSwap pool
+    @param _pool Address of the base pool
+    @returns bool True if the pool is a Curve CryptoSwap pool
+    """
     return self.base_pool[_pool].is_v2
 
 
 @external
 @view
 def is_lending(_pool: address) -> bool:
+    """
+    @notice Checks if a base pool is a Curve Lending pool
+    @param _pool Address of the base pool
+    @returns bool True if the pool is a Curve Lending pool
+    """
     return self.base_pool[_pool].is_lending
 
 
@@ -143,7 +193,12 @@ def is_lending(_pool: address) -> bool:
 def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_legacy: bool, _is_lending: bool, _is_v2: bool):
     """
     @notice Add a base pool to the registry
-    @dev this is needed since paired base pools might be in a different registry
+    @param _pool Address of the base pool
+    @param _lp_token Address of the LP token
+    @param _n_coins Number of coins in the base pool
+    @param _is_legacy True if the base pool uses legacy abi
+    @param _is_lending True if the base pool is a Curve Lending pool
+    @param _is_v2 True if the base pool is a Curve CryptoSwap pool
     """
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
     assert self.base_pool[_pool].lp_token == ZERO_ADDRESS  # dev: pool exists
@@ -168,6 +223,10 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
 
 @external
 def remove_base_pool(_pool: address):
+    """
+    @notice Remove a base pool from the registry
+    @param _pool Address of the base pool
+    """
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
     assert _pool != ZERO_ADDRESS
     assert self.base_pool[_pool].lp_token != ZERO_ADDRESS  # dev: pool doesn't exist

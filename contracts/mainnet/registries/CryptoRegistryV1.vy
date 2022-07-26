@@ -111,9 +111,6 @@ last_updated: public(uint256)
 
 @external
 def __init__(_address_provider: address, _base_pool_registry: address):
-    """
-    @notice Constructor function
-    """
     self.address_provider = AddressProvider(_address_provider)
     self.base_pool_registry = BasePoolRegistry(_base_pool_registry)
 
@@ -233,9 +230,6 @@ def _get_coin_indices(
     _from: address,
     _to: address
 ) -> uint256[3]:
-    """
-    Convert coin addresses to indices for use with pool methods
-    """
     # the return value is stored as `uint256[3]` to reduce gas costs
     # from index, to index, is the market underlying?
     result: uint256[3] = empty(uint256[3])
@@ -334,7 +328,7 @@ def get_n_coins(_pool: address) -> uint256:
     @dev For non-metapools, both returned values are identical
          even when the pool does not use wrapping/lending
     @param _pool Pool address
-    @return Number of wrapped coins, number of underlying coins
+    @return uint256 Number of wrapped coins, number of underlying coins
     """
     return self.pool_data[_pool].n_coins
 
@@ -344,6 +338,8 @@ def get_n_coins(_pool: address) -> uint256:
 def get_n_underlying_coins(_pool: address) -> uint256:
     """
     @notice Get the number of underlying coins in a pool
+    @param _pool Pool address
+    @return uint256 Number of underlying coins
     """
     if not self._is_meta(_pool):
         return self.pool_data[_pool].n_coins
@@ -359,7 +355,7 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
     @notice Get the coins within a pool
     @dev For pools using lending, these are the wrapped coin addresses
     @param _pool Pool address
-    @return List of coin addresses
+    @return address[MAX_COINS] List of coin addresses
     """
     return self._get_coins(_pool)
 
@@ -371,7 +367,7 @@ def get_underlying_coins(_pool: address) -> address[MAX_COINS]:
     @notice Get the underlying coins within a pool
     @dev For pools that do not lend, returns the same value as `get_coins`
     @param _pool Pool address
-    @return List of coin addresses
+    @return address[MAX_COINS] of coin addresses
     """
     if self._is_meta(_pool):
         return self._get_underlying_coins_for_metapool(_pool)
@@ -473,18 +469,33 @@ def get_virtual_price_from_lp_token(_token: address) -> uint256:
 @view
 @external
 def get_A(_pool: address) -> uint256:
+    """
+    @notice Get a pool's amplification factor
+    @param _pool Pool address
+    @return uint256 Amplification factor
+    """
     return CurvePool(_pool).A()
 
 
 @view
 @external
 def get_D(_pool: address) -> uint256:
+    """
+    @notice Get invariant of a pool's curve
+    @param _pool Pool address
+    @return uint256 Invariant
+    """
     return CurvePool(_pool).D()
 
 
 @view
 @external
 def get_gamma(_pool: address) -> uint256:
+    """
+    @notice Get the pool's gamma parameter
+    @param _pool Pool address
+    @return uint256 Gamma parameter
+    """
     return CurvePool(_pool).gamma()
 
 
@@ -494,6 +505,7 @@ def get_fees(_pool: address) -> uint256[4]:
     """
     @notice Get the fees for a pool
     @dev Fees are expressed as integers
+    @param _pool Pool address
     @return Pool fee as uint256 with 1e10 precision
             Admin fee as 1e10 percentage of pool fee
             Mid fee
@@ -506,12 +518,15 @@ def get_fees(_pool: address) -> uint256[4]:
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_COINS]:
     """
+    @notice Get the admin balances for a pool (accrued fees)
     @dev Cryptoswap pools do not store admin fees in the form of
          admin token balances. Instead, the admin fees are computed
          at the time of claim iff sufficient profits have been made.
          These fees are allocated to the admin by minting LP tokens
          (dilution). The logic to calculate fees are derived from
          cryptopool._claim_admin_fees() method.
+    @param _pool Pool address
+    @return uint256 list of admin balances
     """
     xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
     xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
@@ -551,6 +566,7 @@ def get_coin_indices(
 ) -> (int128, int128, bool):
     """
     @notice Convert coin addresses to indices for use with pool methods
+    @param _pool Pool address
     @param _from Coin address to be used as `i` within a pool
     @param _to Coin address to be used as `j` within a pool
     @return int128 `i`, int128 `j`, boolean indicating if `i` and `j` are underlying coins
@@ -573,6 +589,11 @@ def is_meta(_pool: address) -> bool:
 @view
 @external
 def get_base_pool(_pool: address) -> address:
+    """
+    @notice Get the base pool of a metapool
+    @param _pool Pool address
+    @return Base pool address
+    """
     return self.pool_data[_pool].base_pool
 
 
@@ -677,6 +698,7 @@ def add_pool(
     @param _lp_token Pool deposit token address
     @param _gauge Gauge address
     @param _zap Zap address
+    @param _n_coins Number of coins in the pool
     @param _name The name of the pool
     @param _base_pool Address of base pool
     @param _has_positive_rebasing_tokens pool contains positive rebasing tokens

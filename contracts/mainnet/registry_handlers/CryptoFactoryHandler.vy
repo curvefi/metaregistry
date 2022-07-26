@@ -225,6 +225,29 @@ def _get_pool_from_lp_token(_lp_token: address) -> address:
     return ZERO_ADDRESS
 
 
+@internal
+@view
+def _get_gauge_type(_gauge: address) -> int128:
+
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        GAUGE_CONTROLLER,
+        concat(
+            method_id("gauge_type(address)"),
+            convert(_gauge, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+
+    if success and not Gauge(_gauge).is_killed():
+        return convert(response, int128)
+
+    return 0
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -234,10 +257,10 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
             if the basepool lp token and the other coin have a pool.
             This is done because the factory does not have `underlying` methods in
             pools that have a basepool lp token in them
-    @dev    This is a hacky way to find the pool for a pair of coins and can be slow
     @param _from Address of the _from coin
     @param _to Address of the _to coin
     @param i Index of the pool to return
+    @return Address of the pool
     """
     _pool: address = self.base_registry.find_pool_for_coins(_from, _to, i)
 
@@ -307,12 +330,15 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
 @view
 def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     """
+    @notice Returns the balances of the admin tokens of the given pool
     @dev Cryptoswap pools do not store admin fees in the form of
          admin token balances. Instead, the admin fees are computed
          at the time of claim iff sufficient profits have been made.
          These fees are allocated to the admin by minting LP tokens
          (dilution). The logic to calculate fees are derived from
          cryptopool._claim_admin_fees() method.
+    @param _pool Address of the pool
+    @return uint256[MAX_METAREGISTRY_COINS] Array of admin balances
     """
     xcp_profit: uint256 = CurvePool(_pool).xcp_profit()
     xcp_profit_a: uint256 = CurvePool(_pool).xcp_profit_a()
@@ -346,12 +372,23 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Returns the balances of the tokens of the given pool
+    @param _pool Address of the pool
+    @return uint256[MAX_METAREGISTRY_COINS] Array of balances
+    """
     return self._get_balances(_pool)
 
 
 @external
 @view
 def get_base_pool(_pool: address) -> address:
+    """
+    @notice Returns the base pool of the given pool
+    @dev Returns ZERO_ADDRESS if the pool isn't a metapool
+    @param _pool Address of the pool
+    @return Address of the base pool
+    """
     if not self._is_meta(_pool):
         return ZERO_ADDRESS
     return self._get_base_pool(_pool)
@@ -361,7 +398,12 @@ def get_base_pool(_pool: address) -> address:
 @external
 def get_coin_indices(_pool: address, _from: address, _to: address) -> (uint256, uint256, bool):
     """
-    Convert coin addresses to indices for use with pool methods
+    @notice Convert coin addresses to indices for use with pool methods
+    @param _pool Address of the pool
+    @param _from Address of the from coin
+    @param _to Address of the to coin
+    @return (uint256, uint256, bool) Tuple of indices of the coins in the pool, 
+            and whether the market is an underlying market or not.
     """
     # the return value is stored as `uint256[3]` to reduce gas costs
     # from index, to index, is the market underlying?
@@ -415,18 +457,37 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (uint256, 
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Returns the coins of the given pool
+    @param _pool Address of the pool
+    @return address[MAX_METAREGISTRY_COINS] Array of coins
+    """
     return self._get_coins(_pool)
 
 
 @external
 @view
 def get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Returns the decimals of the coins in a given pool
+    @param _pool Address of the pool
+    @return uint256[MAX_METAREGISTRY_COINS] Array of decimals
+    """
     return self._get_decimals(_pool)
 
 
 @external
 @view
 def get_fees(_pool: address) -> uint256[10]:
+    """
+    @notice Returns the fees of the given pool
+    @param _pool Address of the pool
+    @return uint256[10] Array of fees. Fees are arranged as:
+            1. swap fee (or `fee`)
+            2. admin fee
+            3. mid fee (fee when cryptoswap pool is pegged)
+            4. out fee (fee when cryptoswap pool depegs)
+    """
     fees: uint256[10] = empty(uint256[10])
     pool_fees: uint256[4] = [CurvePool(_pool).fee(), CurvePool(_pool).admin_fee(), CurvePool(_pool).mid_fee(), CurvePool(_pool).out_fee()]
     for i in range(4):
@@ -434,32 +495,16 @@ def get_fees(_pool: address) -> uint256[10]:
     return fees
 
 
-@internal
-@view
-def _get_gauge_type(_gauge: address) -> int128:
-
-    success: bool = False
-    response: Bytes[32] = b""
-    success, response = raw_call(
-        GAUGE_CONTROLLER,
-        concat(
-            method_id("gauge_type(address)"),
-            convert(_gauge, bytes32),
-        ),
-        max_outsize=32,
-        revert_on_failure=False,
-        is_static_call=True
-    )
-
-    if success and not Gauge(_gauge).is_killed():
-        return convert(response, int128)
-
-    return 0
-
-
 @external
 @view
 def get_gauges(_pool: address) -> (address[10], int128[10]):
+    """
+    @notice Returns the gauges of the given pool
+    @param _pool Address of the pool
+    @return (address[10], int128[10]) Tuple of gauges. Gauges are arranged as:
+            1. gauge addresses
+            2. gauge types
+    """
     gauges: address[10] = empty(address[10])
     types: int128[10] = empty(int128[10])
     gauges[0] = self.base_registry.get_gauge(_pool)
@@ -470,12 +515,22 @@ def get_gauges(_pool: address) -> (address[10], int128[10]):
 @external
 @view
 def get_lp_token(_pool: address) -> address:
+    """
+    @notice Returns the Liquidity Provider token of the given pool
+    @param _pool Address of the pool
+    @return Address of the Liquidity Provider token
+    """
     return self._get_lp_token(_pool)
 
 
 @external
 @view
 def get_n_coins(_pool: address) -> uint256:
+    """
+    @notice Returns the number of coins in the given pool
+    @param _pool Address of the pool
+    @return uint256 Number of coins
+    """
     return self._get_n_coins(_pool)
 
 
@@ -484,6 +539,8 @@ def get_n_coins(_pool: address) -> uint256:
 def get_n_underlying_coins(_pool: address) -> uint256:
     """
     @notice Get the number of underlying coins in a pool
+    @param _pool Address of the pool
+    @return uint256 Number of underlying coins
     """
     _coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
 
@@ -501,12 +558,23 @@ def get_n_underlying_coins(_pool: address) -> uint256:
 @external
 @view
 def get_pool_asset_type(_pool: address) -> uint256:
+    """
+    @notice Returns the asset type of the given pool
+    @dev Returns 4: 0 = USD, 1 = ETH, 2 = BTC, 3 = Other
+    @param _pool Address of the pool
+    @return uint256 Asset type
+    """
     return 4
 
 
 @external
 @view
 def get_pool_from_lp_token(_lp_token: address) -> address:
+    """
+    @notice Returns the pool of the given Liquidity Provider token
+    @param _lp_token Address of the Liquidity Provider token
+    @return Address of the pool
+    """
     max_pools: uint256 = self.base_registry.pool_count()
     for i in range(MAX_POOLS):
         if i == max_pools:
@@ -521,6 +589,11 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
 @external
 @view
 def get_pool_name(_pool: address) -> String[64]:
+    """
+    @notice Returns the name of the given pool
+    @param _pool Address of the pool
+    @return String[64] Name of the pool
+    """
     token: address = self._get_lp_token(_pool)
     if token != ZERO_ADDRESS:
         return ERC20(self.base_registry.get_token(_pool)).name()
@@ -552,6 +625,11 @@ def get_pool_params(_pool: address) -> uint256[20]:
 @external
 @view
 def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Returns the underlying balances of the given pool
+    @param _pool Address of the pool
+    @return uint256[MAX_METAREGISTRY_COINS] Array of underlying balances
+    """
     if self._is_meta(_pool):
         return self._get_meta_underlying_balances(_pool)
     return self._get_balances(_pool)
@@ -559,6 +637,11 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Returns the underlying coins of the given pool
+    @param _pool Address of the pool
+    @return address[MAX_METAREGISTRY_COINS] Array of underlying coins
+    """
     if self._is_meta(_pool):
         return self._get_underlying_coins_for_metapool(_pool)
     return self._get_coins(_pool)
@@ -567,6 +650,11 @@ def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
+    """
+    @notice Returns the underlying decimals of the given pool
+    @param _pool Address of the pool
+    @return uint256[MAX_METAREGISTRY_COINS] Array of underlying decimals
+    """
     if self._is_meta(_pool):
         _underlying_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins_for_metapool(_pool)
         _decimals: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
@@ -581,12 +669,22 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 @external
 @view
 def get_virtual_price_from_lp_token(_token: address) -> uint256:
+    """
+    @notice Returns the virtual price of the given Liquidity Provider token
+    @param _token Address of the Liquidity Provider token
+    @return uint256 Virtual price
+    """
     return CurvePool(self._get_pool_from_lp_token(_token)).get_virtual_price()
 
 
 @external
 @view
 def is_meta(_pool: address) -> bool:
+    """
+    @notice Returns whether the given pool is a meta pool
+    @param _pool Address of the pool
+    @return bool Whether the pool is a meta pool
+    """
     return self._is_meta(_pool)
 
 
@@ -604,10 +702,19 @@ def is_registered(_pool: address) -> bool:
 @external
 @view
 def pool_count() -> uint256:
+    """
+    @notice Returns the number of pools in the registry
+    @return uint256 Number of pools
+    """
     return self.base_registry.pool_count()
 
 
 @external
 @view
 def pool_list(_index: uint256) -> address:
+    """
+    @notice Returns the address of the pool at the given index
+    @param _index Index of the pool
+    @return Address of the pool
+    """
     return self.base_registry.pool_list(_index)
