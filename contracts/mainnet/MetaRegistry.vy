@@ -49,7 +49,7 @@ event NewAdmin:
 
 
 # ---- constants ---- #
-MAX_REGISTRIES: constant(uint256) = 64
+MAX_REGISTRIES: constant(uint256) = 10
 MAX_COINS: constant(uint256) = 8
 MAX_POOL_PARAMS: constant(uint256) = 20
 ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
