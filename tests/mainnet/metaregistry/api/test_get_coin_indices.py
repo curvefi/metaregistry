@@ -73,101 +73,66 @@ def _get_coin_indices(pool, coin_a, coin_b, metaregistry, max_coins):
     return result[0], result[1], result[2] > 0
 
 
-def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
+def _test_coin_indices(coin_a, coin_b, metaregistry, pool, max_coins):
+
+    if coin_a != coin_b:
+
+        metaregistry_output = metaregistry.get_coin_indices(pool, coin_a, coin_b)
+
+        actual_output = _get_coin_indices(
+            pool,
+            coin_a,
+            coin_b,
+            metaregistry,
+            max_coins,
+        )
+
+        assert tuple(actual_output) == metaregistry_output
+
+
+def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, max_coins):
 
     all_combinations = _get_coin_combinations(populated_metaregistry, stable_registry_pool)
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
-        metaregistry_output = populated_metaregistry.get_coin_indices(
-            stable_registry_pool, combination[0], combination[1]
-        )
-        actual_output = list(
-            stable_registry.get_coin_indices(stable_registry_pool, combination[0], combination[1])
+        _test_coin_indices(
+            combination[0], combination[1], populated_metaregistry, stable_registry_pool, max_coins
         )
 
-        assert tuple(actual_output) == metaregistry_output
 
-
-def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, stable_factory):
+def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, max_coins):
 
     all_combinations = _get_coin_combinations(populated_metaregistry, stable_factory_pool)
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
-        metaregistry_output = populated_metaregistry.get_coin_indices(
-            stable_factory_pool, combination[0], combination[1]
-        )
-        actual_output = list(
-            stable_factory.get_coin_indices(stable_factory_pool, combination[0], combination[1])
+        _test_coin_indices(
+            combination[0], combination[1], populated_metaregistry, stable_factory_pool, max_coins
         )
 
-        # fix bug with stable factory where returned `is_underlying` is always True
-        # so check if pool is metapool and basepool lp token is not in combination
-        # (then `is_underlying` == True)
-        actual_output[-1] = False
-        if (
-            stable_factory.is_meta(stable_factory_pool)
-            and not stable_factory.get_coins(stable_factory_pool)[1] in combination
-        ):
-            actual_output[-1] = True
 
-        assert tuple(actual_output) == metaregistry_output
-
-
-def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
+def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, max_coins):
 
     all_combinations = _get_coin_combinations(populated_metaregistry, crypto_registry_pool)
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
-        metaregistry_output = populated_metaregistry.get_coin_indices(
-            crypto_registry_pool, combination[0], combination[1]
-        )
-        actual_output = list(
-            crypto_registry.get_coin_indices(crypto_registry_pool, combination[0], combination[1])
+        _test_coin_indices(
+            combination[0], combination[1], populated_metaregistry, crypto_registry_pool, max_coins
         )
 
-        # mainnet crypto registry and crypto factory do not return `is_underlying`
-        # but metaregistry does (since stable registry and factory do)
-        actual_output = (actual_output[0], actual_output[1], False)
 
-        assert tuple(actual_output) == metaregistry_output
-
-
-def test_crypto_factory_pools(
-    populated_metaregistry, crypto_factory_pool, crypto_factory, max_coins
-):
+def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, max_coins):
 
     all_combinations = _get_coin_combinations(populated_metaregistry, crypto_factory_pool)
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
-        metaregistry_output = populated_metaregistry.get_coin_indices(
-            crypto_factory_pool, combination[0], combination[1]
+        _test_coin_indices(
+            combination[0], combination[1], populated_metaregistry, crypto_factory_pool, max_coins
         )
-
-        try:
-
-            actual_output = list(
-                crypto_factory.get_coin_indices(crypto_factory_pool, combination[0], combination[1])
-            )
-
-        # ---- Crypto factory: 0xF18056Bbd320E96A48e3Fbf8bC061322531aac99> method get_coin_indices
-        # ---- reverts for pool: 0x595146ED98c81Dde9bD23d0c2Ab5b807C7Fe2D9f. special treatment:
-        except ape.exceptions.ContractLogicError:
-
-            actual_output = _get_coin_indices(
-                crypto_factory_pool,
-                combination[0],
-                combination[1],
-                populated_metaregistry,
-                max_coins,
-            )
-
-        for i in range(len(actual_output)):
-            assert actual_output[i] == metaregistry_output[i]
