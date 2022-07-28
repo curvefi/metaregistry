@@ -1,4 +1,4 @@
-# @version 0.3.3
+# @version 0.3.4
 """
 @title Curve Meta Registry
 @license MIT
@@ -90,9 +90,9 @@ def _get_pool_from_lp_token(_token: address) -> address:
             break
         handler: address = self.get_registry[i]
         pool: address = RegistryHandler(handler).get_pool_from_lp_token(_token)
-        if pool != ZERO_ADDRESS:
+        if pool != empty(address):
             return pool
-    return ZERO_ADDRESS
+    return empty(address)
 
 
 @internal
@@ -120,7 +120,7 @@ def _get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
             pool_registry_handler[c] = handler
             c += 1
 
-    if pool_registry_handler[0] == ZERO_ADDRESS:
+    if pool_registry_handler[0] == empty(address):
         raise("no registry")
     return pool_registry_handler
 
@@ -176,14 +176,14 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     @return Pool address
     """
     local_index: uint256 = 0
-    pool: address = ZERO_ADDRESS
+    pool: address = empty(address)
     for registry_index in range(MAX_REGISTRIES):
         if registry_index == self.registry_length:
             break
         registry: RegistryHandler = RegistryHandler(self.get_registry[registry_index])
         for j in range(0, 65536):
             pool = registry.find_pool_for_coins(_from, _to, j)
-            if pool == ZERO_ADDRESS:
+            if pool == empty(address):
                 break
             local_index += 1
             if local_index > i:
@@ -222,7 +222,7 @@ def get_balances(_pool: address, _handler_id: uint256 = 0)  -> uint256[MAX_COINS
 def get_base_pool(_pool: address, _handler_id: uint256 = 0) -> address:
     """
     @notice Get the base pool for a given factory metapool
-    @dev Will return ZERO_ADDRESS if pool is not a metapool
+    @dev Will return empty(address) if pool is not a metapool
     @param _pool Metapool address
     @param _handler_id id of registry handler
     @return Address of base pool
@@ -474,7 +474,7 @@ def is_registered(_pool: address, _handler_id: uint256 = 0) -> bool:
     @param _handler_id id of registry handler
     @return A bool corresponding to whether the pool belongs or not
     """
-    return self._get_registry_handlers_from_pool(_pool)[_handler_id] != ZERO_ADDRESS
+    return self._get_registry_handlers_from_pool(_pool)[_handler_id] != empty(address)
 
 
 @external
@@ -510,4 +510,4 @@ def pool_list(_index: uint256) -> address:
         if _index - pools_skip < count:
             return RegistryHandler(handler).pool_list(_index - pools_skip)
         pools_skip += count
-    return ZERO_ADDRESS
+    return empty(address)

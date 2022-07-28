@@ -1,4 +1,4 @@
-# @version 0.3.3
+# @version 0.3.4
 """
 @title Curve Registry Handler for v1 Factory (latest)
 @license MIT
@@ -124,12 +124,12 @@ def _get_n_coins(_pool: address) -> uint256:
 @view
 def _get_base_pool(_pool: address) -> address:
     _coins: address[MAX_METAREGISTRY_COINS] = self._get_coins(_pool)
-    _base_pool: address = ZERO_ADDRESS
+    _base_pool: address = empty(address)
     for coin in _coins:
         _base_pool = self.base_pool_registry.get_base_pool_for_lp_token(coin)
-        if _base_pool != ZERO_ADDRESS:
+        if _base_pool != empty(address):
             return _base_pool
-    return ZERO_ADDRESS
+    return empty(address)
 
 
 @view
@@ -148,18 +148,18 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_CO
     ul_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins(_pool)
     for i in range(MAX_METAREGISTRY_COINS):
 
-        if ul_coins[i] == ZERO_ADDRESS:
+        if ul_coins[i] == empty(address):
             break
 
         if i < base_coin_idx:
-            ul_balance = CurvePool(_pool).balances(convert(i, uint256))
+            ul_balance = CurvePool(_pool).balances(i)
 
         else:
 
             if self.base_pool_registry.is_legacy(base_pool):
                 ul_balance = CurveLegacyPool(base_pool).balances(convert(i - base_coin_idx, int128))
             else:
-                ul_balance = CurvePool(base_pool).balances(convert(i, uint256) - base_coin_idx)
+                ul_balance = CurvePool(base_pool).balances(i - base_coin_idx)
             ul_balance = ul_balance * underlying_pct / 10**36
         underlying_balances[i] = ul_balance
 
@@ -410,7 +410,7 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
     """
     if self._get_n_coins(_lp_token) > 0:
         return _lp_token
-    return ZERO_ADDRESS
+    return empty(address)
 
 
 @external

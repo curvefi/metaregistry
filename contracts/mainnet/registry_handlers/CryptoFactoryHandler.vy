@@ -1,4 +1,4 @@
-# @version 0.3.3
+# @version 0.3.4
 """
 @title Curve Registry Handler for v2 Factory
 @license MIT
@@ -134,7 +134,7 @@ def _get_lp_token(_pool: address) -> address:
 @view
 def _get_n_coins(_pool: address) -> uint256:
 
-    if (self.base_registry.get_coins(_pool)[0] != ZERO_ADDRESS):
+    if (self.base_registry.get_coins(_pool)[0] != empty(address)):
         return N_COINS
     return 0
 
@@ -143,12 +143,12 @@ def _get_n_coins(_pool: address) -> uint256:
 @view
 def _get_base_pool(_pool: address) -> address:
     _coins: address[2] = self.base_registry.get_coins(_pool)
-    _base_pool: address = ZERO_ADDRESS
+    _base_pool: address = empty(address)
     for coin in _coins:
         _base_pool = self.base_pool_registry.get_base_pool_for_lp_token(coin)
-        if _base_pool != ZERO_ADDRESS:
+        if _base_pool != empty(address):
             return _base_pool
-    return ZERO_ADDRESS
+    return empty(address)
 
 
 @view
@@ -156,7 +156,7 @@ def _get_base_pool(_pool: address) -> address:
 def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 
     base_pool: address = self._get_base_pool(_pool)
-    assert base_pool != ZERO_ADDRESS
+    assert base_pool != empty(address)
 
     base_pool_coins: address[MAX_METAREGISTRY_COINS] = self.base_pool_registry.get_coins(base_pool)
     _underlying_coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
@@ -174,7 +174,7 @@ def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_METAREGIST
 @view
 @internal
 def _is_meta(_pool: address) -> bool:
-    return self._get_base_pool(_pool) != ZERO_ADDRESS
+    return self._get_base_pool(_pool) != empty(address)
 
 
 @view
@@ -193,18 +193,18 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_CO
     ul_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins_for_metapool(_pool)
     for i in range(MAX_METAREGISTRY_COINS):
 
-        if ul_coins[i] == ZERO_ADDRESS:
+        if ul_coins[i] == empty(address):
             break
 
         if i < base_coin_idx:
-            ul_balance = CurvePool(_pool).balances(convert(i, uint256))
+            ul_balance = CurvePool(_pool).balances(i)
 
         else:
 
             if self.base_pool_registry.is_legacy(base_pool):
                 ul_balance = StableSwapLegacy(base_pool).balances(convert(i - base_coin_idx, int128))
             else:
-                ul_balance = CurvePool(base_pool).balances(convert(i, uint256) - base_coin_idx)
+                ul_balance = CurvePool(base_pool).balances(i - base_coin_idx)
             ul_balance = ul_balance * underlying_pct / 10**36
         underlying_balances[i] = ul_balance
 
@@ -222,7 +222,7 @@ def _get_pool_from_lp_token(_lp_token: address) -> address:
         token: address = self._get_lp_token(pool)
         if token == _lp_token:
             return pool
-    return ZERO_ADDRESS
+    return empty(address)
 
 
 @internal
@@ -264,11 +264,11 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     """
     _pool: address = self.base_registry.find_pool_for_coins(_from, _to, i)
 
-    if _pool != ZERO_ADDRESS:
+    if _pool != empty(address):
         return _pool
 
     # could not find a pool for the coins for `i`. check if they are in a base pool:
-    _base_pool: address = ZERO_ADDRESS
+    _base_pool: address = empty(address)
     _pools: address[20] = empty(address[20])
     _num_metapool_pairs: uint256 = 0
 
@@ -280,7 +280,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
             _base_pool = self.base_pool_registry.get_basepool_for_coins(coin, j)
 
             # found a base pool, but is it the right one?
-            if _base_pool != ZERO_ADDRESS:
+            if _base_pool != empty(address):
 
                 base_pool_lp_token: address = self.base_pool_registry.get_lp_token(_base_pool)
 
@@ -290,7 +290,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
                     _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, 0)
 
                     # only append if a pool is found:
-                    if _pool != ZERO_ADDRESS:
+                    if _pool != empty(address):
                         _pools[_num_metapool_pairs] = _pool
                         _num_metapool_pairs += 1
 
@@ -300,26 +300,26 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
                     _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, 0)
 
                     # only append if a pool is found:
-                    if _pool != ZERO_ADDRESS:
+                    if _pool != empty(address):
                         _pools[_num_metapool_pairs] = _pool
                         _num_metapool_pairs += 1
 
     # say we found a pair for _from and _to in the base registry without a basepool combination already
     # then that pool will be returned when i == 0. But if that same pair exists in a base pool then
-    # i == 1 will return ZERO_ADDRESS in the base_registry query, but i = 0 for _pools will return
-    # the metapool pair. But if we keep i == 1 for _pools, it would return ZERO_ADDRESS (unless there
+    # i == 1 will return empty(address) in the base_registry query, but i = 0 for _pools will return
+    # the metapool pair. But if we keep i == 1 for _pools, it would return empty(address) (unless there
     # is another metapool pair of course). So, we first check how many direct pairs exist:
 
     num_pairs: uint256 = 0
     for k in range(20):
         _pool = self.base_registry.find_pool_for_coins(_from, _to, k)
-        if _pool == ZERO_ADDRESS:
+        if _pool == empty(address):
             break
         num_pairs += 1
 
     # now we check if the queried pair index `i` is higher than num_pairs. e.g. if num_pairs == 1 and i == 1,
     # and _num_metapool_pairs == 1, then i >= num_pairs, and we return _pools[1 - num_pairs]. If there are
-    # no metapool pairs, then it will automatically return ZERO_ADDRESS:
+    # no metapool pairs, then it will automatically return empty(address):
     if i >= num_pairs:
         return _pools[i - num_pairs]
     else:
@@ -385,12 +385,12 @@ def get_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 def get_base_pool(_pool: address) -> address:
     """
     @notice Returns the base pool of the given pool
-    @dev Returns ZERO_ADDRESS if the pool isn't a metapool
+    @dev Returns empty(address) if the pool isn't a metapool
     @param _pool Address of the pool
     @return Address of the base pool
     """
     if not self._is_meta(_pool):
-        return ZERO_ADDRESS
+        return empty(address)
     return self._get_base_pool(_pool)
 
 
@@ -414,15 +414,15 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (uint256, 
     # check coin markets
     for x in range(MAX_METAREGISTRY_COINS):
         coin: address = _coins[x]
-        if coin == ZERO_ADDRESS:
+        if coin == empty(address):
             # if we reach the end of the coins, reset `found_market` and try again
             # with the underlying coins
             found_market = False
             break
         if coin == _from:
-            result[0] = convert(x, uint256)
+            result[0] = x
         elif coin == _to:
-            result[1] = convert(x, uint256)
+            result[1] = x
         else:
             continue
 
@@ -437,12 +437,12 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (uint256, 
         underlying_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins_for_metapool(_pool)
         for x in range(MAX_METAREGISTRY_COINS):
             coin: address = underlying_coins[x]
-            if coin == ZERO_ADDRESS:
+            if coin == empty(address):
                 raise "No available market"
             if coin == _from:
-                result[0] = convert(x, uint256)
+                result[0] = x
             elif coin == _to:
-                result[1] = convert(x, uint256)
+                result[1] = x
             else:
                 continue
 
@@ -550,7 +550,7 @@ def get_n_underlying_coins(_pool: address) -> uint256:
         _coins = self._get_coins(_pool)
 
     for i in range(MAX_METAREGISTRY_COINS):
-        if _coins[i] == ZERO_ADDRESS:
+        if _coins[i] == empty(address):
             return i
     raise
 
@@ -583,7 +583,7 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
         token: address = self._get_lp_token(pool)
         if token == _lp_token:
             return pool
-    return ZERO_ADDRESS
+    return empty(address)
 
 
 @external
@@ -595,7 +595,7 @@ def get_pool_name(_pool: address) -> String[64]:
     @return String[64] Name of the pool
     """
     token: address = self._get_lp_token(_pool)
-    if token != ZERO_ADDRESS:
+    if token != empty(address):
         return ERC20(self.base_registry.get_token(_pool)).name()
     else:
         return ""
@@ -659,7 +659,7 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
         _underlying_coins: address[MAX_METAREGISTRY_COINS] = self._get_underlying_coins_for_metapool(_pool)
         _decimals: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
         for i in range(MAX_METAREGISTRY_COINS):
-            if _underlying_coins[i] == ZERO_ADDRESS:
+            if _underlying_coins[i] == empty(address):
                 break
             _decimals[i] = ERC20(_underlying_coins[i]).decimals()
         return _decimals

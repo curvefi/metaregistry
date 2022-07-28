@@ -1,4 +1,4 @@
-# @version 0.3.3
+# @version 0.3.4
 """
 @title Curve Registry Handler for v1 Registry
 @license MIT
@@ -111,7 +111,7 @@ def get_base_pool(_pool: address) -> address:
     @return base pool of the pool.
     """
     if not(self._is_meta(_pool)):
-        return ZERO_ADDRESS
+        return empty(address)
     return self.base_registry.get_pool_from_lp_token(self.base_registry.get_coins(_pool)[1])
 
 

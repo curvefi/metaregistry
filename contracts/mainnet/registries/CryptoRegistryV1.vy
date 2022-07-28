@@ -1,4 +1,4 @@
-# @version 0.3.3
+# @version 0.3.4
 """
 @title Curve CryptoSwap Registry
 @license MIT
@@ -134,7 +134,7 @@ def _get_decimals(_coins: address[MAX_COINS]) -> uint256[MAX_COINS]:
     decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     value: uint256 = 0
     for i in range(MAX_COINS):
-        if _coins[i] == ZERO_ADDRESS:
+        if _coins[i] == empty(address):
             break
         coin: address = _coins[i]
         if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
@@ -163,7 +163,7 @@ def _get_underlying_coins_for_metapool(_pool: address) -> address[MAX_COINS]:
         else:
             _underlying_coins[i] = base_pool_coins[i - base_coin_offset]
 
-    assert _underlying_coins[0] != ZERO_ADDRESS
+    assert _underlying_coins[0] != empty(address)
 
     return _underlying_coins
 
@@ -174,7 +174,7 @@ def _get_balances(_pool: address) -> uint256[MAX_COINS]:
     balances: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     _coins: address[MAX_COINS] = self._get_coins(_pool)
     for i in range(MAX_COINS):
-        if _coins[i] == ZERO_ADDRESS:
+        if _coins[i] == empty(address):
             assert i != 0
             break
 
@@ -199,7 +199,7 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
     ul_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
     for i in range(MAX_COINS):
 
-        if ul_coins[i] == ZERO_ADDRESS:
+        if ul_coins[i] == empty(address):
             break
 
         if i < convert(base_coin_idx, int128):
@@ -220,7 +220,7 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_COINS]:
 @view
 @internal
 def _is_meta(_pool: address) -> bool:
-    return self.pool_data[_pool].base_pool != ZERO_ADDRESS
+    return self.pool_data[_pool].base_pool != empty(address)
 
 
 @view
@@ -239,7 +239,7 @@ def _get_coin_indices(
     # check coin markets
     for x in range(MAX_COINS):
         coin: address = _coins[x]
-        if coin == ZERO_ADDRESS:
+        if coin == empty(address):
             # if we reach the end of the coins, reset `found_market` and try again
             # with the underlying coins
             found_market = False
@@ -262,7 +262,7 @@ def _get_coin_indices(
         underlying_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
         for x in range(MAX_COINS):
             coin: address = underlying_coins[x]
-            if coin == ZERO_ADDRESS:
+            if coin == empty(address):
                 raise "No available market"
             if coin == _from:
                 result[0] = convert(x, uint256)
@@ -400,7 +400,7 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]:
         _underlying_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
         _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
         for i in range(MAX_COINS):
-            if _underlying_coins[i] == ZERO_ADDRESS:
+            if _underlying_coins[i] == empty(address):
                 break
             _decimals[i] = ERC20(_underlying_coins[i]).decimals()
         return _decimals
@@ -421,7 +421,7 @@ def get_gauges(_pool: address) -> (address[10], int128[10]):
     gauge_types: int128[10] = empty(int128[10])
     for i in range(10):
         gauge: address = self.liquidity_gauges[_pool][i]
-        if gauge == ZERO_ADDRESS:
+        if gauge == empty(address):
             break
         liquidity_gauges[i] = gauge
         gauge_types[i] = GaugeController(GAUGE_CONTROLLER).gauge_types(gauge)
@@ -583,7 +583,7 @@ def is_meta(_pool: address) -> bool:
     @param _pool Pool address
     @return True if `_pool` is a metapool
     """
-    return self.pool_data[_pool].base_pool != ZERO_ADDRESS
+    return self.pool_data[_pool].base_pool != empty(address)
 
 
 @view
@@ -616,7 +616,7 @@ def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS], _is_und
 
     for i in range(MAX_COINS):
 
-        if _coin_list[i] == ZERO_ADDRESS:
+        if _coin_list[i] == empty(address):
             break
 
         # we dont want underlying <> underlying markets
@@ -631,7 +631,7 @@ def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS], _is_und
         i2: int128 = i + 1
         for x in range(i2, i2 + MAX_COINS):
 
-            if _coin_list[x] == ZERO_ADDRESS:
+            if _coin_list[x] == empty(address):
                 break
 
             key: uint256 = bitwise_xor(
@@ -663,7 +663,7 @@ def _remove_market(_pool: address, _coina: address, _coinb: address):
         if self.markets[key][i] == _pool:
             if i < length:
                 self.markets[key][i] = self.markets[key][length]
-            self.markets[key][length] = ZERO_ADDRESS
+            self.markets[key][length] = empty(address)
             self.market_counts[key] = length
             break
 
@@ -671,8 +671,8 @@ def _remove_market(_pool: address, _coina: address, _coinb: address):
 @internal
 def _remove_liquidity_gauges(_pool: address):
     for i in range(10):
-        if self.liquidity_gauges[_pool][i] != ZERO_ADDRESS:
-            self.liquidity_gauges[_pool][i] = ZERO_ADDRESS
+        if self.liquidity_gauges[_pool][i] != empty(address):
+            self.liquidity_gauges[_pool][i] = empty(address)
         else:
             break
 
@@ -704,8 +704,8 @@ def add_pool(
     @param _has_positive_rebasing_tokens pool contains positive rebasing tokens
     """
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
-    assert _lp_token != ZERO_ADDRESS
-    assert self.get_pool_from_lp_token[_lp_token] == ZERO_ADDRESS  # dev: pool exists
+    assert _lp_token != empty(address)
+    assert self.get_pool_from_lp_token[_lp_token] == empty(address)  # dev: pool exists
 
     # initialise PoolArray struct
     length: uint256 = self.pool_count
@@ -716,10 +716,10 @@ def add_pool(
     self.pool_data[_pool].n_coins = _n_coins
 
     # update public mappings
-    if _zap != ZERO_ADDRESS:
+    if _zap != empty(address):
         self.get_zap[_pool] = _zap
 
-    if _gauge != ZERO_ADDRESS:
+    if _gauge != empty(address):
         self.liquidity_gauges[_pool][0] = _gauge
 
     self.get_pool_from_lp_token[_lp_token] = _pool
@@ -735,12 +735,12 @@ def add_pool(
 
     # the following does not add basepool_lp_token <> underlying_coin mapping
     # since that is redundant:
-    if _base_pool != ZERO_ADDRESS:
-        assert self.base_pool_registry.get_lp_token(_base_pool) != ZERO_ADDRESS
+    if _base_pool != empty(address):
+        assert self.base_pool_registry.get_lp_token(_base_pool) != empty(address)
         self.pool_data[_pool].base_pool = _base_pool
 
         _underlying_coins: address[MAX_COINS] = self._get_underlying_coins_for_metapool(_pool)
-        assert _underlying_coins[0] != ZERO_ADDRESS
+        assert _underlying_coins[0] != empty(address)
 
         self._add_coins_to_market(_pool, _underlying_coins, True)
 
@@ -760,17 +760,17 @@ def remove_pool(_pool: address):
     @param _pool Pool address to remove
     """
     assert msg.sender == self.address_provider.admin()  # dev: admin-only function
-    assert self.get_lp_token[_pool] != ZERO_ADDRESS  # dev: pool does not exist
+    assert self.get_lp_token[_pool] != empty(address)  # dev: pool does not exist
 
-    self.get_pool_from_lp_token[self.get_lp_token[_pool]] = ZERO_ADDRESS
-    self.get_lp_token[_pool] = ZERO_ADDRESS
+    self.get_pool_from_lp_token[self.get_lp_token[_pool]] = empty(address)
+    self.get_lp_token[_pool] = empty(address)
 
     # remove _pool from pool_list
     location: uint256 = self.pool_data[_pool].location
     length: uint256 = self.pool_count - 1
 
     # because self.pool_list is a static array,
-    # we can replace the last index with ZERO_ADDRESS
+    # we can replace the last index with empty(address)
     # and replace the first index with the pool
     # that was previously in the last index.
     # we skip this step if location == last index
@@ -781,7 +781,7 @@ def remove_pool(_pool: address):
         self.pool_data[addr].location = location
 
     # delete final pool_list value
-    self.pool_list[length] = ZERO_ADDRESS
+    self.pool_list[length] = empty(address)
     self.pool_count = length
 
     coins: address[MAX_COINS] = self._get_coins(_pool)
@@ -792,7 +792,7 @@ def remove_pool(_pool: address):
 
     for i in range(MAX_COINS):
 
-        if coins[i] == ZERO_ADDRESS and ucoins[i] == ZERO_ADDRESS:
+        if coins[i] == empty(address) and ucoins[i] == empty(address):
             break
 
         for j in range(MAX_COINS):
@@ -800,17 +800,17 @@ def remove_pool(_pool: address):
             if not j > i:
                 continue
 
-            if ZERO_ADDRESS not in [coins[i], coins[j]] and self._market_exists(_pool, coins[i], coins[j]):
+            if empty(address) not in [coins[i], coins[j]] and self._market_exists(_pool, coins[i], coins[j]):
                 self._remove_market(_pool, coins[i], coins[j])
 
-            if ZERO_ADDRESS not in [coins[i], ucoins[j]] and self._market_exists(_pool, coins[i], ucoins[j]):
+            if empty(address) not in [coins[i], ucoins[j]] and self._market_exists(_pool, coins[i], ucoins[j]):
                 self._remove_market(_pool, coins[i], ucoins[j])
 
     # reset remaining mappings:
-    self.pool_data[_pool].base_pool = ZERO_ADDRESS
+    self.pool_data[_pool].base_pool = empty(address)
     self.pool_data[_pool].n_coins = 0
     self.pool_data[_pool].name = ""
-    self.get_zap[_pool] = ZERO_ADDRESS
+    self.get_zap[_pool] = empty(address)
     self._remove_liquidity_gauges(_pool)
 
     self.last_updated = block.timestamp
@@ -829,11 +829,11 @@ def set_liquidity_gauges(_pool: address, _liquidity_gauges: address[10]):
     _lp_token: address = self.get_lp_token[_pool]
     for i in range(10):
         _gauge: address = _liquidity_gauges[i]
-        if _gauge != ZERO_ADDRESS:
+        if _gauge != empty(address):
             assert LiquidityGauge(_gauge).lp_token() == _lp_token  # dev: wrong token
             self.liquidity_gauges[_pool][i] = _gauge
-        elif self.liquidity_gauges[_pool][i] != ZERO_ADDRESS:
-            self.liquidity_gauges[_pool][i] = ZERO_ADDRESS
+        elif self.liquidity_gauges[_pool][i] != empty(address):
+            self.liquidity_gauges[_pool][i] = empty(address)
         else:
             break
     self.last_updated = block.timestamp
@@ -850,7 +850,7 @@ def batch_set_liquidity_gauges(_pools: address[10], _liquidity_gauges: address[1
 
     for i in range(10):
         _pool: address = _pools[i]
-        if _pool == ZERO_ADDRESS:
+        if _pool == empty(address):
             break
         _gauge: address = _liquidity_gauges[i]
         assert LiquidityGauge(_gauge).lp_token() == self.get_lp_token[_pool]  # dev: wrong token

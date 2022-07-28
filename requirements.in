@@ -1,7 +1,7 @@
-eth-ape
-ape-vyper
-ape-alchemy
-ape-hardhat
+eth-ape==0.4
+ape-vyper==0.4
+ape-alchemy==0.4
+ape-hardhat==0.4
 black
 flake8
 isort

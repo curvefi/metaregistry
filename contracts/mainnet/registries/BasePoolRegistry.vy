@@ -1,4 +1,4 @@
-# @version 0.3.3
+# @version 0.3.4
 """
 @title Curve BasePool Registry
 @license MIT
@@ -110,7 +110,7 @@ def get_decimals(_pool: address) -> uint256[MAX_COINS]:
     _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
     _decimals: uint256[MAX_COINS] = empty(uint256[MAX_COINS])
     for i in range(MAX_COINS):
-        if _coins[i] == ZERO_ADDRESS:
+        if _coins[i] == empty(address):
             break
         if _coins[i] == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
             _decimals[i] = 18
@@ -201,7 +201,7 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
     @param _is_v2 True if the base pool is a Curve CryptoSwap pool
     """
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
-    assert self.base_pool[_pool].lp_token == ZERO_ADDRESS  # dev: pool exists
+    assert self.base_pool[_pool].lp_token == empty(address)  # dev: pool exists
 
     # add pool to base_pool_list
     base_pool_count: uint256 = self.base_pool_count
@@ -228,12 +228,12 @@ def remove_base_pool(_pool: address):
     @param _pool Address of the base pool
     """
     assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
-    assert _pool != ZERO_ADDRESS
-    assert self.base_pool[_pool].lp_token != ZERO_ADDRESS  # dev: pool doesn't exist
+    assert _pool != empty(address)
+    assert self.base_pool[_pool].lp_token != empty(address)  # dev: pool doesn't exist
 
     # reset pool <> lp_token mappings
-    self.get_base_pool_for_lp_token[self.base_pool[_pool].lp_token] = ZERO_ADDRESS
-    self.base_pool[_pool].lp_token = ZERO_ADDRESS
+    self.get_base_pool_for_lp_token[self.base_pool[_pool].lp_token] = empty(address)
+    self.base_pool[_pool].lp_token = empty(address)
     self.base_pool[_pool].n_coins = 0
 
     # remove base_pool from base_pool_list
@@ -242,19 +242,19 @@ def remove_base_pool(_pool: address):
     assert location < length
 
     # because self.base_pool_list is a static array,
-    # we can replace the last index with ZERO_ADDRESS
+    # we can replace the last index with empty(address)
     # and replace the first index with the base pool
     # that was previously in the last index.
     # we skip this step if location == last index
     if location < length:
         # replace _pool with final value in pool_list
         addr: address = self.base_pool_list[length]
-        assert addr != ZERO_ADDRESS
+        assert addr != empty(address)
         self.base_pool_list[location] = addr
         self.base_pool[addr].location = location
 
     # delete final pool_list value
-    self.base_pool_list[length] = ZERO_ADDRESS
+    self.base_pool_list[length] = empty(address)
     self.base_pool_count = length
 
     self.last_updated = block.timestamp
