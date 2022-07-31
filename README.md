@@ -17,7 +17,7 @@ In principle, a child registry does not need a registry handler wrapper, if it a
 
 # Who should use the MetaRegistry?
 
-One of the challenges of having on-chain data stored in separate contracts is that it makes integrations challenging: integrators do not have intrinsic knowledge in the protocol level to accommodate edge cases and onboard multiple registries. A single source of information that aggregates all registries makes integrations trivial. If you are an integrator, the MetaRegistry is built for you.
+Integrators find it quite challenging to integrate a protocol into their dapp if there are multiple on-chain registry stored in separate contracts: They do not have intrinsic knowledge in the protocol level to accommodate edge cases and onboard multiple registries. A single source of information that aggregates all registries makes integrations trivial. If you are an integrator looking to integrate Curve, the MetaRegistry is your best friend.
 
 # The MetaRegistry API
 
@@ -348,7 +348,7 @@ Set up the python environment using the following steps:
 > pip install -r ./requirements.txt
 ```
 
-This project uses the [Ape Framework](https://apeworx.io). The various plugins used are:
+This project uses `eth-ape >= 0.4.0` developed at [Apeworx](https://apeworx.io). The various plugins used are:
 
 1. [`ape-vyper`](https://github.com/ApeWorX/ape-vyper)
 2. [`ape-hardhat`](https://github.com/ApeWorX/ape-hardhat)
@@ -367,8 +367,6 @@ hardhat:
         upstream_provider: geth
         # upstream_provider: alchemy
 ```
-
-Finally, the tests will not work due to a bug in [`eth-ape 0.3.5`](https://github.com/ApeWorX/ape/issues/905), which spits out a `RecursionError: maximum recursion depth exceeded` while parsing arrays and tuples of arrays. This has been patched, but not released in a new version of the package yet. To implement this fix locally, please refer to the [this pull request](https://github.com/ApeWorX/ape/pull/909), specifically the [ape/src/ape/utils/abi.py](https://github.com/unparalleled-js/ape/blob/5ed2864baf9286aba19d75b5fdb6a4302cd147ff/src/ape/utils/abi.py) file.
 
 ### Testing
 
