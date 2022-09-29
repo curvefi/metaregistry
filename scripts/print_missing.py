@@ -22,7 +22,8 @@ def main():
     registry_names = [f"{a}{b}" for a in ["Crypto", "Stable"] for b in ["Factory", "Registry"]]
 
     for registry_name in registry_names:
-        registry = getattr(interface, registry_name)
+        # registry = getattr(interface, registry_name)  # TODO: fix this!
+        registry = None
         non_indexed_view_fns = get_non_indexed_view_functions(
             registry.selectors, registry.abi, function_index
         )
