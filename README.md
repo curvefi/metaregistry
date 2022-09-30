@@ -2,16 +2,16 @@
 
 The metaregistry is a [Curve Finance](https://curve.exchange/) Pool Registry Aggregator that consolidates different registries used at Curve Finance for a single chain into a single contract.
 
-The current version of the MetaRegistry aggregates of the following four child registries:
+The current version of the MetaRegistry aggregates the following four child registries:
 
 Mainnet:
 
 1. Curve Stable Registry: A registry of custom pool implementations deployed by Curve Core.
 2. Curve Stable Factory: A permissionless [StableSwap](https://curve.fi/files/stableswap-paper.pdf) pool factory, which also acts as a registry for pools that its users create.
-3. Curve Crypto Registry: A registry of custom CryptoSwap pool implementaions deployed by Curve Core.
+3. Curve Crypto Registry: A registry of custom CryptoSwap pool implementations deployed by Curve Core.
 4. Curve Crypto Factory: A permissionless [CryptoSwap](https://curve.fi/files/crypto-pools-paper.pdf) pool factory, which also acts as a registry for pools that its users create.
 
-Each of the child registries are accompanied by a RegistryHandler, which is a contract that wraps around the child registry and enforces the abi implemented in the MetaRegistry. These registry handlers are then added to the MetaRegistry using the `MetaRegistry.add_registry_handler` method.
+Each of the child registries is accompanied by a RegistryHandler, which is a contract that wraps around the child registry and enforces the abi implemented in the MetaRegistry. These registry handlers are then added to the MetaRegistry using the `MetaRegistry.add_registry_handler` method.
 
 In principle, a child registry does not need a registry handler wrapper, if it already conforms to the MetaRegistry's abi standards. However, a wrapper around the child registries can be used to hotfix bugs detected in production when such fixes cannot be introduced to the child registry without significant breaking changes.
 
