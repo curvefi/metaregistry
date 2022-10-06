@@ -137,42 +137,50 @@ def cli():
 @account_option()
 def main(network, account):
     
+    # admin only: only admin of ADDRESSPROVIDER can do the following:
+    
     # deploy basepool registry:
-    base_pool_registry = account.deploy(project.BasePoolRegistry, publish=True)
+    base_pool_registry = project.BasePoolRegistry.at("0x425b6511Bc83033545b882bd64F5a6D8F5De3544")
     
-    crypto_registry = account.deploy(
-        project.CryptoRegistryV1, 
-        ADDRESS_PROVIDER, 
-        base_pool_registry,
-        publish=True,
-    )
+    # populate base pool registry:
+    for _, data in BASE_POOLS.items():
+        base_pool_registry.add_base_pool(
+            data["pool"],
+            data["lp_token"],
+            data["num_coins"],
+            data["is_legacy"],
+            data["is_lending"],
+            data["is_v2"],
+            sender=account,
+        )
     
-    # deploy registry handlers:
-    stable_registry_handler = account.deploy(
-        project.StableRegistryHandler, STABLE_REGISTRY_ADDRESS, publish=True
-    )
+    crypto_registry = project.CryptoRegistryV1.at("0x320f18c7a09520e5004000f908d7669be5e4d49f")
     
-    stable_factory_handler = account.deploy(
-        project.StableFactoryHandler, 
-        STABLE_REGISTRY_ADDRESS, 
-        base_pool_registry,
-        publish=True
-    )
+    # populate crypto registry:
+    for _, pool in CRYPTO_REGISTRY_POOLS.items():
+        crypto_registry.add_pool(
+            pool["pool"],
+            pool["lp_token"],
+            pool["gauge"],
+            pool["zap"],
+            pool["num_coins"],
+            pool["name"],
+            pool["base_pool"],
+            pool["has_positive_rebasing_tokens"],
+            sender=account,
+        )
     
-    crypto_registry_handler = account.deploy(
-        project.CryptoRegistryHandler, crypto_registry, publish=True
-    )
+    # registry handlers:
+    stable_registry_handler = project.StableRegistryHandler.at("0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68")
+    stable_factory_handler = project.StableFactoryHandler.at("0xD57Bb1Db8f796E840Eb295024c14ddcaC06e2e37")
+    crypto_registry_handler = project.CryptoRegistryHandler.at("0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56")
+    crypto_factory_handler = project.CryptoFactoryHandler.at("0x23544454b2b6cdb62ddd4f402c23e7bd0e50656c")
     
-    crypto_factory_handler = account.deploy(
-        project.CryptoFactoryHandler, 
-        CRYPTO_FACTORY_ADDRESS, 
-        base_pool_registry,
-        publish=True
-    )
+    # metaregistry:
+    metaregistry = project.MetaRegistry.at("0x8764ADd5e7008ac9a1F44f2664930e8c8fdDc095")
     
-    # deploy metaregistry:
-    metaregistry = account.deploy(
-        project.MetaRegistry,
-        ADDRESS_PROVIDER,
-        publish=True
-    )
+    # # populate metaregistry:
+    metaregistry.add_registry_handler(stable_registry_handler, sender=account)
+    metaregistry.add_registry_handler(stable_factory_handler, sender=account)
+    metaregistry.add_registry_handler(crypto_registry_handler, sender=account)
+    metaregistry.add_registry_handler(crypto_factory_handler, sender=account)
