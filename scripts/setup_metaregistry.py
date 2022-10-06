@@ -172,7 +172,7 @@ def main(network, account):
     
     # registry handlers:
     stable_registry_handler = project.StableRegistryHandler.at("0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68")
-    stable_factory_handler = project.StableFactoryHandler.at("0xD57Bb1Db8f796E840Eb295024c14ddcaC06e2e37")
+    stable_factory_handler = project.StableFactoryHandler.at("0xF9b71067A1Bb1258F2155359e8B22090612870FF")
     crypto_registry_handler = project.CryptoRegistryHandler.at("0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56")
     crypto_factory_handler = project.CryptoFactoryHandler.at("0x23544454b2b6cdb62ddd4f402c23e7bd0e50656c")
     

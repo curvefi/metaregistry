@@ -139,11 +139,12 @@ def main(network, account):
     
     # deploy basepool registry:
     base_pool_registry = account.deploy(project.BasePoolRegistry, publish=True)
-    
+
+    # re-deploy this
     crypto_registry = account.deploy(
         project.CryptoRegistryV1, 
         ADDRESS_PROVIDER, 
-        base_pool_registry,
+        "0x425b6511Bc83033545b882bd64F5a6D8F5De3544",
         publish=True,
     )
     
@@ -154,8 +155,8 @@ def main(network, account):
     
     stable_factory_handler = account.deploy(
         project.StableFactoryHandler, 
-        STABLE_REGISTRY_ADDRESS, 
-        base_pool_registry,
+        STABLE_FACTORY_ADDRESS, 
+        "0x425b6511Bc83033545b882bd64F5a6D8F5De3544",
         publish=True
     )
     
