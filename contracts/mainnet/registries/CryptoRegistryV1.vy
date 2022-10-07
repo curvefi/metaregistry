@@ -1,4 +1,4 @@
-# @version 0.3.4
+# @version 0.3.7
 """
 @title Curve CryptoSwap Registry
 @license MIT
@@ -13,7 +13,7 @@ struct CoinInfo:
     index: uint256
     register_count: uint256
     swap_count: uint256
-    swap_for: address[MAX_INT128]
+    swap_for: address[max_value(int128)]
 
 
 struct PoolArray:
@@ -316,7 +316,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
             this value is used to return the n'th address.
     @return Pool address
     """
-    key: uint256 = bitwise_xor(convert(_from, uint256), convert(_to, uint256))
+    key: uint256 = convert(_from, uint256) ^ convert(_to, uint256)
     return self.markets[key][i]
 
 
@@ -634,8 +634,8 @@ def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS], _is_und
             if _coin_list[x] == empty(address):
                 break
 
-            key: uint256 = bitwise_xor(
-                convert(_coin_list[i], uint256), convert(_coin_list[x], uint256)
+            key: uint256 = (
+                convert(_coin_list[i], uint256) ^ convert(_coin_list[x], uint256)
             )
             length: uint256 = self.market_counts[key]
             self.markets[key][length] = _pool
@@ -645,7 +645,7 @@ def _add_coins_to_market(_pool: address, _coin_list: address[MAX_COINS], _is_und
 @internal
 @view
 def _market_exists(_pool: address, _coina: address, _coinb: address) -> bool:
-    key: uint256 = bitwise_xor(convert(_coina, uint256), convert(_coinb, uint256))
+    key: uint256 = convert(_coina, uint256) ^ convert(_coinb, uint256)
     if self.market_counts[key] == 0:
         return False
     return True
@@ -654,7 +654,7 @@ def _market_exists(_pool: address, _coina: address, _coinb: address) -> bool:
 @internal
 def _remove_market(_pool: address, _coina: address, _coinb: address):
 
-    key: uint256 = bitwise_xor(convert(_coina, uint256), convert(_coinb, uint256))
+    key: uint256 = convert(_coina, uint256) ^ convert(_coinb, uint256)
     length: uint256 = self.market_counts[key] - 1
 
     for i in range(65536):
@@ -688,7 +688,7 @@ def add_pool(
     _zap: address,
     _n_coins: uint256,
     _name: String[64],
-    _base_pool: address = ZERO_ADDRESS,
+    _base_pool: address = empty(address),
     _has_positive_rebasing_tokens: bool = False
 ):
     """
