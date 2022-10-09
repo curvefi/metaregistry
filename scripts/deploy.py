@@ -29,15 +29,9 @@ def main(network, account):
 
     # deploy registry handlers:
     account.deploy(project.StableRegistryHandler, STABLE_REGISTRY_ADDRESS)
-    account.deploy(
-        project.StableFactoryHandler,
-        STABLE_FACTORY_ADDRESS,
-        base_pool_registry
-    )
+    account.deploy(project.StableFactoryHandler, STABLE_FACTORY_ADDRESS, base_pool_registry)
     account.deploy(project.CryptoRegistryHandler, crypto_registry)
-    account.deploy(
-        project.CryptoFactoryHandler, CRYPTO_FACTORY_ADDRESS, base_pool_registry
-    )
+    account.deploy(project.CryptoFactoryHandler, CRYPTO_FACTORY_ADDRESS, base_pool_registry)
 
     # deploy metaregistry:
     account.deploy(project.MetaRegistry, ADDRESS_PROVIDER)
