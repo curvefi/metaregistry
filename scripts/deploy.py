@@ -20,26 +20,24 @@ def cli():
 def main(network, account):
 
     # deploy registries:
-    base_pool_registry = account.deploy(project.BasePoolRegistry, publish=True)
+    base_pool_registry = account.deploy(project.BasePoolRegistry)
     crypto_registry = account.deploy(
         project.CryptoRegistryV1,
         ADDRESS_PROVIDER,
         base_pool_registry,
-        publish=True,
     )
 
     # deploy registry handlers:
-    account.deploy(project.StableRegistryHandler, STABLE_REGISTRY_ADDRESS, publish=True)
+    account.deploy(project.StableRegistryHandler, STABLE_REGISTRY_ADDRESS)
     account.deploy(
         project.StableFactoryHandler,
         STABLE_FACTORY_ADDRESS,
-        "0x425b6511Bc83033545b882bd64F5a6D8F5De3544",
-        publish=True,
+        base_pool_registry
     )
-    account.deploy(project.CryptoRegistryHandler, crypto_registry, publish=True)
+    account.deploy(project.CryptoRegistryHandler, crypto_registry)
     account.deploy(
-        project.CryptoFactoryHandler, CRYPTO_FACTORY_ADDRESS, base_pool_registry, publish=True
+        project.CryptoFactoryHandler, CRYPTO_FACTORY_ADDRESS, base_pool_registry
     )
 
     # deploy metaregistry:
-    account.deploy(project.MetaRegistry, ADDRESS_PROVIDER, publish=True)
+    account.deploy(project.MetaRegistry, ADDRESS_PROVIDER)
