@@ -156,6 +156,14 @@ def main(network, account, simulate):
     # populate base pool registry:
     base_pool_index = 0
     for _, data in BASE_POOLS.items():
+
+        # check if base pool already exists in the registry:
+        entry_at_index = base_pool_registry.base_pool_list(base_pool_index).lower()
+        if entry_at_index == data["pool"].lower():
+            base_pool_index += 1
+            continue
+
+        # set up tx calldata for proxy admin:
         call_data = base_pool_registry.add_base_pool.as_transaction(
             data["pool"],
             data["lp_token"],
@@ -183,6 +191,14 @@ def main(network, account, simulate):
     # populate crypto registry:
     crypto_pool_index = 0
     for _, pool in CRYPTO_REGISTRY_POOLS.items():
+
+        # check if base pool already exists in the registry:
+        entry_at_index = crypto_registry.pool_list(base_pool_index).lower()
+        if entry_at_index == pool["pool"].lower():
+            crypto_pool_index += 1
+            continue
+
+        # set up tx calldata for proxy admin:
         call_data = crypto_registry.add_pool.as_transaction(
             pool["pool"],
             pool["lp_token"],
@@ -234,6 +250,14 @@ def main(network, account, simulate):
     # populate metaregistry:
     registry_handler_index = 0
     for registry_handler in registry_handlers:
+
+        # check if base pool already exists in the registry:
+        entry_at_index = metaregistry.get_registry(registry_handler_index).lower()
+        if entry_at_index == registry_handler.address.lower():
+            registry_handler_index += 1
+            continue
+
+        # set up tx calldata for proxy admin:
         call_data = metaregistry.add_registry_handler.as_transaction(
             registry_handler.address, sender=address_provider_admin
         ).data
