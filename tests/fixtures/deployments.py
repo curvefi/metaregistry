@@ -14,9 +14,6 @@ def stable_registry() -> ape.Contract:
     return ape.project.StableRegistry.at("0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
 
 
-2
-
-
 @pytest.fixture(scope="module", autouse=True)
 def stable_factory() -> ape.Contract:
     return ape.project.StableFactory.at("0xB9fC157394Af804a3578134A6585C0dc9cc990d4")
