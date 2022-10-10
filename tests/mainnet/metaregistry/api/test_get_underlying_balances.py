@@ -32,7 +32,7 @@ def _get_underlying_balances(metaregistry, pool, registry, base_pool_registry, m
             if base_pool != ape.utils.ZERO_ADDRESS:
 
                 basepool_lp_token_balance = balances[idx]
-                lp_token_supply = ape.project.ERC20.at(coin).totalSupply()
+                lp_token_supply = ape.Contract(coin).totalSupply()
                 ratio_in_pool = basepool_lp_token_balance / lp_token_supply
 
                 base_pool_balances = metaregistry.get_balances(base_pool)
