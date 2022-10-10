@@ -14,7 +14,9 @@ def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
     return True
 
 
-def _get_factory_gauge(registry, pool, gauge_controller, liquidity_gauge):
+def _get_factory_gauge(
+    registry, pool, gauge_controller, liquidity_gauge, default_gauge_type: int = 0
+):
 
     gauge = registry.get_gauge(pool)
 
@@ -29,7 +31,7 @@ def _get_factory_gauge(registry, pool, gauge_controller, liquidity_gauge):
     else:
         return (
             [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
-            [0] * 10,
+            [default_gauge_type] * 10,
         )
 
 
@@ -101,11 +103,16 @@ def test_crypto_factory_pools(
     liquidity_gauge,
 ):
 
+    # warning: gauge_type == 5 : this is true only for crypto pools on ethereum
     actual_output = _get_factory_gauge(
-        crypto_factory, crypto_factory_pool, gauge_controller, liquidity_gauge
+        crypto_factory, 
+        crypto_factory_pool, 
+        gauge_controller, 
+        liquidity_gauge, 
+        5,  # DEFAULT_GAUGE_TYPE_CRYPTO_FACTORY_POOLS
     )
     metaregistry_output_gauge = populated_metaregistry.get_gauge(crypto_factory_pool)
     metaregistry_output_gauge_type = populated_metaregistry.get_gauge_type(crypto_factory_pool)
 
     assert actual_output[0][0] == metaregistry_output_gauge
-    assert actual_output[1][0] == metaregistry_output_gauge_type
+    assert metaregistry_output_gauge_type == 5

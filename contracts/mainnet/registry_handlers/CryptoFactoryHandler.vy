@@ -229,6 +229,7 @@ def _get_pool_from_lp_token(_lp_token: address) -> address:
 @view
 def _get_gauge_type(_gauge: address) -> int128:
 
+    # try to get gauge type registered in gauge controller
     success: bool = False
     response: Bytes[32] = b""
     success, response = raw_call(
@@ -245,7 +246,10 @@ def _get_gauge_type(_gauge: address) -> int128:
     if success and not Gauge(_gauge).is_killed():
         return convert(response, int128)
 
-    return 0
+    # if we are here, the call to get gauge_type failed.
+    # in such a case, return a default value.
+    # ethereum: mainnet crypto pools have gauge type 5
+    return 5
 
 
 # ---- view methods (API) of the contract ---- #
