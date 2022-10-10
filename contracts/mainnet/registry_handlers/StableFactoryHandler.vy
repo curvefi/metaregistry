@@ -380,10 +380,24 @@ def get_n_underlying_coins(_pool: address) -> uint256:
     @param _pool address of the pool
     @return number of underlying coins in the pool
     """
-    if self._is_meta(_pool):
-        return self.base_registry.get_meta_n_coins(_pool)[1]
-    else:
-        return self.base_registry.get_n_coins(_pool)
+    # need to check if any of the token is a base pool LP token
+    # since a metapool can be lptoken:lptoken, and it would count
+    # underlying coins as 1 + base_pool_n_coins instead of 2 x base_pool_n_coins
+    coins: address[MAX_METAREGISTRY_COINS] = self._get_coins(_pool)
+    base_pool: address = empty(address)
+    num_coins: uint256 = 0
+    for i in range(MAX_METAREGISTRY_COINS):
+
+        if coins[i] == empty(address):
+            break
+
+        base_pool = self.base_pool_registry.get_base_pool_for_lp_token(coins[i])
+        if base_pool == empty(address) and coins[i] != empty(address):
+            num_coins += 1
+        else:
+            num_coins += self.base_pool_registry.get_n_coins(base_pool)
+
+    return num_coins
 
 
 @external
