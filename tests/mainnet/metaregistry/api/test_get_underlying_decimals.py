@@ -26,11 +26,11 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
         underlying_coins = metaregistry.get_underlying_coins(pool)
         actual_output = []
         for i in range(len(underlying_coins)):
-            
+
             if underlying_coins[i] == ape.utils.ZERO_ADDRESS:
                 actual_output.append(0)
                 continue
-            
+
             try:
                 token_contract = ape.Contract(underlying_coins[i])
                 actual_output.append(token_contract.decimals())
@@ -43,7 +43,7 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
                     pytest.skip("Unable to get decimals due to SignatureError. Skipping test.")
             except AttributeError:
                 view_methods = [method.name for method in token_contract.contract_type.view_methods]
-                if not "decimals" in view_methods:
+                if "decimals" not in view_methods:
                     pytest.skip(f"no decimals() view method on {token_contract.address}")
 
         assert actual_output[2] != 0  # there has to be a third coin!

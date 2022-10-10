@@ -1,3 +1,5 @@
+import warnings
+
 import ape
 import pytest
 
@@ -35,10 +37,7 @@ def _check_skem_tokens_with_weird_decimals(
 
         pool_balances_float.append(pool_balances[i] / 10 ** coin_decimals[i])
 
-        if (
-            coin_decimals[i] == 0
-            and ape.Contract(metaregistry.get_coins(pool)[0]).decimals() == 0
-        ):
+        if coin_decimals[i] == 0 and ape.Contract(metaregistry.get_coins(pool)[0]).decimals() == 0:
             with ape.reverts():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)
             pytest.skip(f"skem token {coins[i]} in pool {pool} with zero decimals")
@@ -58,13 +57,16 @@ def _check_pool_is_depegged(
             == pytest.approx(max(pool_balances_float))
             and min(pool_balances_float) < 1
         ):
-            with ape.reverts():
-                metaregistry.get_virtual_price_from_lp_token(lp_token)
+            try:
+                with ape.reverts():
+                    metaregistry.get_virtual_price_from_lp_token(lp_token)
 
-            pytest.skip(
-                f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
-                f"{pool_balances[i] / 10 ** coin_decimals[i]}"
-            )
+                pytest.skip(
+                    f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
+                    f"{pool_balances[i] / 10 ** coin_decimals[i]}"
+                )
+            except AssertionError:  # ok to catch this assertion error since we continue testing
+                warnings.warn("pool virtual price getter did not revert. continuing test")
 
 
 def pre_test_checks(metaregistry, pool):
