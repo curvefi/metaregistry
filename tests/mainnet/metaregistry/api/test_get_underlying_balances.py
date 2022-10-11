@@ -32,7 +32,15 @@ def _get_underlying_balances(metaregistry, pool, registry, base_pool_registry, m
             if base_pool != ape.utils.ZERO_ADDRESS:
 
                 basepool_lp_token_balance = balances[idx]
-                lp_token_supply = ape.Contract(coin).totalSupply()
+                coin_contract = ape.Contract(coin)
+                try:
+                    lp_token_supply = coin_contract.totalSupply()
+                except AttributeError:
+                    assert "total_supply" not in [
+                        i.name for i in coin_contract.contract_type.view_methods
+                    ]
+                    pytest.skip("Token does not have total_supply view method")
+
                 ratio_in_pool = basepool_lp_token_balance / lp_token_supply
 
                 base_pool_balances = metaregistry.get_balances(base_pool)

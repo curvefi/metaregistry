@@ -1,9 +1,22 @@
 import itertools
+import warnings
 
 import ape
+import pytest
+
+
+def _reject_pools_with_one_coin(metaregistry, pool):
+
+    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS]
+    if len(list(set(pool_coins))) == 1:
+        warnings.warn(f"Pool {pool} has only one coin!")
+        pytest.skip("Pool has only one coin")
 
 
 def _get_coin_combinations(metaregistry, pool):
+
+    # skip tests if pool has only one coin:
+    _reject_pools_with_one_coin(metaregistry, pool)
 
     is_meta = metaregistry.is_meta(pool)
     pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS]
