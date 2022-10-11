@@ -35,11 +35,11 @@ def _get_underlying_balances(metaregistry, pool, registry, base_pool_registry, m
                 coin_contract = ape.Contract(coin)
                 try:
                     lp_token_supply = coin_contract.totalSupply()
-                except AttributeError:
-                    assert "total_supply" not in [
+                except (ape.exceptions.SignatureError, AttributeError):
+                    assert "totalSupply" not in [
                         i.name for i in coin_contract.contract_type.view_methods
                     ]
-                    pytest.skip("Token does not have total_supply view method")
+                    pytest.skip(f"Token {coin} method totalSupply() is not a view method")
 
                 ratio_in_pool = basepool_lp_token_balance / lp_token_supply
 
@@ -65,11 +65,6 @@ def _test_underlying_balances_getter(metaregistry, pool, registry, base_pool_reg
     )
     metaregistry_output = metaregistry.get_underlying_balances(pool)
     underlying_decimals = metaregistry.get_underlying_decimals(pool)
-
-    if metaregistry.is_meta(pool):
-        assert metaregistry_output[2] > 0  # it must have a third coin
-    else:
-        assert metaregistry_output[1] > 0  # it must have a second coin
 
     for idx, registry_value in enumerate(actual_output):
 
