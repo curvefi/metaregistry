@@ -179,7 +179,7 @@ def get_base_registry(registry_handler: address) -> address:
 @view
 @external
 def find_pool_for_coins(
-    _from: address, _to: address, i: uint256
+    _from: address, _to: address, i: uint256 = 0
 ) -> address:
     """
     @notice Find the ith available pool containing the input pair
