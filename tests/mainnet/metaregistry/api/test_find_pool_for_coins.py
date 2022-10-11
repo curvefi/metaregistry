@@ -2,6 +2,10 @@ import itertools
 
 import ape
 
+# NOTE: This is the most important method in the metaregistry contract since it will be used
+# by integrators to find pools for coin pairs. It finds pools even if the coin pair is not
+# a direct coin pair, but has a path through a metapool.
+
 
 def _get_all_combinations(metaregistry, pool):
 
@@ -24,22 +28,10 @@ def _get_all_combinations(metaregistry, pool):
 
 def test_all(populated_metaregistry, pool):
 
-    pool_count = populated_metaregistry.pool_count()
-    for combination in _get_all_combinations(populated_metaregistry, pool):
+    combinations = _get_all_combinations(populated_metaregistry, pool)
+    for combination in combinations:
+        pools_containing_pair = populated_metaregistry.find_pools_for_coins(*combination)
+        assert pool in pools_containing_pair
 
-        registered = False
-
-        for i in range(pool_count):
-
-            pool_for_the_pair = populated_metaregistry.find_pool_for_coins(
-                combination[0], combination[1], i
-            )
-
-            if pool_for_the_pair == pool:
-                registered = True
-                break
-
-            if pool_for_the_pair == ape.utils.ZERO_ADDRESS:
-                break
-
-        assert registered
+        for i, found_pool in enumerate(pools_containing_pair):
+            assert populated_metaregistry.find_pool_for_coins(*combination, i) == found_pool

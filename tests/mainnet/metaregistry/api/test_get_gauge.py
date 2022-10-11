@@ -105,10 +105,10 @@ def test_crypto_factory_pools(
 
     # warning: gauge_type == 5 : this is true only for crypto pools on ethereum
     actual_output = _get_factory_gauge(
-        crypto_factory, 
-        crypto_factory_pool, 
-        gauge_controller, 
-        liquidity_gauge, 
+        crypto_factory,
+        crypto_factory_pool,
+        gauge_controller,
+        liquidity_gauge,
         5,  # DEFAULT_GAUGE_TYPE_CRYPTO_FACTORY_POOLS
     )
     metaregistry_output_gauge = populated_metaregistry.get_gauge(crypto_factory_pool)

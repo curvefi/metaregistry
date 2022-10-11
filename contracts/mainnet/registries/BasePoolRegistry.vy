@@ -66,6 +66,26 @@ def _get_basepool_coins(_pool: address) -> address[MAX_COINS]:
     return _coins
 
 
+
+@internal
+@view
+def _get_basepools_for_coin(_coin: address) -> DynArray[address, 1000]:
+    """
+    @notice Gets the base pool for a coin
+    @dev Some coins can be in multiple base pools, this function returns
+         the base pool for a coin at a specific index
+    @param _coin Address of the coin
+    @return basepool addresses
+    """
+    _base_pools: DynArray[address, 1000] = empty(DynArray[address, 1000])
+    for _pool in self.base_pool_list:
+        _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
+        if _coin in _coins:
+            _base_pools.append(_pool)
+
+    return _base_pools
+
+
 @external
 @view
 def get_coins(_pool: address) -> address[MAX_COINS]:
@@ -79,7 +99,7 @@ def get_coins(_pool: address) -> address[MAX_COINS]:
 
 @external
 @view
-def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address:
+def get_basepool_for_coin(_coin: address, _idx: uint256 = 0) -> address:
     """
     @notice Gets the base pool for a coin
     @dev Some coins can be in multiple base pools, this function returns
@@ -88,15 +108,20 @@ def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address:
     @param _idx Index of base pool that holds the coin
     @return basepool address
     """
-    _base_pools: address[20] = empty(address[20])
-    _id: uint256 = 0
-    for _pool in self.base_pool_list:
-        _coins: address[MAX_COINS] = self._get_basepool_coins(_pool)
-        if _coin in _coins:
-            _base_pools[_id] = _pool
-            _id += 1
+    return self._get_basepools_for_coin(_coin)[_idx]
 
-    return _base_pools[_idx]
+
+@external
+@view
+def get_basepools_for_coin(_coin: address) -> DynArray[address, 1000]:
+    """
+    @notice Gets the base pool for a coin
+    @dev Some coins can be in multiple base pools, this function returns
+         the base pool for a coin at a specific index
+    @param _coin Address of the coin
+    @return basepool addresses
+    """
+    return self._get_basepools_for_coin(_coin)
 
 
 @external

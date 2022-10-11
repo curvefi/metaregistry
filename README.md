@@ -223,28 +223,54 @@ In [2]: metaregistry.find_pool_for_coins(
 Out[2]: '0xDeBF20617708857ebe4F679508E7b7863a8A8EeE'
 ```
 
+#### `MetaRegistry.find_pool_for_coins`
+
+Returns a list of pools that holds two coins (even if the pool is a metapool). The index in the query returns the index of the list of pools containing the two coins.
+
+```
+In [1]: metaregistry.find_pool_for_coins(
+            "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+            "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        )
+Out[1]:
+['0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7',
+ '0xDeBF20617708857ebe4F679508E7b7863a8A8EeE',
+ '0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27',
+ '0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56',
+ '0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF',
+ '0x06364f10B501e868329afBc005b3492902d6C763',
+ '0xA5407eAE9Ba41422680e2e00537571bcC53efBfD',
+ '0xA5407eAE9Ba41422680e2e00537571bcC53efBfD',
+ '0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C',
+ '0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51']
+```
+
 #### `MetaRegistry.get_coin_indices`
 
 Given a `_from` coin, a `_to` coin, and a `_pool`, this getter returns coin indices and a boolean that indicates if the coin swap involves an underlying market. In case of a non-metapool, the following is returned:
 
 ```
+
 In [1]: metaregistry.get_coin_indices(
-            "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
-            "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-            "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-        )
+"0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
+"0x6B175474E89094C44Da98b954EedeAC495271d0F",
+"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+)
 Out[1]: (0, 1, False)
+
 ```
 
 If the coin combination involves an underlying market (same coins, but with the `LUSD` pool):
 
 ```
+
 In [1]: metaregistry.get_coin_indices(
-            "0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
-            "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-            "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-        )
+"0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca",
+"0x6B175474E89094C44Da98b954EedeAC495271d0F",
+"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+)
 Out[1]: (1, 2, True)
+
 ```
 
 #### `MetaRegistry.get_pool_params`
@@ -254,8 +280,10 @@ Returns a pool's parameters.
 For StableSwap, the getter returns the amplification coefficient (`A`) of the pool.
 
 ```
+
 In [1]: metaregistry.get_pool_params("0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7")
 Out[1]: [2000, ... ]
+
 ```
 
 For CryptoSwap, the getter returns:
@@ -269,6 +297,7 @@ For CryptoSwap, the getter returns:
 7. MA (moving average) half time
 
 ```
+
 In [1]: metaregistry.get_pool_params("0xd51a44d3fae010294c616388b506acda1bfaae46")
 Out[1]: [1707629, 257946982336455335322438705, 11809167828997, 2000000000000, 500000000000000, 2000000000000000, 600, ... ]
 
@@ -279,8 +308,10 @@ Out[1]: [1707629, 257946982336455335322438705, 11809167828997, 2000000000000, 50
 Gets the gauge that receives `CRV` token inflation for depositing the liquidity pool token of a pool.
 
 ```
+
 In [1]: metaregistry.get_gauge("0xd51a44d3fae010294c616388b506acda1bfaae46", 0, 0)
 Out[1]: '0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168'
+
 ```
 
 #### `MetaRegistry.get_gauge_type`
@@ -288,8 +319,10 @@ Out[1]: '0xDeFd8FdD20e0f34115C7018CCfb655796F6B2168'
 Gets the gauge type of the gauge associated with a pool.
 
 ```
+
 In [1]: metaregistry.get_gauge_type("0xd51a44d3fae010294c616388b506acda1bfaae46", 0, 0)
 Out[1]: 5
+
 ```
 
 #### `MetaRegistry.get_lp_token`
@@ -297,8 +330,10 @@ Out[1]: 5
 Gets the address of the liquidity pool token minted by a pool.
 
 ```
+
 In [1]: metaregistry.get_lp_token("0xd51a44d3fae010294c616388b506acda1bfaae46")
 Out[1]: '0xc4AD29ba4B3c580e6D59105FFf484999997675Ff'
+
 ```
 
 #### `MetaRegistry.get_pool_asset_type`
@@ -308,15 +343,19 @@ Gets the asset type of a pool. `0` = `USD`, `1` = `ETH`, `2` = `BTC`, `3` = Othe
 StableSwap pool example for `LUSD-3CRV` pool which is a `USD` stablecoin pool:
 
 ```
+
 In [1]: metaregistry.get_pool_asset_type("0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca")
 Out[1]: 0
+
 ```
 
 CryptoSwap pool example:
 
 ```
+
 In [1]: metaregistry.get_pool_asset_type("0xd51a44d3fae010294c616388b506acda1bfaae46")
 Out[1]: 4
+
 ```
 
 #### `MetaRegistry.get_pool_from_lp_token`
@@ -324,8 +363,10 @@ Out[1]: 4
 Gets the pool associated with a liquidity pool token.
 
 ```
+
 In [1]: metaregistry.get_pool_from_lp_token("0xc4AD29ba4B3c580e6D59105FFf484999997675Ff")
 Out[1]: '0xD51a44d3FaE010294C616388b506AcdA1bfAAE46'
+
 ```
 
 #### `MetaRegistry.get_virtual_price_from_lp_token`
@@ -333,8 +374,10 @@ Out[1]: '0xD51a44d3FaE010294C616388b506AcdA1bfAAE46'
 Gets a token's virtual price. The virtual price of any pool begins with `1`, and increases as the pool accrues fees. This number constantly increases for StableSwap pools, unless the pool's amplification coefficient changes. For CryptoSwap pools, there are moments when the virtual price can go down (admin fee claims, changes to pool's parameters).
 
 ```
+
 In [1]: metaregistry.get_virtual_price_from_lp_token("0xc4AD29ba4B3c580e6D59105FFf484999997675Ff")
 Out[1]: 1020841390601246610
+
 ```
 
 # Setup
@@ -342,10 +385,12 @@ Out[1]: 1020841390601246610
 Set up the python environment using the following steps:
 
 ```
+
 > python -m venv venv
 > source ./venv/bin/active
 > pip install --upgrade pip
 > pip install -r ./requirements.txt
+
 ```
 
 This project uses `eth-ape >= 0.4.0` developed at [Apeworx](https://apeworx.io). The various plugins used are:
@@ -361,13 +406,14 @@ To install these, please follow instructions laid out in their respective Github
 Note: If you choose to run tests using `Alchemy` as the upstream provider, please set up an alchemy api key into an environment variable labelled `WEB3_ALCHEMY_PROJECT_ID` or `WEB3_ALCHEMY_API_KEY`. If you choose to use a local node (`geth` or `erigon`) please change the hardhat upstream provider for mainnet-fork to `geth` in [ape-config.yaml](ape-config.yaml):
 
 ```
+
 hardhat:
-  port: auto
-  fork:
-    ethereum:
-      mainnet:
-        upstream_provider: geth
-        # upstream_provider: alchemy
+port: auto
+fork:
+ethereum:
+mainnet:
+upstream_provider: geth # upstream_provider: alchemy
+
 ```
 
 ### Testing
@@ -375,7 +421,9 @@ hardhat:
 To run tests in interactive mode, please do the following:
 
 ```
+
 > ape test -I -s
+
 ```
 
 # Deployment
@@ -383,7 +431,9 @@ To run tests in interactive mode, please do the following:
 To deploy, please use the following command (example deployment in mainnet-fork):
 
 ```
+
 > ape run scripts/deploy.py main --network ethereum:mainnet-fork --account <your_account>
+
 ```
 
 ## Adding Registries
@@ -391,7 +441,9 @@ To deploy, please use the following command (example deployment in mainnet-fork)
 The following command simulates metaregistry setup. For Prod transactions, set simulation to False.
 
 ```
+
 > ape run scripts/setup_metaregistry.py main --network ethereum:mainnet-fork --account <your_account> --simulate True
+
 ```
 
 #### Deployments
@@ -409,3 +461,7 @@ Ethereum Mainnet:
 ### License
 
 (c) Curve.Fi, 2022 - [All rights reserved](LICENSE).
+
+```
+
+```
