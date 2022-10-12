@@ -5,7 +5,7 @@ def test_new_crypto_factory_pool(metaregistry, crypto_factory, tokens, lp_tokens
     test_pool_name = "test_pool"
 
     assert (
-        metaregistry.find_pool_for_coins(tokens["dai"], lp_tokens["cvxFXSFXS-f"])
+        metaregistry.find_pool_for_coins(tokens["dai"], lp_tokens["cvxFXSFXS-f"], 0)
         == ape.utils.ZERO_ADDRESS
     )
 
@@ -34,14 +34,14 @@ def test_new_crypto_factory_pool(metaregistry, crypto_factory, tokens, lp_tokens
     )
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool
-    assert metaregistry.find_pool_for_coins(tokens["dai"], lp_tokens["cvxFXSFXS-f"]) == new_pool
+    assert metaregistry.find_pool_for_coins(tokens["dai"], lp_tokens["cvxFXSFXS-f"], 0) == new_pool
 
 
 def test_new_stable_factory_pool(metaregistry, stable_factory, lp_tokens, alice):
     test_pool_name = "test_pool"
 
     assert (
-        metaregistry.find_pool_for_coins(lp_tokens["bveCVX-CVX-f"], lp_tokens["cvxFXSFXS-f"])
+        metaregistry.find_pool_for_coins(lp_tokens["bveCVX-CVX-f"], lp_tokens["cvxFXSFXS-f"], 0)
         == ape.utils.ZERO_ADDRESS
     )
 
@@ -71,6 +71,6 @@ def test_new_stable_factory_pool(metaregistry, stable_factory, lp_tokens, alice)
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool
     assert (
-        metaregistry.find_pool_for_coins(lp_tokens["bveCVX-CVX-f"], lp_tokens["cvxFXSFXS-f"])
+        metaregistry.find_pool_for_coins(lp_tokens["bveCVX-CVX-f"], lp_tokens["cvxFXSFXS-f"], 0)
         == new_pool
     )

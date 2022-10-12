@@ -1,4 +1,5 @@
 import ape
+import pytest
 
 EXCEPTIONS = {
     # eth: ankreth pool returns [18, 0] when it should return:
@@ -25,10 +26,25 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
         underlying_coins = metaregistry.get_underlying_coins(pool)
         actual_output = []
         for i in range(len(underlying_coins)):
+
             if underlying_coins[i] == ape.utils.ZERO_ADDRESS:
                 actual_output.append(0)
-            else:
-                actual_output.append(ape.project.ERC20.at(underlying_coins[i]).decimals())
+                continue
+
+            try:
+                token_contract = ape.Contract(underlying_coins[i])
+                actual_output.append(token_contract.decimals())
+            except ape.exceptions.ChainError:
+                pytest.skip("Unverified contract. Skipping test.")
+            except ape.exceptions.SignatureError:
+                if underlying_coins[i] == "0x6810e776880C02933D47DB1b9fc05908e5386b96":
+                    actual_output.append(18)  # Gnosis Token
+                else:
+                    pytest.skip("Unable to get decimals due to SignatureError. Skipping test.")
+            except AttributeError:
+                view_methods = [method.name for method in token_contract.contract_type.view_methods]
+                if "decimals" not in view_methods:
+                    pytest.skip(f"no decimals() view method on {token_contract.address}")
 
         assert actual_output[2] != 0  # there has to be a third coin!
     else:

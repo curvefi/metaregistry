@@ -1,9 +1,11 @@
 name: curve-metaregistry
 
 plugins:
-  - vyper
-  - alchemy
-  - hardhat
+  - name: vyper
+  - name: alchemy
+  - name: hardhat
+  - name: ledger
+  - name: etherscan
 
 ethereum:
   default_network: mainnet-fork

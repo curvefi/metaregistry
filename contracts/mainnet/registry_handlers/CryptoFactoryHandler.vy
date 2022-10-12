@@ -24,7 +24,7 @@ interface BasePoolRegistry:
     def get_lp_token(_pool: address) -> address: view
     def is_legacy(_pool: address) -> bool: view
     def base_pool_list(i: uint256) -> address: view
-    def get_basepool_for_coins(_coin: address, _idx: uint256 = 0) -> address: view
+    def get_basepools_for_coin(_coin: address) -> DynArray[address, 1000]: view
 
 
 interface CurvePool:
@@ -229,6 +229,7 @@ def _get_pool_from_lp_token(_lp_token: address) -> address:
 @view
 def _get_gauge_type(_gauge: address) -> int128:
 
+    # try to get gauge type registered in gauge controller
     success: bool = False
     response: Bytes[32] = b""
     success, response = raw_call(
@@ -245,7 +246,10 @@ def _get_gauge_type(_gauge: address) -> int128:
     if success and not Gauge(_gauge).is_killed():
         return convert(response, int128)
 
-    return 0
+    # if we are here, the call to get gauge_type failed.
+    # in such a case, return a default value.
+    # ethereum: mainnet crypto pools have gauge type 5
+    return 5
 
 
 # ---- view methods (API) of the contract ---- #
@@ -268,39 +272,47 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
         return _pool
 
     # could not find a pool for the coins for `i`. check if they are in a base pool:
-    _base_pool: address = empty(address)
-    _pools: address[20] = empty(address[20])
+    _pools: address[1000] = empty(address[1000])
     _num_metapool_pairs: uint256 = 0
 
     for coin in [_from, _to]:
 
         # we need to loop over several base pools because a coin can exist in multiple base pools
-        for j in range(20):
+        base_pools: DynArray[address, 1000] = self.base_pool_registry.get_basepools_for_coin(coin)
 
-            _base_pool = self.base_pool_registry.get_basepool_for_coins(coin, j)
+        if len(base_pools) == 0:
+            continue
+
+        for _base_pool in base_pools:
 
             # found a base pool, but is it the right one?
             if _base_pool != empty(address):
 
                 base_pool_lp_token: address = self.base_pool_registry.get_lp_token(_base_pool)
 
-                if coin == _from:
+                for k in range(100):
 
-                    # check if the basepool cointaining the _from coin has a pair with the _to coin:
-                    _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, 0)
+                    if coin == _from:
 
-                    # only append if a pool is found:
-                    if _pool != empty(address):
+                        # check if the basepool containing the _from coin has a pair with the _to coin:
+                        _pool = self.base_registry.find_pool_for_coins(base_pool_lp_token, _to, k)
+
+                        if _pool == empty(address):
+                            break
+
+                        # only append if a pool is found:
                         _pools[_num_metapool_pairs] = _pool
                         _num_metapool_pairs += 1
 
-                elif coin == _to:
+                    elif coin == _to:
 
-                    # check if the basepool cointaining the _to coin has a pair with the _from coin:
-                    _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, 0)
+                        # check if the basepool containing the _to coin has a pair with the _from coin:
+                        _pool = self.base_registry.find_pool_for_coins(_from, base_pool_lp_token, k)
 
-                    # only append if a pool is found:
-                    if _pool != empty(address):
+                        if _pool == empty(address):
+                            break
+
+                        # only append if a pool is found:
                         _pools[_num_metapool_pairs] = _pool
                         _num_metapool_pairs += 1
 

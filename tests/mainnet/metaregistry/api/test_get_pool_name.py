@@ -9,7 +9,7 @@ def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, sta
     ) == stable_registry.get_pool_name(stable_registry_pool)
 
 
-def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, project):
+def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
 
     # same issues where a pool that was first in a registry got ported over to the
     # factory incorrectly. so we try different handler indices to check if we get
@@ -25,7 +25,7 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, proje
 
         assert (
             populated_metaregistry.get_pool_name(stable_factory_pool)
-            == project.ERC20.at(stable_factory_pool).name()
+            == ape.Contract(stable_factory_pool).name()
         )
 
     elif num_registry_handlers == 2:
@@ -34,12 +34,12 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, proje
 
             assert (
                 populated_metaregistry.get_pool_name(stable_factory_pool)
-                == project.ERC20.at(stable_factory_pool).name()
+                == ape.Contract(stable_factory_pool).name()
             )
 
         assert (
             populated_metaregistry.get_pool_name(stable_factory_pool, 1)
-            == project.ERC20.at(stable_factory_pool).name()
+            == ape.Contract(stable_factory_pool).name()
         )
 
     else:
@@ -54,9 +54,9 @@ def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, cry
     ) == crypto_registry.get_pool_name(crypto_registry_pool)
 
 
-def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory, project):
+def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory):
 
     assert (
         populated_metaregistry.get_pool_name(crypto_factory_pool)
-        == project.ERC20.at(crypto_factory.get_token(crypto_factory_pool)).name()
+        == ape.Contract(crypto_factory.get_token(crypto_factory_pool)).name()
     )

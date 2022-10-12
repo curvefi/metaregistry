@@ -1,20 +1,22 @@
+import ape
 import pytest
 
 
-def pre_test_checks(metaregistry, pool, project):
+def pre_test_checks(metaregistry, pool):
 
     if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip("empty pool: skipping")
 
-    if project.ERC20.at(metaregistry.get_lp_token(pool)).totalSupply() == 0:
-        pytest.skip("lp token supply is zero")
+    try:
+        if ape.Contract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
+            pytest.skip("lp token supply is zero")
+    except ape.exceptions.SignatureError:
+        pytest.skip(f"SignatureError for token {metaregistry.get_lp_token(pool)}: skipping")
 
 
-def test_stable_registry_pools(
-    populated_metaregistry, stable_registry_pool, stable_registry, project
-):
+def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
 
-    pre_test_checks(populated_metaregistry, stable_registry_pool, project)
+    pre_test_checks(populated_metaregistry, stable_registry_pool)
 
     actual_output = stable_registry.get_admin_balances(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_admin_balances(stable_registry_pool)
@@ -25,11 +27,10 @@ def test_stable_registry_pools(
 def test_stable_factory_pools(
     populated_metaregistry,
     stable_factory_pool,
-    project,
     curve_pool,
 ):
 
-    pre_test_checks(populated_metaregistry, stable_factory_pool, project)
+    pre_test_checks(populated_metaregistry, stable_factory_pool)
 
     pool = curve_pool(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_admin_balances(stable_factory_pool)
@@ -42,7 +43,7 @@ def test_stable_factory_pools(
 
 def _get_crypto_pool_admin_fees(populated_metaregistry, pool, fee_receiver, project, alice, chain):
 
-    lp_token = project.ERC20.at(populated_metaregistry.get_lp_token(pool))
+    lp_token = ape.Contract(populated_metaregistry.get_lp_token(pool))
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
 
     chain.snapshot()
@@ -71,7 +72,7 @@ def test_crypto_registry_pools(
     project,
 ):
 
-    pre_test_checks(populated_metaregistry, crypto_registry_pool, project)
+    pre_test_checks(populated_metaregistry, crypto_registry_pool)
 
     pool = curve_pool_v2(crypto_registry_pool)
     fee_receiver = pool.admin_fee_receiver()
@@ -94,7 +95,7 @@ def test_crypto_factory_pools(
     project,
 ):
 
-    pre_test_checks(populated_metaregistry, crypto_factory_pool, project)
+    pre_test_checks(populated_metaregistry, crypto_factory_pool)
 
     pool = curve_pool_v2(crypto_factory_pool)
     fee_receiver = crypto_factory.fee_receiver()

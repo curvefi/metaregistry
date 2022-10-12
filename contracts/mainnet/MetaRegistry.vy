@@ -1,4 +1,4 @@
-# @version 0.3.4
+# @version 0.3.7
 """
 @title Curve Meta Registry
 @license MIT
@@ -37,6 +37,7 @@ interface RegistryHandler:
     def pool_count() -> uint256: view
     def pool_list(_index: uint256) -> address: view
     def get_virtual_price_from_lp_token(_addr: address) -> uint256: view
+    def base_registry() -> address: view
 
 
 # ---- events ---- #
@@ -164,31 +165,78 @@ def get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
     return self._get_registry_handlers_from_pool(_pool)
 
 
+@external
+@view
+def get_base_registry(registry_handler: address) -> address:
+    """
+    @notice Get the registry associated with a registry handler
+    @param registry_handler Registry Handler address
+    @return Address of base registry
+    """
+    return RegistryHandler(registry_handler).base_registry()
+
+
 @view
 @external
-def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address:
+def find_pool_for_coins(
+    _from: address, _to: address, i: uint256 = 0
+) -> address:
     """
-    @notice Find an available pool for exchanging two coins
+    @notice Find the ith available pool containing the input pair
     @param _from Address of coin to be sent
     @param _to Address of coin to be received
-    @param i Index value. When multiple pools are available
-            this value is used to return the n'th address.
+    @param i Index of the pool to return
     @return Pool address
     """
-    local_index: uint256 = 0
+    pools_found: uint256 = 0
     pool: address = empty(address)
+    registry: address = empty(address)
+
     for registry_index in range(MAX_REGISTRIES):
-        if registry_index == self.registry_length:
+
+        registry = self.get_registry[registry_index]
+        if registry == empty(address):
             break
-        registry: RegistryHandler = RegistryHandler(self.get_registry[registry_index])
+
         for j in range(0, 65536):
-            pool = registry.find_pool_for_coins(_from, _to, j)
+
+            pool = RegistryHandler(registry).find_pool_for_coins(_from, _to, j)
             if pool == empty(address):
                 break
-            local_index += 1
-            if local_index > i:
+            pools_found += 1
+            if pools_found > i:
                 return pool
+
     return pool
+
+
+@view
+@external
+def find_pools_for_coins(_from: address, _to: address) -> DynArray[address, 1000]:
+    """
+    @notice Find all pools that contain the input pair
+    @param _from Address of coin to be sent
+    @param _to Address of coin to be received
+    @return Pool addresses
+    """
+    pools_found: DynArray[address, 1000]= empty(DynArray[address, 1000])
+    pool: address = empty(address)
+    registry: address = empty(address)
+
+    for registry_index in range(MAX_REGISTRIES):
+
+        registry = self.get_registry[registry_index]
+        if registry == empty(address):
+            break
+
+        for j in range(0, 65536):
+
+            pool = RegistryHandler(registry).find_pool_for_coins(_from, _to, j)
+            if pool == empty(address):
+                break
+            pools_found.append(pool)
+
+    return pools_found
 
 
 @external
