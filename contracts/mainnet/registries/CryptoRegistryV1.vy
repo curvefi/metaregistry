@@ -703,7 +703,7 @@ def _unregister_coin(_coin: address):
             self.coins[coin_b].index = location
 
         self.coins[_coin].index = 0
-        self.get_coin[coin_count] = ZERO_ADDRESS
+        self.get_coin[coin_count] = empty(address)
 
 
 @internal
@@ -735,7 +735,7 @@ def _unregister_coin_pair(_coina: address, _coinb: address, _coinb_idx: uint256)
         # set _coinb_idx in coina's array to coin_c
         self.coins[_coina].swap_for[_coinb_idx] = coin_c
 
-    self.coins[_coina].swap_for[coina_arr_last_idx] = ZERO_ADDRESS
+    self.coins[_coina].swap_for[coina_arr_last_idx] = empty(address)
 
 
 @internal

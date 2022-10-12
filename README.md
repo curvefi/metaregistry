@@ -428,6 +428,18 @@ To run tests in interactive mode, please do the following:
 
 # Deployment
 
+First, set up your account in Ape. If you're using an EOA that is a cold wallet, please do:
+
+```
+> ape accounts import <alias>
+```
+
+This will prompt you for a private key. If your account is a ledger account, then follow:
+
+```
+> ape ledger add <alias>
+```
+
 To deploy, please use the following command (example deployment in mainnet-fork):
 
 ```
@@ -438,11 +450,12 @@ To deploy, please use the following command (example deployment in mainnet-fork)
 
 ## Adding Registries
 
-The following command simulates metaregistry setup. For Prod transactions, set simulation to False.
+The following command simulates metaregistry setup. For Prod transactions, set network to anythin that is not
+`ethereum:mainnet-fork` (so: `ethereum:mainnet:geth` or `ethereum:mainnet:alchemy` is fine.)
 
 ```
 
-> ape run scripts/setup_metaregistry.py main --network ethereum:mainnet-fork --account <your_account> --simulate True
+> ape run scripts/setup_metaregistry.py main --network ethereum:mainnet-fork --account <your_account>
 
 ```
 
@@ -450,18 +463,14 @@ The following command simulates metaregistry setup. For Prod transactions, set s
 
 Ethereum Mainnet:
 
-`base_pool_registry`: [0x425b6511Bc83033545b882bd64F5a6D8F5De3544](https://etherscan.io/address/0x425b6511Bc83033545b882bd64F5a6D8F5De3544#code)
-`crypto_registry`: [0xAe917125d629DC0AbF8702793D1E911728DE0455](https://etherscan.io/address/0xAe917125d629DC0AbF8702793D1E911728DE0455#code)
+`base_pool_registry`: [0xDE3eAD9B2145bBA2EB74007e58ED07308716B725](https://etherscan.io/address/0xDE3eAD9B2145bBA2EB74007e58ED07308716B725#code)
+`crypto_registry`: [0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0](https://etherscan.io/address/0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0#code)
 `stable_registry_handler`: [0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68](https://etherscan.io/address/0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68#code)
-`stable_factory_handler`: [0xF9b71067A1Bb1258F2155359e8B22090612870FF](https://etherscan.io/address/0xF9b71067A1Bb1258F2155359e8B22090612870FF#code)
-`crypto_registry_handler`: [0xAB09Bd46eBb782da7a61F336b9376BcB3D35B2e4](https://etherscan.io/address/0xAB09Bd46eBb782da7a61F336b9376BcB3D35B2e4#code)
-`crypto_factory_handler`: [0x23544454b2b6cdb62ddd4f402c23e7bd0e50656c](https://etherscan.io/address/0x23544454b2b6cdb62ddd4f402c23e7bd0e50656c#code)
-`metaregistry`: [0x8764ADd5e7008ac9a1F44f2664930e8c8fdDc095](https://etherscan.io/address/0x8764ADd5e7008ac9a1F44f2664930e8c8fdDc095#code)
+`stable_factory_handler`: [0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9](https://etherscan.io/address/0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9#code)
+`crypto_registry_handler`: [0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56](https://etherscan.io/address/0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56#code)
+`crypto_factory_handler`: [0xC4F389020002396143B863F6325aA6ae481D19CE](https://etherscan.io/address/0xC4F389020002396143B863F6325aA6ae481D19CE#code)
+`metaregistry`: [0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC](https://etherscan.io/address/0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC#code)
 
 ### License
 
 (c) Curve.Fi, 2022 - [All rights reserved](LICENSE).
-
-```
-
-```

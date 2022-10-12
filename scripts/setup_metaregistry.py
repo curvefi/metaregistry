@@ -137,21 +137,43 @@ def cli():
 @cli.command(cls=NetworkBoundCommand)
 @network_option()
 @account_option()
-@click.option("--simulate", "-s", type=bool, default=True, help="Simulate deployment")
-def main(network, account, simulate):
-
-    total_gas_used = 0
+def main(network, account):
 
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
     address_provider = project.AddressProvider.at(ADDRESS_PROVIDER)
     address_provider_admin = address_provider.admin()
     proxy_admin = project.ProxyAdmin.at(address_provider_admin)
 
-    if simulate:
+    if network == "ethereum:mainnet-fork":
+        RICH_CONSOLE.log("Simulation mode.")
         account = accounts[proxy_admin.admins(1)]
 
-    # deploy basepool registry:
-    base_pool_registry = project.BasePoolRegistry.at("0x425b6511Bc83033545b882bd64F5a6D8F5De3544")
+    # deployed contracts:
+    base_pool_registry = project.BasePoolRegistry.at("0xDE3eAD9B2145bBA2EB74007e58ED07308716B725")
+    crypto_registry = project.CryptoRegistryV1.at("0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0")
+    stable_registry_handler = project.StableRegistryHandler.at(
+        "0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68"
+    )
+    stable_factory_handler = project.StableFactoryHandler.at(
+        "0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9"
+    )
+    crypto_registry_handler = project.CryptoRegistryHandler.at(
+        "0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56"
+    )
+    crypto_factory_handler = project.CryptoFactoryHandler.at(
+        "0xC4F389020002396143B863F6325aA6ae481D19CE"
+    )
+    metaregistry = project.MetaRegistry.at("0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC")
+    registry_handlers = [
+        stable_registry_handler,
+        stable_factory_handler,
+        crypto_registry_handler,
+        crypto_factory_handler,
+    ]
+
+    # setup the metaregistry:
+
+    total_gas_used = 0  # gets total gas used for setting up. should be about 5mil gas.
 
     # populate base pool registry:
     base_pool_index = 0
@@ -185,8 +207,6 @@ def main(network, account, simulate):
             f"Gas used: [green]{tx.gas_used}"
         )
         base_pool_index += 1
-
-    crypto_registry = project.CryptoRegistryV1.at("0xAe917125d629DC0AbF8702793D1E911728DE0455")
 
     # populate crypto registry:
     crypto_pool_index = 0
@@ -223,30 +243,6 @@ def main(network, account, simulate):
         )
         crypto_pool_index += 1
 
-    # registry handlers:
-    stable_registry_handler = project.StableRegistryHandler.at(
-        "0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68"
-    )
-    stable_factory_handler = project.StableFactoryHandler.at(
-        "0xF9b71067A1Bb1258F2155359e8B22090612870FF"
-    )
-    crypto_registry_handler = project.CryptoRegistryHandler.at(
-        "0xAB09Bd46eBb782da7a61F336b9376BcB3D35B2e4"
-    )
-    crypto_factory_handler = project.CryptoFactoryHandler.at(
-        "0x23544454b2b6cdb62ddd4f402c23e7bd0e50656c"
-    )
-
-    registry_handlers = [
-        stable_registry_handler,
-        stable_factory_handler,
-        crypto_registry_handler,
-        crypto_factory_handler,
-    ]
-
-    # metaregistry:
-    metaregistry = project.MetaRegistry.at("0x8764ADd5e7008ac9a1F44f2664930e8c8fdDc095")
-
     # populate metaregistry:
     registry_handler_index = 0
     for registry_handler in registry_handlers:
@@ -279,6 +275,9 @@ def main(network, account, simulate):
 
     # add metaregistry to address provider:
     max_id = address_provider.max_id()
+    RICH_CONSOLE.log(
+        f"Max id: [yellow]{max_id}, entry: [blue]{address_provider.get_address(max_id)}."
+    )
     metaregistry_description = "Metaregistry"
     call_data = address_provider.add_new_id.as_transaction(
         metaregistry.address, metaregistry_description, sender=address_provider_admin
@@ -295,3 +294,11 @@ def main(network, account, simulate):
         f"Gas used: [green]{tx.gas_used}"
     )
     RICH_CONSOLE.log(f"Deployment complete! Total gas used: [green]{total_gas_used}")
+
+    # test metaregistry. get a list of pools that have shibainu <> frax:
+    print(
+        metaregistry.find_pools_for_coins(
+            "0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE",
+            "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+        )
+    )
