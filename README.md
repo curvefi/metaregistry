@@ -225,7 +225,7 @@ Out[2]: '0xDeBF20617708857ebe4F679508E7b7863a8A8EeE'
 
 #### `MetaRegistry.find_pools_for_coins`
 
-Returns a list of pools that holds two coins (even if the pool is a metapool). The index in the query returns the index of the list of pools containing the two coins.
+Returns a list of pools that holds two coins (even if the pool is a metapool).
 
 ```
 In [1]: metaregistry.find_pools_for_coins(
