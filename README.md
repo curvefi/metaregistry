@@ -223,12 +223,12 @@ In [2]: metaregistry.find_pool_for_coins(
 Out[2]: '0xDeBF20617708857ebe4F679508E7b7863a8A8EeE'
 ```
 
-#### `MetaRegistry.find_pool_for_coins`
+#### `MetaRegistry.find_pools_for_coins`
 
 Returns a list of pools that holds two coins (even if the pool is a metapool). The index in the query returns the index of the list of pools containing the two coins.
 
 ```
-In [1]: metaregistry.find_pool_for_coins(
+In [1]: metaregistry.find_pools_for_coins(
             "0x6B175474E89094C44Da98b954EedeAC495271d0F",
             "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         )
