@@ -1,8 +1,4 @@
-eth-ape
-ape-vyper
-ape-alchemy
-ape-hardhat
-ape-ledger
+eth-brownie
 black
 flake8
 isort
