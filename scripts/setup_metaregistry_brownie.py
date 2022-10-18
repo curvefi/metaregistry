@@ -217,7 +217,7 @@ def main():
     for _, pool in CRYPTO_REGISTRY_POOLS.items():
 
         # check if base pool already exists in the registry:
-        entry_at_index = crypto_registry.pool_list(base_pool_index).lower()
+        entry_at_index = crypto_registry.pool_list(crypto_pool_index).lower()
         if entry_at_index == pool["pool"].lower():
             crypto_pool_index += 1
             continue
