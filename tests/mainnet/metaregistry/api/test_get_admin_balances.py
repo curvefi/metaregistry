@@ -11,15 +11,21 @@ def pre_test_checks(metaregistry, pool):
         if ape.Contract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
             pytest.skip("lp token supply is zero")
     except ape.exceptions.SignatureError:
-        pytest.skip(f"SignatureError for token {metaregistry.get_lp_token(pool)}: skipping")
+        pytest.skip(
+            f"SignatureError for token {metaregistry.get_lp_token(pool)}: skipping"
+        )
 
 
-def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, stable_registry
+):
 
     pre_test_checks(populated_metaregistry, stable_registry_pool)
 
     actual_output = stable_registry.get_admin_balances(stable_registry_pool)
-    metaregistry_output = populated_metaregistry.get_admin_balances(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_admin_balances(
+        stable_registry_pool
+    )
     for i, output in enumerate(actual_output):
         assert output == metaregistry_output[i]
 
@@ -33,7 +39,9 @@ def test_stable_factory_pools(
     pre_test_checks(populated_metaregistry, stable_factory_pool)
 
     pool = curve_pool(stable_factory_pool)
-    metaregistry_output = populated_metaregistry.get_admin_balances(stable_factory_pool)
+    metaregistry_output = populated_metaregistry.get_admin_balances(
+        stable_factory_pool
+    )
     for i in range(populated_metaregistry.get_n_coins(pool)):
         assert pool.admin_balances(i) == metaregistry_output[i]
 
@@ -41,7 +49,9 @@ def test_stable_factory_pools(
 # ---- crypto pools are treated differently ----
 
 
-def _get_crypto_pool_admin_fees(populated_metaregistry, pool, fee_receiver, project, alice, chain):
+def _get_crypto_pool_admin_fees(
+    populated_metaregistry, pool, fee_receiver, project, alice, chain
+):
 
     lp_token = ape.Contract(populated_metaregistry.get_lp_token(pool))
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
@@ -49,9 +59,13 @@ def _get_crypto_pool_admin_fees(populated_metaregistry, pool, fee_receiver, proj
     chain.snapshot()
     pool.claim_admin_fees(sender=alice)
 
-    claimed_lp_token_as_fee = lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
+    claimed_lp_token_as_fee = (
+        lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
+    )
     total_supply_lp_token = lp_token.totalSupply()
-    frac_admin_fee = int(claimed_lp_token_as_fee * 10**18 / total_supply_lp_token)
+    frac_admin_fee = int(
+        claimed_lp_token_as_fee * 10**18 / total_supply_lp_token
+    )
 
     # get admin balances in individual assets:
     reserves = populated_metaregistry.get_balances(pool)

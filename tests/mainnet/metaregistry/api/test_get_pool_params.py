@@ -1,15 +1,23 @@
-def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, stable_registry
+):
 
     actual_pool_params = [0] * 20
     actual_pool_params[0] = stable_registry.get_A(stable_registry_pool)
-    metaregistry_output = populated_metaregistry.get_pool_params(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_pool_params(
+        stable_registry_pool
+    )
 
     assert actual_pool_params == metaregistry_output
 
 
-def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, stable_factory):
+def test_stable_factory_pools(
+    populated_metaregistry, stable_factory_pool, stable_factory
+):
 
-    metaregistry_output = populated_metaregistry.get_pool_params(stable_factory_pool)
+    metaregistry_output = populated_metaregistry.get_pool_params(
+        stable_factory_pool
+    )
     actual_pool_params = [0] * 20
     actual_pool_params[0] = stable_factory.get_A(stable_factory_pool)
 
@@ -17,10 +25,15 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, stabl
 
 
 def test_crypto_registry_pools(
-    populated_metaregistry, crypto_registry_pool, crypto_registry, curve_pool_v2
+    populated_metaregistry,
+    crypto_registry_pool,
+    crypto_registry,
+    curve_pool_v2,
 ):
 
-    metaregistry_output = populated_metaregistry.get_pool_params(crypto_registry_pool)
+    metaregistry_output = populated_metaregistry.get_pool_params(
+        crypto_registry_pool
+    )
     v2_pool = curve_pool_v2(crypto_registry_pool)
 
     actual_pool_params = [0] * 20
@@ -34,9 +47,13 @@ def test_crypto_registry_pools(
     assert actual_pool_params == metaregistry_output
 
 
-def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, curve_pool_v2):
+def test_crypto_factory_pools(
+    populated_metaregistry, crypto_factory_pool, curve_pool_v2
+):
 
-    metaregistry_output = populated_metaregistry.get_pool_params(crypto_factory_pool)
+    metaregistry_output = populated_metaregistry.get_pool_params(
+        crypto_factory_pool
+    )
     v2_pool = curve_pool_v2(crypto_factory_pool)
 
     actual_pool_params = [0] * 20

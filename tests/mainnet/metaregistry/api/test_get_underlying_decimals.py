@@ -37,14 +37,24 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
             except ape.exceptions.ChainError:
                 pytest.skip("Unverified contract. Skipping test.")
             except ape.exceptions.SignatureError:
-                if underlying_coins[i] == "0x6810e776880C02933D47DB1b9fc05908e5386b96":
+                if (
+                    underlying_coins[i]
+                    == "0x6810e776880C02933D47DB1b9fc05908e5386b96"
+                ):
                     actual_output.append(18)  # Gnosis Token
                 else:
-                    pytest.skip("Unable to get decimals due to SignatureError. Skipping test.")
+                    pytest.skip(
+                        "Unable to get decimals due to SignatureError. Skipping test."
+                    )
             except AttributeError:
-                view_methods = [method.name for method in token_contract.contract_type.view_methods]
+                view_methods = [
+                    method.name
+                    for method in token_contract.contract_type.view_methods
+                ]
                 if "decimals" not in view_methods:
-                    pytest.skip(f"no decimals() view method on {token_contract.address}")
+                    pytest.skip(
+                        f"no decimals() view method on {token_contract.address}"
+                    )
 
         assert actual_output[2] != 0  # there has to be a third coin!
     else:
@@ -54,17 +64,33 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
         assert decimals == metaregistry_output[idx]
 
 
-def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, stable_registry):
-    _test_underlying_decimals_getter(populated_metaregistry, stable_registry, stable_registry_pool)
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, stable_registry
+):
+    _test_underlying_decimals_getter(
+        populated_metaregistry, stable_registry, stable_registry_pool
+    )
 
 
-def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, stable_factory):
-    _test_underlying_decimals_getter(populated_metaregistry, stable_factory, stable_factory_pool)
+def test_stable_factory_pools(
+    populated_metaregistry, stable_factory_pool, stable_factory
+):
+    _test_underlying_decimals_getter(
+        populated_metaregistry, stable_factory, stable_factory_pool
+    )
 
 
-def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, crypto_registry):
-    _test_underlying_decimals_getter(populated_metaregistry, crypto_registry, crypto_registry_pool)
+def test_crypto_registry_pools(
+    populated_metaregistry, crypto_registry_pool, crypto_registry
+):
+    _test_underlying_decimals_getter(
+        populated_metaregistry, crypto_registry, crypto_registry_pool
+    )
 
 
-def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, crypto_factory):
-    _test_underlying_decimals_getter(populated_metaregistry, crypto_factory, crypto_factory_pool)
+def test_crypto_factory_pools(
+    populated_metaregistry, crypto_factory_pool, crypto_factory
+):
+    _test_underlying_decimals_getter(
+        populated_metaregistry, crypto_factory, crypto_factory_pool
+    )

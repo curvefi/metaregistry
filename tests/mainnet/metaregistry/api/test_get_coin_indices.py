@@ -7,7 +7,11 @@ import pytest
 
 def _reject_pools_with_one_coin(metaregistry, pool):
 
-    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS]
+    pool_coins = [
+        coin
+        for coin in metaregistry.get_coins(pool)
+        if coin != ape.utils.ZERO_ADDRESS
+    ]
     if len(list(set(pool_coins))) == 1:
         warnings.warn(f"Pool {pool} has only one coin!")
         pytest.skip("Pool has only one coin")
@@ -19,7 +23,11 @@ def _get_coin_combinations(metaregistry, pool):
     _reject_pools_with_one_coin(metaregistry, pool)
 
     is_meta = metaregistry.is_meta(pool)
-    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS]
+    pool_coins = [
+        coin
+        for coin in metaregistry.get_coins(pool)
+        if coin != ape.utils.ZERO_ADDRESS
+    ]
 
     base_combinations = list(itertools.combinations(pool_coins, 2))
     all_combinations = base_combinations
@@ -29,7 +37,9 @@ def _get_coin_combinations(metaregistry, pool):
             for coin in metaregistry.get_underlying_coins(pool)
             if coin != ape.utils.ZERO_ADDRESS
         ]
-        all_combinations = all_combinations + [(pool_coins[0], coin) for coin in underlying_coins]
+        all_combinations = all_combinations + [
+            (pool_coins[0], coin) for coin in underlying_coins
+        ]
 
     return all_combinations
 
@@ -90,7 +100,9 @@ def _test_coin_indices(coin_a, coin_b, metaregistry, pool, max_coins):
 
     if coin_a != coin_b:
 
-        metaregistry_output = metaregistry.get_coin_indices(pool, coin_a, coin_b)
+        metaregistry_output = metaregistry.get_coin_indices(
+            pool, coin_a, coin_b
+        )
 
         actual_output = _get_coin_indices(
             pool,
@@ -103,49 +115,81 @@ def _test_coin_indices(coin_a, coin_b, metaregistry, pool, max_coins):
         assert tuple(actual_output) == metaregistry_output
 
 
-def test_stable_registry_pools(populated_metaregistry, stable_registry_pool, max_coins):
+def test_stable_registry_pools(
+    populated_metaregistry, stable_registry_pool, max_coins
+):
 
-    all_combinations = _get_coin_combinations(populated_metaregistry, stable_registry_pool)
+    all_combinations = _get_coin_combinations(
+        populated_metaregistry, stable_registry_pool
+    )
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
         _test_coin_indices(
-            combination[0], combination[1], populated_metaregistry, stable_registry_pool, max_coins
+            combination[0],
+            combination[1],
+            populated_metaregistry,
+            stable_registry_pool,
+            max_coins,
         )
 
 
-def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, max_coins):
+def test_stable_factory_pools(
+    populated_metaregistry, stable_factory_pool, max_coins
+):
 
-    all_combinations = _get_coin_combinations(populated_metaregistry, stable_factory_pool)
+    all_combinations = _get_coin_combinations(
+        populated_metaregistry, stable_factory_pool
+    )
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
         _test_coin_indices(
-            combination[0], combination[1], populated_metaregistry, stable_factory_pool, max_coins
+            combination[0],
+            combination[1],
+            populated_metaregistry,
+            stable_factory_pool,
+            max_coins,
         )
 
 
-def test_crypto_registry_pools(populated_metaregistry, crypto_registry_pool, max_coins):
+def test_crypto_registry_pools(
+    populated_metaregistry, crypto_registry_pool, max_coins
+):
 
-    all_combinations = _get_coin_combinations(populated_metaregistry, crypto_registry_pool)
+    all_combinations = _get_coin_combinations(
+        populated_metaregistry, crypto_registry_pool
+    )
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
         _test_coin_indices(
-            combination[0], combination[1], populated_metaregistry, crypto_registry_pool, max_coins
+            combination[0],
+            combination[1],
+            populated_metaregistry,
+            crypto_registry_pool,
+            max_coins,
         )
 
 
-def test_crypto_factory_pools(populated_metaregistry, crypto_factory_pool, max_coins):
+def test_crypto_factory_pools(
+    populated_metaregistry, crypto_factory_pool, max_coins
+):
 
-    all_combinations = _get_coin_combinations(populated_metaregistry, crypto_factory_pool)
+    all_combinations = _get_coin_combinations(
+        populated_metaregistry, crypto_factory_pool
+    )
 
     for combination in all_combinations:
         if combination[0] == combination[1]:
             continue
         _test_coin_indices(
-            combination[0], combination[1], populated_metaregistry, crypto_factory_pool, max_coins
+            combination[0],
+            combination[1],
+            populated_metaregistry,
+            crypto_factory_pool,
+            max_coins,
         )

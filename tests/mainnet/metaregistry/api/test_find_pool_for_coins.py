@@ -9,7 +9,11 @@ import ape
 
 def _get_all_combinations(metaregistry, pool):
 
-    pool_coins = [coin for coin in metaregistry.get_coins(pool) if coin != ape.utils.ZERO_ADDRESS]
+    pool_coins = [
+        coin
+        for coin in metaregistry.get_coins(pool)
+        if coin != ape.utils.ZERO_ADDRESS
+    ]
     base_combinations = list(itertools.combinations(pool_coins, 2))
     all_combinations = base_combinations
 
@@ -20,7 +24,9 @@ def _get_all_combinations(metaregistry, pool):
             if coin != ape.utils.ZERO_ADDRESS
         ]
         all_combinations = all_combinations + [
-            (pool_coins[0], coin) for coin in underlying_coins if pool_coins[0] != coin
+            (pool_coins[0], coin)
+            for coin in underlying_coins
+            if pool_coins[0] != coin
         ]
 
     return all_combinations
@@ -30,8 +36,13 @@ def test_all(populated_metaregistry, pool):
 
     combinations = _get_all_combinations(populated_metaregistry, pool)
     for combination in combinations:
-        pools_containing_pair = populated_metaregistry.find_pools_for_coins(*combination)
+        pools_containing_pair = populated_metaregistry.find_pools_for_coins(
+            *combination
+        )
         assert pool in pools_containing_pair
 
         for i, found_pool in enumerate(pools_containing_pair):
-            assert populated_metaregistry.find_pool_for_coins(*combination, i) == found_pool
+            assert (
+                populated_metaregistry.find_pool_for_coins(*combination, i)
+                == found_pool
+            )

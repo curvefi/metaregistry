@@ -12,7 +12,9 @@ def pre_test_checks(metaregistry, pool):
         pytest.skip(f"Empty pool: {pool}")
 
 
-def _get_underlying_balances(metaregistry, pool, registry, base_pool_registry, max_coins):
+def _get_underlying_balances(
+    metaregistry, pool, registry, base_pool_registry, max_coins
+):
 
     actual_output = [0] * max_coins
 
@@ -37,9 +39,12 @@ def _get_underlying_balances(metaregistry, pool, registry, base_pool_registry, m
                     lp_token_supply = coin_contract.totalSupply()
                 except (ape.exceptions.SignatureError, AttributeError):
                     assert "totalSupply" not in [
-                        i.name for i in coin_contract.contract_type.view_methods
+                        i.name
+                        for i in coin_contract.contract_type.view_methods
                     ]
-                    pytest.skip(f"Token {coin} method totalSupply() is not a view method")
+                    pytest.skip(
+                        f"Token {coin} method totalSupply() is not a view method"
+                    )
 
                 ratio_in_pool = basepool_lp_token_balance / lp_token_supply
 
@@ -58,7 +63,9 @@ def _get_underlying_balances(metaregistry, pool, registry, base_pool_registry, m
     return actual_output
 
 
-def _test_underlying_balances_getter(metaregistry, pool, registry, base_pool_registry, max_coins):
+def _test_underlying_balances_getter(
+    metaregistry, pool, registry, base_pool_registry, max_coins
+):
 
     actual_output = _get_underlying_balances(
         metaregistry, pool, registry, base_pool_registry, max_coins
@@ -71,7 +78,8 @@ def _test_underlying_balances_getter(metaregistry, pool, registry, base_pool_reg
         try:
 
             assert registry_value == pytest.approx(
-                metaregistry_output[idx] * 10 ** (18 - underlying_decimals[idx])
+                metaregistry_output[idx]
+                * 10 ** (18 - underlying_decimals[idx])
             )
 
         except AssertionError:
@@ -79,7 +87,9 @@ def _test_underlying_balances_getter(metaregistry, pool, registry, base_pool_reg
             if pool in EXCEPTION_POOLS:
 
                 warnings.warn("Skipping test for pool: {}".format(pool))
-                pytest.skip("Unresolved output from Borky pool: {}".format(pool))
+                pytest.skip(
+                    "Unresolved output from Borky pool: {}".format(pool)
+                )
 
 
 def test_stable_registry_pools(

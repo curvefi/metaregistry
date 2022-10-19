@@ -1,7 +1,9 @@
 import ape
 
 
-def test_revert_unauthorised_add_base_pool(owner, unauthorised_account, base_pools):
+def test_revert_unauthorised_add_base_pool(
+    owner, unauthorised_account, base_pools
+):
 
     base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
@@ -38,7 +40,10 @@ def test_add_basepool(owner, base_pools, tokens):
     )
 
     assert base_pool_registry.base_pool_count() == base_pool_count + 1
-    assert base_pool_registry.get_base_pool_for_lp_token(tripool_lp_token) == tripool
+    assert (
+        base_pool_registry.get_base_pool_for_lp_token(tripool_lp_token)
+        == tripool
+    )
     assert base_pool_registry.get_lp_token(tripool) == tripool_lp_token
     assert not base_pool_registry.is_legacy(tripool)
     assert not base_pool_registry.is_v2(tripool)
@@ -92,9 +97,14 @@ def test_revert_unauthorised_remove_base_pool(
 
     tripool_address = base_pools["tripool"]["pool"]
 
-    assert populated_base_pool_registry.get_lp_token(tripool_address) != ape.utils.ZERO_ADDRESS
+    assert (
+        populated_base_pool_registry.get_lp_token(tripool_address)
+        != ape.utils.ZERO_ADDRESS
+    )
     with ape.reverts():
-        populated_base_pool_registry.remove_base_pool(tripool_address, sender=unauthorised_account)
+        populated_base_pool_registry.remove_base_pool(
+            tripool_address, sender=unauthorised_account
+        )
 
 
 def test_remove_base_pool(populated_base_pool_registry, owner, base_pools):
@@ -103,15 +113,31 @@ def test_remove_base_pool(populated_base_pool_registry, owner, base_pools):
     tripool_lp_token = base_pools["tripool"]["lp_token"]
 
     base_pool_count = populated_base_pool_registry.base_pool_count()
-    last_base_pool = populated_base_pool_registry.base_pool_list(base_pool_count - 1)
-    base_pool_location = populated_base_pool_registry.get_location(tripool_address)
-    populated_base_pool_registry.remove_base_pool(tripool_address, sender=owner)
+    last_base_pool = populated_base_pool_registry.base_pool_list(
+        base_pool_count - 1
+    )
+    base_pool_location = populated_base_pool_registry.get_location(
+        tripool_address
+    )
+    populated_base_pool_registry.remove_base_pool(
+        tripool_address, sender=owner
+    )
 
-    assert populated_base_pool_registry.base_pool_count() == base_pool_count - 1
-    assert populated_base_pool_registry.get_lp_token(tripool_address) == ape.utils.ZERO_ADDRESS
     assert (
-        populated_base_pool_registry.get_base_pool_for_lp_token(tripool_lp_token)
+        populated_base_pool_registry.base_pool_count() == base_pool_count - 1
+    )
+    assert (
+        populated_base_pool_registry.get_lp_token(tripool_address)
         == ape.utils.ZERO_ADDRESS
     )
-    assert populated_base_pool_registry.base_pool_list(base_pool_location) == last_base_pool
+    assert (
+        populated_base_pool_registry.get_base_pool_for_lp_token(
+            tripool_lp_token
+        )
+        == ape.utils.ZERO_ADDRESS
+    )
+    assert (
+        populated_base_pool_registry.base_pool_list(base_pool_location)
+        == last_base_pool
+    )
     assert populated_base_pool_registry.get_n_coins(tripool_address) == 0

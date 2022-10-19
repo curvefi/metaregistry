@@ -1,7 +1,9 @@
 import ape
 
 
-def test_revert_unauthorised_add_pool(crypto_registry, unauthorised_account, crypto_registry_pools):
+def test_revert_unauthorised_add_pool(
+    crypto_registry, unauthorised_account, crypto_registry_pools
+):
 
     pool_data = crypto_registry_pools["tricrypto2"]
 
@@ -19,7 +21,9 @@ def test_revert_unauthorised_add_pool(crypto_registry, unauthorised_account, cry
         )
 
 
-def test_revert_add_existing_pool(crypto_registry, owner, crypto_registry_pools):
+def test_revert_add_existing_pool(
+    crypto_registry, owner, crypto_registry_pools
+):
 
     pool_data = crypto_registry_pools["tricrypto2"]
 
@@ -38,7 +42,11 @@ def test_revert_add_existing_pool(crypto_registry, owner, crypto_registry_pools)
 
 
 def test_add_pool(
-    crypto_registry_pools, populated_base_pool_registry, address_provider, owner, tokens
+    crypto_registry_pools,
+    populated_base_pool_registry,
+    address_provider,
+    owner,
+    tokens,
 ):
 
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
@@ -65,35 +73,68 @@ def test_add_pool(
     assert crypto_registry.pool_count() == pool_count + 1
     assert crypto_registry.pool_list(pool_count) == pool_data["pool"]
     assert crypto_registry.get_zap(pool_data["pool"]) == pool_data["zap"]
-    assert crypto_registry.get_lp_token(pool_data["pool"]) == pool_data["lp_token"]
-    assert crypto_registry.get_pool_from_lp_token(pool_data["lp_token"]) == pool_data["pool"]
-    assert crypto_registry.get_base_pool(pool_data["pool"]) == ape.utils.ZERO_ADDRESS
+    assert (
+        crypto_registry.get_lp_token(pool_data["pool"])
+        == pool_data["lp_token"]
+    )
+    assert (
+        crypto_registry.get_pool_from_lp_token(pool_data["lp_token"])
+        == pool_data["pool"]
+    )
+    assert (
+        crypto_registry.get_base_pool(pool_data["pool"])
+        == ape.utils.ZERO_ADDRESS
+    )
     assert not crypto_registry.is_meta(pool_data["pool"])
     assert crypto_registry.get_pool_name(pool_data["pool"]) == "tricrypto2"
 
     assert crypto_registry.get_n_coins(pool_data["pool"]) == 3
-    assert crypto_registry.get_decimals(pool_data["pool"]) == [6, 8, 18, 0, 0, 0, 0, 0]
-    assert crypto_registry.get_gauges(pool_data["pool"])[0][0] == pool_data["gauge"]
-    assert crypto_registry.get_gauges(pool_data["pool"])[1][0] == 5  # gauge type is 5
-    assert [i.lower() for i in crypto_registry.get_coins(pool_data["pool"])] == [
+    assert crypto_registry.get_decimals(pool_data["pool"]) == [
+        6,
+        8,
+        18,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
+    assert (
+        crypto_registry.get_gauges(pool_data["pool"])[0][0]
+        == pool_data["gauge"]
+    )
+    assert (
+        crypto_registry.get_gauges(pool_data["pool"])[1][0] == 5
+    )  # gauge type is 5
+    assert [
+        i.lower() for i in crypto_registry.get_coins(pool_data["pool"])
+    ] == [
         tokens["usdt"].lower(),
         tokens["wbtc"].lower(),
         tokens["weth"].lower(),
-    ] + [ape.utils.ZERO_ADDRESS] * 5
+    ] + [
+        ape.utils.ZERO_ADDRESS
+    ] * 5
 
     # check if coins and underlying coins (if any) are added to the underlying market:
-    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["usdt"], tokens["wbtc"]) == (
+    assert crypto_registry.get_coin_indices(
+        pool_data["pool"], tokens["usdt"], tokens["wbtc"]
+    ) == (
         0,
         1,
         False,
     )
-    assert crypto_registry.get_coin_indices(pool_data["pool"], tokens["wbtc"], tokens["weth"]) == (
+    assert crypto_registry.get_coin_indices(
+        pool_data["pool"], tokens["wbtc"], tokens["weth"]
+    ) == (
         1,
         2,
         False,
     )
     assert (
-        crypto_registry.find_pool_for_coins(tokens["usdt"], tokens["wbtc"], 0).lower()
+        crypto_registry.find_pool_for_coins(
+            tokens["usdt"], tokens["wbtc"], 0
+        ).lower()
         == pool_data["pool"].lower()
     )
 
@@ -104,7 +145,8 @@ def test_revert_unauthorised_remove_pool(
 
     with ape.reverts():
         crypto_registry.remove_pool(
-            crypto_registry_pools["tricrypto2"]["pool"], sender=unauthorised_account
+            crypto_registry_pools["tricrypto2"]["pool"],
+            sender=unauthorised_account,
         )
 
 
@@ -159,23 +201,41 @@ def test_remove_pool(
     crypto_registry.remove_pool(tricrypto2["pool"], sender=owner)
 
     assert crypto_registry.pool_list(0).lower() == last_pool.lower()
-    assert crypto_registry.pool_count() == pool_count - 1  # one pool should be gone
-    assert crypto_registry.get_zap(tricrypto2["pool"]) == ape.utils.ZERO_ADDRESS
-    assert crypto_registry.get_lp_token(tricrypto2["pool"]) == ape.utils.ZERO_ADDRESS
-    assert crypto_registry.get_pool_from_lp_token(tricrypto2["lp_token"]) == ape.utils.ZERO_ADDRESS
+    assert (
+        crypto_registry.pool_count() == pool_count - 1
+    )  # one pool should be gone
+    assert (
+        crypto_registry.get_zap(tricrypto2["pool"]) == ape.utils.ZERO_ADDRESS
+    )
+    assert (
+        crypto_registry.get_lp_token(tricrypto2["pool"])
+        == ape.utils.ZERO_ADDRESS
+    )
+    assert (
+        crypto_registry.get_pool_from_lp_token(tricrypto2["lp_token"])
+        == ape.utils.ZERO_ADDRESS
+    )
     assert crypto_registry.get_pool_name(tricrypto2["pool"]) == ""
 
     assert crypto_registry.get_n_coins(tricrypto2["pool"]) == 0
     assert crypto_registry.get_decimals(tricrypto2["pool"]) == [0] * max_coins
-    assert crypto_registry.get_gauges(tricrypto2["pool"])[0][0] == ape.utils.ZERO_ADDRESS
+    assert (
+        crypto_registry.get_gauges(tricrypto2["pool"])[0][0]
+        == ape.utils.ZERO_ADDRESS
+    )
     assert crypto_registry.get_gauges(tricrypto2["pool"])[1][0] == 0
 
-    assert crypto_registry.get_coins(tricrypto2["pool"]) == [ape.utils.ZERO_ADDRESS] * max_coins
+    assert (
+        crypto_registry.get_coins(tricrypto2["pool"])
+        == [ape.utils.ZERO_ADDRESS] * max_coins
+    )
 
     for coin_i in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:
         for coin_j in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:
 
-            assert crypto_registry.get_coin_indices(tricrypto2["pool"], coin_i, coin_j) == (
+            assert crypto_registry.get_coin_indices(
+                tricrypto2["pool"], coin_i, coin_j
+            ) == (
                 0,
                 0,
                 False,

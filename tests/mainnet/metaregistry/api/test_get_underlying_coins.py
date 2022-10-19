@@ -3,7 +3,9 @@ import warnings
 import ape
 
 
-def _get_underlying_coins(registry, base_pool_registry_updated, pool, max_coins):
+def _get_underlying_coins(
+    registry, base_pool_registry_updated, pool, max_coins
+):
 
     coins = registry.get_coins(pool)
     underlying_coins = [ape.utils.ZERO_ADDRESS] * max_coins
@@ -49,7 +51,9 @@ def _check_fetched_underlying_coins(registry, pool, underlying_coins):
         balances = registry.get_balances(pool)
         decimals = registry.get_decimals(pool)
 
-        float_balances = [balances[i] / 10 ** decimals[i] for i in range(len(decimals))]
+        float_balances = [
+            balances[i] / 10 ** decimals[i] for i in range(len(decimals))
+        ]
         if min(float_balances) < 1:
             with ape.reverts():
                 registry.get_underlying_coins(pool)
@@ -66,9 +70,14 @@ def test_stable_registry_pools(
     max_coins,
 ):
 
-    metaregistry_output = populated_metaregistry.get_underlying_coins(stable_registry_pool)
+    metaregistry_output = populated_metaregistry.get_underlying_coins(
+        stable_registry_pool
+    )
     actual_output = _get_underlying_coins(
-        stable_registry, populated_base_pool_registry, stable_registry_pool, max_coins
+        stable_registry,
+        populated_base_pool_registry,
+        stable_registry_pool,
+        max_coins,
     )
     actual_output = _check_fetched_underlying_coins(
         stable_registry, stable_registry_pool, actual_output
@@ -86,9 +95,14 @@ def test_stable_factory_pools(
     max_coins,
 ):
 
-    metaregistry_output = populated_metaregistry.get_underlying_coins(stable_factory_pool)
+    metaregistry_output = populated_metaregistry.get_underlying_coins(
+        stable_factory_pool
+    )
     actual_output = _get_underlying_coins(
-        stable_factory, populated_base_pool_registry, stable_factory_pool, max_coins
+        stable_factory,
+        populated_base_pool_registry,
+        stable_factory_pool,
+        max_coins,
     )
     actual_output = _check_fetched_underlying_coins(
         stable_factory, stable_factory_pool, actual_output
@@ -106,9 +120,14 @@ def test_crypto_registry_pools(
     max_coins,
 ):
 
-    metaregistry_output = populated_metaregistry.get_underlying_coins(crypto_registry_pool)
+    metaregistry_output = populated_metaregistry.get_underlying_coins(
+        crypto_registry_pool
+    )
     actual_output = _get_underlying_coins(
-        crypto_registry, populated_base_pool_registry, crypto_registry_pool, max_coins
+        crypto_registry,
+        populated_base_pool_registry,
+        crypto_registry_pool,
+        max_coins,
     )
     actual_output = _check_fetched_underlying_coins(
         crypto_registry, crypto_registry_pool, actual_output
@@ -126,9 +145,14 @@ def test_crypto_factory_pools(
     max_coins,
 ):
 
-    metaregistry_output = populated_metaregistry.get_underlying_coins(crypto_factory_pool)
+    metaregistry_output = populated_metaregistry.get_underlying_coins(
+        crypto_factory_pool
+    )
     actual_output = _get_underlying_coins(
-        crypto_factory, populated_base_pool_registry, crypto_factory_pool, max_coins
+        crypto_factory,
+        populated_base_pool_registry,
+        crypto_factory_pool,
+        max_coins,
     )
 
     for idx, coin in enumerate(actual_output):

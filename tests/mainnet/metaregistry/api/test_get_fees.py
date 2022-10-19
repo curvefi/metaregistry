@@ -8,21 +8,31 @@ def _check_dissimilar_length_array_elements_are_equal(output_a, output_b):
 
 
 def test_stable_registry_pools(
-    populated_metaregistry, stable_registry_pool, stable_registry, stable_registry_handler
+    populated_metaregistry,
+    stable_registry_pool,
+    stable_registry,
+    stable_registry_handler,
 ):
 
     actual_output = stable_registry.get_fees(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_registry_pool)
-    _check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
+    _check_dissimilar_length_array_elements_are_equal(
+        actual_output, metaregistry_output
+    )
 
 
 def test_stable_factory_pools(
-    populated_metaregistry, stable_factory_pool, stable_factory, stable_factory_handler
+    populated_metaregistry,
+    stable_factory_pool,
+    stable_factory,
+    stable_factory_handler,
 ):
 
     actual_output = stable_factory.get_fees(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_factory_pool)
-    _check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
+    _check_dissimilar_length_array_elements_are_equal(
+        actual_output, metaregistry_output
+    )
 
 
 def test_crypto_registry_pools(
@@ -43,7 +53,9 @@ def test_crypto_registry_pools(
 
     actual_output = crypto_registry.get_fees(crypto_registry_pool)
     metaregistry_output = populated_metaregistry.get_fees(crypto_registry_pool)
-    _check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
+    _check_dissimilar_length_array_elements_are_equal(
+        actual_output, metaregistry_output
+    )
 
 
 def test_crypto_factory_pools(
@@ -70,4 +82,6 @@ def test_crypto_factory_pools(
         curve_contract.out_fee(),
     ]
     metaregistry_output = populated_metaregistry.get_fees(crypto_factory_pool)
-    _check_dissimilar_length_array_elements_are_equal(actual_output, metaregistry_output)
+    _check_dissimilar_length_array_elements_are_equal(
+        actual_output, metaregistry_output
+    )

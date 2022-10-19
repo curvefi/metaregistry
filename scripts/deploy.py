@@ -44,9 +44,16 @@ def main(network, account):
     # deploy stable factory handler:
     print(
         "Stable Factory Handler constructor arguments: ",
-        encode(["address", "address"], [STABLE_FACTORY_ADDRESS, base_pool_registry]).hex(),
+        encode(
+            ["address", "address"],
+            [STABLE_FACTORY_ADDRESS, base_pool_registry],
+        ).hex(),
     )
-    account.deploy(project.StableFactoryHandler, STABLE_FACTORY_ADDRESS, base_pool_registry)
+    account.deploy(
+        project.StableFactoryHandler,
+        STABLE_FACTORY_ADDRESS,
+        base_pool_registry,
+    )
 
     # deploy crypto registry handler:
     print(
@@ -58,10 +65,20 @@ def main(network, account):
     # deploy crypto factory handler:
     print(
         "Crypto Factory Handler constructor arguments: ",
-        encode(["address", "address"], [CRYPTO_FACTORY_ADDRESS, base_pool_registry]).hex(),
+        encode(
+            ["address", "address"],
+            [CRYPTO_FACTORY_ADDRESS, base_pool_registry],
+        ).hex(),
     )
-    account.deploy(project.CryptoFactoryHandler, CRYPTO_FACTORY_ADDRESS, base_pool_registry)
+    account.deploy(
+        project.CryptoFactoryHandler,
+        CRYPTO_FACTORY_ADDRESS,
+        base_pool_registry,
+    )
 
     # deploy metaregistry:
-    print("MetaRegistry constructor arguments: ", encode(["address"], [ADDRESS_PROVIDER]).hex())
+    print(
+        "MetaRegistry constructor arguments: ",
+        encode(["address"], [ADDRESS_PROVIDER]).hex(),
+    )
     account.deploy(project.MetaRegistry, ADDRESS_PROVIDER)
