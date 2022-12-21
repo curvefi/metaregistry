@@ -52,6 +52,8 @@ def main():
     stable_registry = init_contract("0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
     metaregistry = init_contract("0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC")
     
+    assert not metaregistry.get_gauge(POOL_DATA["pool"]) == POOL_DATA["gauge"]
+    
     # --- add base pool to base pool registry ---
     call_data = base_pool_registry.add_base_pool.encode_input(
             POOL_DATA["pool"],
@@ -77,12 +79,11 @@ def main():
         POOL_DATA["pool"],
         [POOL_DATA["gauge"]] + [ZERO_ADDRESS]*9
     )
-    breakpoint()
     proxy_admin.execute(stable_registry, call_data, txparams)
     
     gauges = stable_registry.get_gauges(POOL_DATA["pool"])
     assert gauges[0][0] == POOL_DATA["gauge"] 
 
     # check if metaregistry has the gauge
-    assert metaregistry.get_gauges(POOL_DATA["pool"])[0] == POOL_DATA["gauge"]
+    assert metaregistry.get_gauge(POOL_DATA["pool"]) == POOL_DATA["gauge"]
     print("success!")
