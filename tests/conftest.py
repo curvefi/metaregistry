@@ -1,9 +1,11 @@
-import ape
 import pytest
+import boa
+from boa.network import NetworkEnv
 
 pytest_plugins = [
     "fixtures.accounts",
     "fixtures.constants",
+    "fixtures.contracts",
     "fixtures.deployments",
     "fixtures.functions",
 ]
@@ -15,7 +17,7 @@ STABLE_FACTORY_POOLS = None
 ALL_POOLS = None
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart():
     """Set up pools into global variables at session start"""
     global CRYPTO_REGISTRY_POOLS
     global CRYPTO_FACTORY_POOLS
@@ -23,53 +25,15 @@ def pytest_sessionstart(session):
     global STABLE_REGISTRY_POOLS
     global ALL_POOLS
 
-    # fetch the pytest ape runner plugin
-    ape_runner = session.config.pluginmanager.getplugin("ape-test")
+    boa.env.fork("https://mainnet.infura.io/v3/84842078b09946638c03157f83405213")
 
-    # connect to the network
-    # https://github.com/ApeWorX/ape/blob/main/src/ape/pytest/runners.py#L149-L153
-    ape_runner.network_manager.active_provider = (
-        ape_runner.network_manager.get_provider_from_choice(
-            ape_runner._network_choice
-        )
-    )
-    ape_runner.network_manager.active_provider.connect()
-    ape_runner._provider_is_connected = True
-
-    # store instance of registries globally so we don't have to recreate multiple times
+    # store instance of registries globally, so we don't have to recreate multiple times
     # when generating tests:
 
-    # stable registry:
-    registry = ape.project.StableRegistry.at(
-        "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
-    )
-    STABLE_REGISTRY_POOLS = [
-        registry.pool_list(i) for i in range(registry.pool_count())
-    ]
-
-    # stable_factory:
-    registry = ape.project.StableFactory.at(
-        "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
-    )
-    STABLE_FACTORY_POOLS = [
-        registry.pool_list(i) for i in range(registry.pool_count())
-    ]
-
-    # crypto_registry:
-    registry = ape.project.CryptoRegistry.at(
-        "0x8F942C20D02bEfc377D41445793068908E2250D0"
-    )
-    CRYPTO_REGISTRY_POOLS = [
-        registry.pool_list(i) for i in range(registry.pool_count())
-    ]
-
-    # crypto_factory:
-    registry = ape.project.CryptoFactory.at(
-        "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99"
-    )
-    CRYPTO_FACTORY_POOLS = [
-        registry.pool_list(i) for i in range(registry.pool_count())
-    ]
+    STABLE_REGISTRY_POOLS = get_pools("StableRegistry", "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
+    STABLE_FACTORY_POOLS = get_pools("StableFactory", "0xB9fC157394Af804a3578134A6585C0dc9cc990d4")
+    CRYPTO_REGISTRY_POOLS = get_pools("CryptoRegistry", "0x8F942C20D02bEfc377D41445793068908E2250D0")
+    CRYPTO_FACTORY_POOLS = get_pools("CryptoFactory", "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99")
 
     ALL_POOLS = (
         STABLE_REGISTRY_POOLS
@@ -77,6 +41,12 @@ def pytest_sessionstart(session):
         + CRYPTO_REGISTRY_POOLS
         + CRYPTO_FACTORY_POOLS
     )
+
+
+def get_pools(registryName, registryAddress):
+    deployer = boa.load_partial(f"contracts/mainnet/mocks/{registryName}", registryName)
+    registry = deployer.at(registryAddress)
+    return [registry.pool_list(i) for i in range(registry.pool_count())]
 
 
 def pytest_generate_tests(metafunc):

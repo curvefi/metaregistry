@@ -1,12 +1,10 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs20
+FROM python:3.11-slim
 
 WORKDIR /usr/app
-COPY package*.json ./
-RUN npm ci \
-    && npm cache clean --force
-
+RUN pip cache purge
 COPY requirements.in ./
-RUN pip install -r requirements.in
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.in
 
 COPY . .
-CMD ape test
+CMD pytest

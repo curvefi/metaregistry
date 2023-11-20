@@ -1,8 +1,0 @@
-eth-brownie
-black
-flake8
-isort
-pip-tools
-pre-commit
-tabulate
-rich

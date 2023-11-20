@@ -387,34 +387,13 @@ Set up the python environment using the following steps:
 ```
 
 > python -m venv venv
-> source ./venv/bin/active
-> pip install --upgrade pip
+> source ./venv/bin/activate
+> python -m pip install --upgrade pip
 > pip install -r ./requirements.txt
 
 ```
 
-This project uses `eth-ape >= 0.4.0` developed at [Apeworx](https://apeworx.io). The various plugins used are:
-
-1. [`ape-vyper`](https://github.com/ApeWorX/ape-vyper)
-2. [`ape-hardhat`](https://github.com/ApeWorX/ape-hardhat)
-3. [`ape-alchemy`](https://github.com/ApeWorX/ape-alchemy)
-4. [`ape-ledger`](https://github.com/ApeWorX/ape-ledger)
-5. [`ape-etherscan`](https://github.com/ApeWorX/ape-etherscan)
-
-To install these, please follow instructions laid out in their respective Github repositories (by clicking on the links above).
-
-Note: If you choose to run tests using `Alchemy` as the upstream provider, please set up an alchemy api key into an environment variable labelled `WEB3_ALCHEMY_PROJECT_ID` or `WEB3_ALCHEMY_API_KEY`. If you choose to use a local node (`geth` or `erigon`) please change the hardhat upstream provider for mainnet-fork to `geth` in [ape-config.yaml](ape-config.yaml):
-
-```
-
-hardhat:
-  port: auto
-  fork:
-    ethereum:
-      mainnet:
-        upstream_provider: geth
-        # upstream_provider: alchemy
-```
+This project uses `titanoboa`.
 
 ### Testing
 
@@ -480,4 +459,4 @@ Ethereum Mainnet:
 
 ### License
 
-(c) Curve.Fi, 2022 - [All rights reserved](LICENSE).
+(c) Curve.Fi, 2023 - [All rights reserved](LICENSE).

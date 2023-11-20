@@ -3,9 +3,7 @@ build/
 .python-version
 .idea
 .pytest_cache
-node_modules/
 __pycache__/
 .DS_Store
 venv/
-brownie-venv/
 bvenv/

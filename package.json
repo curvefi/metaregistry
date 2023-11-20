@@ -1,8 +1,0 @@
-{
-  "scripts": {
-    "preinstall": "npm install --global ganache@7.5.0"
-  },
-  "devDependencies": {
-    "hardhat": "^2.19.0"
-  }
-}

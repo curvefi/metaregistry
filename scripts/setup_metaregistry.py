@@ -137,7 +137,7 @@ def cli():
 @cli.command(cls=NetworkBoundCommand)
 @network_option()
 @account_option()
-def main(network, account):
+def main(network: str, account: str):
 
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
     address_provider = project.AddressProvider.at(ADDRESS_PROVIDER)
