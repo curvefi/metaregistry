@@ -39,7 +39,7 @@ def _check_skem_tokens_with_weird_decimals(
 
         if (
             coin_decimals[i] == 0
-            and ape.Contract(metaregistry.get_coins(pool)[0]).decimals() == 0
+            and VyperContract(metaregistry.get_coins(pool)[0]).decimals() == 0
         ):
             with ape.reverts():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)

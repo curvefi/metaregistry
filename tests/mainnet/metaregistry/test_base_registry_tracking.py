@@ -2,7 +2,7 @@ import ape
 
 
 def test_new_crypto_factory_pool(
-    metaregistry, crypto_factory, tokens, lp_tokens, alice
+    metaregistry, crypto_factory, tokens, lp_tokens, alice_address
 ):
     test_pool_name = "test_pool"
 
@@ -27,7 +27,7 @@ def test_new_crypto_factory_pool(
         5000000000,
         600,
         994000214704046300,
-        sender=alice,
+        sender=alice_address,
     )
     new_pool = crypto_factory.pool_list(crypto_factory.pool_count() - 1)
     lp_token = crypto_factory.get_token(new_pool)
@@ -48,7 +48,7 @@ def test_new_crypto_factory_pool(
 
 
 def test_new_stable_factory_pool(
-    metaregistry, stable_factory, lp_tokens, alice
+    metaregistry, stable_factory, lp_tokens, alice_address
 ):
     test_pool_name = "test_pool"
 
@@ -72,7 +72,7 @@ def test_new_stable_factory_pool(
         4000000,
         0,
         0,
-        sender=alice,
+        sender=alice_address,
     )
 
     new_pool = stable_factory.pool_list(stable_factory.pool_count() - 1)

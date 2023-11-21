@@ -1,10 +1,10 @@
 import sys
 
 import click
-from ape import accounts, project
-from ape.cli import NetworkBoundCommand, account_option, network_option
-from ape.utils import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
 from rich.console import Console as RichConsole
+
+from tests.utils import get_deployed_contract
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
 
@@ -140,36 +140,22 @@ def cli():
 def main(network: str, account: str):
 
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
-    address_provider = project.AddressProvider.at(ADDRESS_PROVIDER)
+    address_provider = get_deployed_contract('AddressProvider', ADDRESS_PROVIDER)
     address_provider_admin = address_provider.admin()
-    proxy_admin = project.ProxyAdmin.at(address_provider_admin)
+    proxy_admin = get_deployed_contract('ProxyAdmin', address_provider_admin)
 
     if network == "ethereum:mainnet-fork":
         RICH_CONSOLE.log("Simulation mode.")
         account = accounts[proxy_admin.admins(1)]
 
     # deployed contracts:
-    base_pool_registry = project.BasePoolRegistry.at(
-        "0xDE3eAD9B2145bBA2EB74007e58ED07308716B725"
-    )
-    crypto_registry = project.CryptoRegistryV1.at(
-        "0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0"
-    )
-    stable_registry_handler = project.StableRegistryHandler.at(
-        "0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68"
-    )
-    stable_factory_handler = project.StableFactoryHandler.at(
-        "0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9"
-    )
-    crypto_registry_handler = project.CryptoRegistryHandler.at(
-        "0x5f493fEE8D67D3AE3bA730827B34126CFcA0ae94"
-    )
-    crypto_factory_handler = project.CryptoFactoryHandler.at(
-        "0xC4F389020002396143B863F6325aA6ae481D19CE"
-    )
-    metaregistry = project.MetaRegistry.at(
-        "0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC"
-    )
+    base_pool_registry = get_deployed_contract('BasePoolRegistry', "0xDE3eAD9B2145bBA2EB74007e58ED07308716B725")
+    crypto_registry = get_deployed_contract('CryptoRegistryV1', "0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0")
+    stable_registry_handler = get_deployed_contract('StableRegistryHandler', "0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68")
+    stable_factory_handler = get_deployed_contract('StableFactoryHandler', "0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9")
+    crypto_registry_handler = get_deployed_contract('CryptoRegistryHandler', "0x5f493fEE8D67D3AE3bA730827B34126CFcA0ae94")
+    crypto_factory_handler = get_deployed_contract('CryptoFactoryHandler', "0xC4F389020002396143B863F6325aA6ae481D19CE")
+    metaregistry = get_deployed_contract('MetaRegistry', "0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC")
     registry_handlers = [
         stable_registry_handler,
         stable_factory_handler,

@@ -8,7 +8,7 @@ def pre_test_checks(metaregistry, pool):
         pytest.skip("empty pool: skipping")
 
     try:
-        if ape.Contract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
+        if VyperContract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
             pytest.skip("lp token supply is zero")
     except ape.exceptions.SignatureError:
         pytest.skip(
@@ -50,14 +50,14 @@ def test_stable_factory_pools(
 
 
 def _get_crypto_pool_admin_fees(
-    populated_metaregistry, pool, fee_receiver, project, alice, chain
+    populated_metaregistry, pool, fee_receiver, project, alice_address, chain
 ):
 
-    lp_token = ape.Contract(populated_metaregistry.get_lp_token(pool))
+    lp_token = VyperContract(populated_metaregistry.get_lp_token(pool))
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
 
     chain.snapshot()
-    pool.claim_admin_fees(sender=alice)
+    pool.claim_admin_fees(sender=alice_address)
 
     claimed_lp_token_as_fee = (
         lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
@@ -81,7 +81,7 @@ def test_crypto_registry_pools(
     populated_metaregistry,
     crypto_registry_pool,
     curve_pool_v2,
-    alice,
+    alice_address,
     chain,
     project,
 ):
@@ -91,7 +91,7 @@ def test_crypto_registry_pools(
     pool = curve_pool_v2(crypto_registry_pool)
     fee_receiver = pool.admin_fee_receiver()
     admin_balances = _get_crypto_pool_admin_fees(
-        populated_metaregistry, pool, fee_receiver, project, alice, chain
+        populated_metaregistry, pool, fee_receiver, project, alice_address, chain
     )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)
@@ -104,7 +104,7 @@ def test_crypto_factory_pools(
     crypto_factory_pool,
     crypto_factory,
     curve_pool_v2,
-    alice,
+    alice_address,
     chain,
     project,
 ):
@@ -114,7 +114,7 @@ def test_crypto_factory_pools(
     pool = curve_pool_v2(crypto_factory_pool)
     fee_receiver = crypto_factory.fee_receiver()
     admin_balances = _get_crypto_pool_admin_fees(
-        populated_metaregistry, pool, fee_receiver, project, alice, chain
+        populated_metaregistry, pool, fee_receiver, project, alice_address, chain
     )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)

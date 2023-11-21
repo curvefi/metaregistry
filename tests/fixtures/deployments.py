@@ -1,45 +1,41 @@
+import boa
 import pytest
+from boa.vyper.contract import VyperContract
+
+from tests.utils import get_deployed_contract, deploy_contract
 
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 
 
 @pytest.fixture(scope="module", autouse=True)
-def gauge_controller() -> ape.Contract:
-    return ape.project.GaugeController.at(
-        "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB"
-    )
+def gauge_controller() -> VyperContract:
+    return get_deployed_contract('GaugeController', "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB")
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_registry() -> ape.Contract:
-    return ape.project.StableRegistry.at(
-        "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
-    )
+def stable_registry() -> VyperContract:
+    return get_deployed_contract('StableRegistry', "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5")
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_factory() -> ape.Contract:
-    return ape.project.StableFactory.at(
-        "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
-    )
+def stable_factory() -> VyperContract:
+    return get_deployed_contract('StableFactory', "0xB9fC157394Af804a3578134A6585C0dc9cc990d4")
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_factory() -> ape.Contract:
-    return ape.project.CryptoFactory.at(
-        "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99"
-    )
+def crypto_factory() -> VyperContract:
+    return get_deployed_contract('CryptoFactory', "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99")
 
 
 @pytest.fixture(scope="module", autouse=True)
-def base_pool_registry(alice, project):
-    return project.BasePoolRegistry.deploy(sender=alice)
+def base_pool_registry(alice_address):
+    return deploy_contract("BasePoolRegistry", sender=alice_address, directory="registries")
 
 
 @pytest.fixture(scope="module", autouse=True)
 def populated_base_pool_registry(base_pool_registry, owner, base_pools):
-
-    for _, data in base_pools.items():
+    for data in base_pools.values():
+        boa.env.eoa = owner
         base_pool_registry.add_base_pool(
             data["pool"],
             data["lp_token"],
@@ -47,9 +43,7 @@ def populated_base_pool_registry(base_pool_registry, owner, base_pools):
             data["is_legacy"],
             data["is_lending"],
             data["is_v2"],
-            sender=owner,
         )
-
     return base_pool_registry
 
 
@@ -57,10 +51,8 @@ def populated_base_pool_registry(base_pool_registry, owner, base_pools):
 def crypto_registry(
     populated_base_pool_registry, owner, crypto_registry_pools
 ):
-
-    crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        ADDRESS_PROVIDER, populated_base_pool_registry, sender=owner
-    )
+    crypto_registry = deploy_contract("CryptoRegistryV1", ADDRESS_PROVIDER, populated_base_pool_registry,
+                                      directory="registries", sender=owner)
 
     for _, pool in crypto_registry_pools.items():
         crypto_registry.add_pool(
@@ -80,78 +72,61 @@ def crypto_registry(
 
 @pytest.fixture(scope="module", autouse=True)
 def address_provider(crypto_registry, owner):
-    contract = ape.project.AddressProvider.at(ADDRESS_PROVIDER)
+    contract = get_deployed_contract('AddressProvider', ADDRESS_PROVIDER)
     contract.set_address(5, crypto_registry, sender=owner)
     return contract
 
 
 @pytest.fixture(scope="module", autouse=True)
-def metaregistry(address_provider, owner, project):
-    return project.MetaRegistry.deploy(address_provider, sender=owner)
+def metaregistry(address_provider, owner):
+    return deploy_contract("MetaRegistry", address_provider, sender=owner)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_registry_handler(stable_registry, owner, project):
-    return project.StableRegistryHandler.deploy(
-        stable_registry.address, sender=owner
+def stable_registry_handler(stable_registry, owner):
+    return deploy_contract(
+        "StableRegistryHandler", stable_registry.address,
+        sender=owner, directory="registry_handlers", override_address=stable_registry.address,
     )
 
 
 @pytest.fixture(scope="module", autouse=True)
-def stable_factory_handler(
-    populated_base_pool_registry, stable_factory, owner, project
-):
-    return project.StableFactoryHandler.deploy(
-        stable_factory.address, populated_base_pool_registry, sender=owner
+def stable_factory_handler(populated_base_pool_registry, stable_factory, owner):
+    return deploy_contract(
+        "StableFactoryHandler", stable_factory.address, populated_base_pool_registry.address,
+        sender=owner, directory="registry_handlers", override_address=stable_factory.address,
     )
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_registry_handler(owner, crypto_registry, project):
-    return project.CryptoRegistryHandler.deploy(crypto_registry, sender=owner)
+def crypto_registry_handler(owner, crypto_registry):
+    return deploy_contract(
+        "CryptoRegistryHandler", crypto_registry.address, sender=owner, directory="registry_handlers",
+    )
 
 
 @pytest.fixture(scope="module", autouse=True)
-def crypto_factory_handler(
-    populated_base_pool_registry, crypto_factory, owner, project
-):
-    return project.CryptoFactoryHandler.deploy(
-        crypto_factory.address, populated_base_pool_registry, sender=owner
+def crypto_factory_handler(populated_base_pool_registry, crypto_factory, owner):
+    return deploy_contract(
+        "CryptoFactoryHandler", crypto_factory.address, populated_base_pool_registry.address,
+        sender=owner, directory="registry_handlers", override_address=crypto_factory.address,
     )
 
 
 @pytest.fixture(scope="module")
-def registries(
-    stable_registry, stable_factory, crypto_registry, crypto_factory
-):
-    return [
-        stable_registry,
-        stable_factory,
-        crypto_registry,
-        crypto_factory,
-    ]
+def registries(stable_registry, stable_factory, crypto_registry, crypto_factory):
+    return [stable_registry, stable_factory, crypto_registry, crypto_factory]
 
 
 @pytest.fixture(scope="module")
-def handlers(
-    stable_registry_handler,
-    stable_factory_handler,
-    crypto_registry_handler,
-    crypto_factory_handler,
-):
-    return [
-        stable_registry_handler,
-        stable_factory_handler,
-        crypto_registry_handler,
-        crypto_factory_handler,
-    ]
+def handlers(stable_registry_handler, stable_factory_handler, crypto_registry_handler, crypto_factory_handler):
+    return [stable_registry_handler, stable_factory_handler, crypto_registry_handler, crypto_factory_handler]
 
 
 @pytest.fixture(scope="module", autouse=True)
 def populated_metaregistry(metaregistry, handlers, owner):
     for handler in handlers:
         metaregistry.add_registry_handler(handler.address, sender=owner)
-
     return metaregistry
 
 

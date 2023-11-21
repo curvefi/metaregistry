@@ -29,7 +29,7 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
 
         assert (
             populated_metaregistry.get_pool_name(stable_factory_pool)
-            == ape.Contract(stable_factory_pool).name()
+            == VyperContract(stable_factory_pool).name()
         )
 
     elif num_registry_handlers == 2:
@@ -38,12 +38,12 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
 
             assert (
                 populated_metaregistry.get_pool_name(stable_factory_pool)
-                == ape.Contract(stable_factory_pool).name()
+                == VyperContract(stable_factory_pool).name()
             )
 
         assert (
             populated_metaregistry.get_pool_name(stable_factory_pool, 1)
-            == ape.Contract(stable_factory_pool).name()
+            == VyperContract(stable_factory_pool).name()
         )
 
     else:
@@ -66,5 +66,5 @@ def test_crypto_factory_pools(
 
     assert (
         populated_metaregistry.get_pool_name(crypto_factory_pool)
-        == ape.Contract(crypto_factory.get_token(crypto_factory_pool)).name()
+        == VyperContract(crypto_factory.get_token(crypto_factory_pool)).name()
     )

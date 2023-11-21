@@ -1,0 +1,204 @@
+[
+  {
+    "name": "TransactionExecuted",
+    "inputs": [
+      {
+        "name": "admin",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "target",
+        "type": "address",
+        "indexed": true
+      },
+      {
+        "name": "calldata",
+        "type": "bytes",
+        "indexed": false
+      },
+      {
+        "name": "value",
+        "type": "uint256",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "RequestAdminChange",
+    "inputs": [
+      {
+        "name": "current_admin",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "future_admin",
+        "type": "address",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "RevokeAdminChange",
+    "inputs": [
+      {
+        "name": "current_admin",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "future_admin",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "calling_admin",
+        "type": "address",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "ApproveAdminChange",
+    "inputs": [
+      {
+        "name": "current_admin",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "future_admin",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "calling_admin",
+        "type": "address",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "name": "AcceptAdminChange",
+    "inputs": [
+      {
+        "name": "previous_admin",
+        "type": "address",
+        "indexed": false
+      },
+      {
+        "name": "current_admin",
+        "type": "address",
+        "indexed": false
+      }
+    ],
+    "anonymous": false,
+    "type": "event"
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_authorized",
+        "type": "address[2]"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "payable",
+    "type": "function",
+    "name": "execute",
+    "inputs": [
+      {
+        "name": "_target",
+        "type": "address"
+      },
+      {
+        "name": "_calldata",
+        "type": "bytes"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "get_admin_change_status",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      },
+      {
+        "name": "",
+        "type": "address"
+      },
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "request_admin_change",
+    "inputs": [
+      {
+        "name": "_new_admin",
+        "type": "address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "approve_admin_change",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "revoke_admin_change",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "name": "accept_admin_change",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "stateMutability": "view",
+    "type": "function",
+    "name": "admins",
+    "inputs": [
+      {
+        "name": "arg0",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ]
+  }
+]

@@ -34,7 +34,7 @@ def _get_underlying_balances(
             if base_pool != ape.utils.ZERO_ADDRESS:
 
                 basepool_lp_token_balance = balances[idx]
-                coin_contract = ape.Contract(coin)
+                coin_contract = VyperContract(coin)
                 try:
                     lp_token_supply = coin_contract.totalSupply()
                 except (ape.exceptions.SignatureError, AttributeError):

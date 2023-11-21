@@ -32,7 +32,7 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
                 continue
 
             try:
-                token_contract = ape.Contract(underlying_coins[i])
+                token_contract = VyperContract(underlying_coins[i])
                 actual_output.append(token_contract.decimals())
             except ape.exceptions.ChainError:
                 pytest.skip("Unverified contract. Skipping test.")

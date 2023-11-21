@@ -26,7 +26,4 @@ jobs:
       - name: Run Tests
         run: pytest
         env:
-          ETHERSCAN_TOKEN: ${{ secrets.ETHERSKEM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WEB3_INFURA_PROJECT_ID: ${{ secrets.INFURA_TOKEN }}
-          WEB3_ALCHEMY_PROJECT_ID: ${{secrets.ALCHEMY_API_KEY}}
+          DRPC_KEY: ${{ secrets.DRPC_KEY }}

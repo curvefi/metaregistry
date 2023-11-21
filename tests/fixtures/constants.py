@@ -1,5 +1,7 @@
-import ape
 import pytest
+
+
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
 @pytest.fixture(scope="module")
@@ -47,7 +49,7 @@ def crypto_registry_pools(base_pools):
         "zap": "0x3993d34e7e99Abf6B6f367309975d1360222D446",
         "num_coins": 3,
         "name": "tricrypto2",
-        "base_pool": ape.utils.ZERO_ADDRESS,
+        "base_pool": ZERO_ADDRESS,
         "has_positive_rebasing_tokens": False,
     }
 
@@ -66,10 +68,10 @@ def crypto_registry_pools(base_pools):
         "pool": "0x98a7F18d4E56Cfe84E3D081B40001B3d5bD3eB8B",
         "lp_token": "0x3D229E1B4faab62F621eF2F6A610961f7BD7b23B",
         "gauge": "0x65CA7Dc5CB661fC58De57B1E1aF404649a27AD35",
-        "zap": ape.utils.ZERO_ADDRESS,
+        "zap": ZERO_ADDRESS,
         "num_coins": 2,
         "name": "eursusd",
-        "base_pool": ape.utils.ZERO_ADDRESS,
+        "base_pool": ZERO_ADDRESS,
         "has_positive_rebasing_tokens": False,
     }
 
@@ -77,10 +79,10 @@ def crypto_registry_pools(base_pools):
         "pool": "0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511",
         "lp_token": "0xEd4064f376cB8d68F770FB1Ff088a3d0F3FF5c4d",
         "gauge": "0x1cEBdB0856dd985fAe9b8fEa2262469360B8a3a6",
-        "zap": ape.utils.ZERO_ADDRESS,
+        "zap": ZERO_ADDRESS,
         "num_coins": 2,
         "name": "crveth",
-        "base_pool": ape.utils.ZERO_ADDRESS,
+        "base_pool": ZERO_ADDRESS,
         "has_positive_rebasing_tokens": False,
     }
 
@@ -88,10 +90,10 @@ def crypto_registry_pools(base_pools):
         "pool": "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
         "lp_token": "0x3A283D9c08E8b55966afb64C515f5143cf907611",
         "gauge": "0x7E1444BA99dcdFfE8fBdb42C02F0005D14f13BE1",
-        "zap": ape.utils.ZERO_ADDRESS,
+        "zap": ZERO_ADDRESS,
         "num_coins": 2,
         "name": "cvxeth",
-        "base_pool": ape.utils.ZERO_ADDRESS,
+        "base_pool": ZERO_ADDRESS,
         "has_positive_rebasing_tokens": False,
     }
 
@@ -110,10 +112,10 @@ def crypto_registry_pools(base_pools):
         "pool": "0x98638FAcf9a3865cd033F36548713183f6996122",
         "lp_token": "0x8282BD15dcA2EA2bDf24163E8f2781B30C43A2ef",
         "gauge": "0x08380a4999Be1a958E2abbA07968d703C7A3027C",
-        "zap": ape.utils.ZERO_ADDRESS,
+        "zap": ZERO_ADDRESS,
         "num_coins": 2,
         "name": "spelleth",
-        "base_pool": ape.utils.ZERO_ADDRESS,
+        "base_pool": ZERO_ADDRESS,
         "has_positive_rebasing_tokens": False,
     }
 
@@ -121,10 +123,10 @@ def crypto_registry_pools(base_pools):
         "pool": "0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC",
         "lp_token": "0xCb08717451aaE9EF950a2524E33B6DCaBA60147B",
         "gauge": "0x6070fBD4E608ee5391189E7205d70cc4A274c017",
-        "zap": ape.utils.ZERO_ADDRESS,
+        "zap": ZERO_ADDRESS,
         "num_coins": 2,
         "name": "teth",
-        "base_pool": ape.utils.ZERO_ADDRESS,
+        "base_pool": ZERO_ADDRESS,
         "has_positive_rebasing_tokens": False,
     }
 

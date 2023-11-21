@@ -2,7 +2,7 @@ import ape
 
 
 def test_revert_unauthorised_add_pool(
-    crypto_registry, unauthorised_account, crypto_registry_pools
+    crypto_registry, unauthorised_address, crypto_registry_pools
 ):
 
     pool_data = crypto_registry_pools["tricrypto2"]
@@ -17,7 +17,7 @@ def test_revert_unauthorised_add_pool(
             pool_data["name"],
             pool_data["base_pool"],
             pool_data["has_positive_rebasing_tokens"],
-            sender=unauthorised_account,
+            sender=unauthorised_address,
         )
 
 
@@ -140,13 +140,13 @@ def test_add_pool(
 
 
 def test_revert_unauthorised_remove_pool(
-    crypto_registry, unauthorised_account, crypto_registry_pools
+    crypto_registry, unauthorised_address, crypto_registry_pools
 ):
 
     with ape.reverts():
         crypto_registry.remove_pool(
             crypto_registry_pools["tricrypto2"]["pool"],
-            sender=unauthorised_account,
+            sender=unauthorised_address,
         )
 
 

@@ -1,22 +1,22 @@
-import ape
+import boa
 
 
 def test_revert_unauthorised_add_registry_handler(
-    metaregistry, unauthorised_account, random_address
+    metaregistry, unauthorised_address, random_address
 ):
-    with ape.reverts():
+    with boa.reverts():
         tx = metaregistry.add_registry_handler(
-            random_address, sender=unauthorised_account
+            random_address, sender=unauthorised_address
         )
         assert tx.revert_msg == "dev: only owner"
 
 
 def test_revert_unauthorised_update_registry_handler(
-    populated_metaregistry, unauthorised_account, random_address
+    populated_metaregistry, unauthorised_address, random_address
 ):
-    with ape.reverts():
+    with boa.reverts():
         tx = populated_metaregistry.update_registry_handler(
-            0, random_address, sender=unauthorised_account
+            0, random_address, sender=unauthorised_address
         )
         assert tx.revert_msg == "dev: only owner"
 
@@ -24,7 +24,7 @@ def test_revert_unauthorised_update_registry_handler(
 def test_update_registry_handler_invalid_registry(
     populated_metaregistry, random_address, owner
 ):
-    with ape.reverts():
+    with boa.reverts():
         populated_metaregistry.update_registry_handler(
             10, random_address, sender=owner
         )

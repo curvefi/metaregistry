@@ -2,7 +2,7 @@ import ape
 
 
 def test_revert_unauthorised_add_base_pool(
-    owner, unauthorised_account, base_pools
+    owner, unauthorised_address, base_pools
 ):
 
     base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
@@ -16,7 +16,7 @@ def test_revert_unauthorised_add_base_pool(
             base_pool_data["is_legacy"],
             base_pool_data["is_lending"],
             base_pool_data["is_v2"],
-            sender=unauthorised_account,
+            sender=unauthorised_address,
         )
 
 
@@ -92,7 +92,7 @@ def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
 
 
 def test_revert_unauthorised_remove_base_pool(
-    populated_base_pool_registry, unauthorised_account, base_pools
+    populated_base_pool_registry, unauthorised_address, base_pools
 ):
 
     tripool_address = base_pools["tripool"]["pool"]
@@ -103,7 +103,7 @@ def test_revert_unauthorised_remove_base_pool(
     )
     with ape.reverts():
         populated_base_pool_registry.remove_base_pool(
-            tripool_address, sender=unauthorised_account
+            tripool_address, sender=unauthorised_address
         )
 
 
