@@ -22,7 +22,7 @@ def _get_underlying_balances(
         actual_output = registry.get_underlying_balances(pool)
 
     # registry getter borks, so we need to get balances the hard way:
-    except (ape.exceptions.ContractLogicError, AttributeError):
+    except (KeyError, AttributeError):  # TODO: Pick the right exception
         coins = metaregistry.get_coins(pool)
         balances = metaregistry.get_balances(pool)
         for idx, coin in enumerate(coins):
@@ -33,7 +33,7 @@ def _get_underlying_balances(
                 coin_contract = VyperContract(coin)
                 try:
                     lp_token_supply = coin_contract.totalSupply()
-                except (ape.exceptions.SignatureError, AttributeError):
+                except (KeyError, AttributeError):  # TODO: Pick the right exception
                     assert "totalSupply" not in [
                         i.name
                         for i in coin_contract.contract_type.view_methods

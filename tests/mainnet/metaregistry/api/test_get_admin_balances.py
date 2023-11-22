@@ -1,4 +1,8 @@
+import boa
 import pytest
+from eth.codecs.abi.exceptions import DecodeError
+
+from tests.utils import get_lp_contract
 
 
 def pre_test_checks(metaregistry, pool):
@@ -6,13 +10,12 @@ def pre_test_checks(metaregistry, pool):
         pytest.skip("empty pool: skipping")
 
     try:
-        if VyperContract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
-            pytest.skip("lp token supply is zero")
-    except SignatureError:
+        if get_lp_contract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
+            pytest.skip("LP token supply is zero")
+    except DecodeError as err:  # TODO: Document why this happens
         pytest.skip(
-            f"SignatureError for token {metaregistry.get_lp_token(pool)}: skipping"
+            f"{type(err).__name__} for token {metaregistry.get_lp_token(pool)}: Skipping because of {err.msg}"
         )
-
 
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
@@ -27,11 +30,7 @@ def test_stable_registry_pools(
         assert output == metaregistry_output[i]
 
 
-def test_stable_factory_pools(
-    populated_metaregistry,
-    stable_factory_pool,
-    curve_pool,
-):
+def test_stable_factory_pools(populated_metaregistry, stable_factory_pool, curve_pool):
     pre_test_checks(populated_metaregistry, stable_factory_pool)
 
     pool = curve_pool(stable_factory_pool)
@@ -46,29 +45,28 @@ def test_stable_factory_pools(
 
 
 def _get_crypto_pool_admin_fees(
-    populated_metaregistry, pool, fee_receiver, project, alice_address, chain
+    populated_metaregistry, pool, fee_receiver, alice_address
 ):
-    lp_token = VyperContract(populated_metaregistry.get_lp_token(pool))
+    lp_token = get_lp_contract(populated_metaregistry.get_lp_token(pool))
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
 
-    chain.snapshot()
-    pool.claim_admin_fees(sender=alice_address)
+    with boa.env.anchor():
+        pool.claim_admin_fees(sender=alice_address)
 
-    claimed_lp_token_as_fee = (
-        lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
-    )
-    total_supply_lp_token = lp_token.totalSupply()
-    frac_admin_fee = int(
-        claimed_lp_token_as_fee * 10**18 / total_supply_lp_token
-    )
+        claimed_lp_token_as_fee = (
+            lp_token.balanceOf(fee_receiver) - fee_receiver_token_balance_before
+        )
+        total_supply_lp_token = lp_token.totalSupply()
+        frac_admin_fee = int(
+            claimed_lp_token_as_fee * 10**18 / total_supply_lp_token
+        )
 
-    # get admin balances in individual assets:
-    reserves = populated_metaregistry.get_balances(pool)
-    admin_balances = [0] * 8
-    for i in range(8):
-        admin_balances[i] = int(frac_admin_fee * reserves[i] / 10**18)
+        # get admin balances in individual assets:
+        reserves = populated_metaregistry.get_balances(pool)
+        admin_balances = [0] * 8
+        for i in range(8):
+            admin_balances[i] = int(frac_admin_fee * reserves[i] / 10**18)
 
-    chain.restore()
     return admin_balances
 
 
@@ -77,8 +75,6 @@ def test_crypto_registry_pools(
     crypto_registry_pool,
     curve_pool_v2,
     alice_address,
-    chain,
-    project,
 ):
     pre_test_checks(populated_metaregistry, crypto_registry_pool)
 
@@ -88,9 +84,7 @@ def test_crypto_registry_pools(
         populated_metaregistry,
         pool,
         fee_receiver,
-        project,
         alice_address,
-        chain,
     )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)
@@ -104,8 +98,6 @@ def test_crypto_factory_pools(
     crypto_factory,
     curve_pool_v2,
     alice_address,
-    chain,
-    project,
 ):
     pre_test_checks(populated_metaregistry, crypto_factory_pool)
 
@@ -115,9 +107,7 @@ def test_crypto_factory_pools(
         populated_metaregistry,
         pool,
         fee_receiver,
-        project,
         alice_address,
-        chain,
     )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)

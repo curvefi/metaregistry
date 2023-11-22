@@ -1,6 +1,6 @@
 import boa
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, deploy_contract
 
 
 def test_add_metapool(
@@ -12,9 +12,8 @@ def test_add_metapool(
     base_pools,
     tokens,
 ):
-    crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        address_provider, populated_base_pool_registry, sender=owner
-    )
+    crypto_registry = deploy_contract("CryptoRegistryV1", address_provider, populated_base_pool_registry,
+                                      directory="registries", sender=owner)
 
     pool_count = crypto_registry.pool_count()
     assert pool_count == 0
@@ -145,7 +144,7 @@ def test_add_metapool(
     )
     # the following should revert since we didn't add any basepool lp token <> coin pairs:
     for coin in [tokens["dai"], tokens["usdc"], tokens["usdt"]]:
-        with ape.reverts():
+        with boa.reverts():
             crypto_registry.get_coin_indices(
                 pool_data["pool"], base_pools["tripool"]["lp_token"], coin
             )
@@ -206,9 +205,8 @@ def test_remove_metapool(
     base_pools,
     tokens,
 ):
-    crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        address_provider, populated_base_pool_registry, sender=owner
-    )
+    crypto_registry = deploy_contract("CryptoRegistryV1", address_provider, populated_base_pool_registry,
+                                      directory="registries", sender=owner)
 
     # add EURT3CRV pool
     eurt3crv = crypto_registry_pools["eurt3crv"]

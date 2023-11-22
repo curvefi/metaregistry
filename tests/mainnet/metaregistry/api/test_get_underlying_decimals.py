@@ -34,9 +34,9 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
             try:
                 token_contract = VyperContract(underlying_coins[i])
                 actual_output.append(token_contract.decimals())
-            except ape.exceptions.ChainError:
+            except KeyError:  # TODO: Pick the right exception
                 pytest.skip("Unverified contract. Skipping test.")
-            except ape.exceptions.SignatureError:
+            except ZeroDivisionError:  # TODO: Pick the right exception
                 if (
                     underlying_coins[i]
                     == "0x6810e776880C02933D47DB1b9fc05908e5386b96"

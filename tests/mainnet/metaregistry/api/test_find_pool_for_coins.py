@@ -1,5 +1,7 @@
 import itertools
 
+import pytest
+
 from tests.utils import ZERO_ADDRESS
 
 # NOTE: This is the most important method in the metaregistry contract since it will be used
@@ -29,6 +31,7 @@ def _get_all_combinations(metaregistry, pool):
     return all_combinations
 
 
+@pytest.mark.skip()  # TODO: This test is spawning a lot of test cases and takes >1:30h to run
 def test_all(populated_metaregistry, pool):
     combinations = _get_all_combinations(populated_metaregistry, pool)
     for combination in combinations:

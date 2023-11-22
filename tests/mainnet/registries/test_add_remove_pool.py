@@ -1,6 +1,6 @@
 import boa
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, deploy_contract
 
 
 def test_revert_unauthorised_add_pool(
@@ -8,7 +8,7 @@ def test_revert_unauthorised_add_pool(
 ):
     pool_data = crypto_registry_pools["tricrypto2"]
 
-    with ape.reverts():
+    with boa.reverts():
         crypto_registry.add_pool(
             pool_data["pool"],
             pool_data["lp_token"],
@@ -27,7 +27,7 @@ def test_revert_add_existing_pool(
 ):
     pool_data = crypto_registry_pools["tricrypto2"]
 
-    with ape.reverts():
+    with boa.reverts():
         crypto_registry.add_pool(
             pool_data["pool"],
             pool_data["lp_token"],
@@ -48,9 +48,8 @@ def test_add_pool(
     owner,
     tokens,
 ):
-    crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        address_provider.address, populated_base_pool_registry, sender=owner
-    )
+    crypto_registry = deploy_contract("CryptoRegistryV1", address_provider, populated_base_pool_registry,
+                                      directory="registries", sender=owner)
 
     pool_count = crypto_registry.pool_count()
     assert pool_count == 0
@@ -138,7 +137,7 @@ def test_add_pool(
 def test_revert_unauthorised_remove_pool(
     crypto_registry, unauthorised_address, crypto_registry_pools
 ):
-    with ape.reverts():
+    with boa.reverts():
         crypto_registry.remove_pool(
             crypto_registry_pools["tricrypto2"]["pool"],
             sender=unauthorised_address,
@@ -153,9 +152,8 @@ def test_remove_pool(
     max_coins,
     tokens,
 ):
-    crypto_registry = ape.project.CryptoRegistryV1.deploy(
-        address_provider.address, populated_base_pool_registry, sender=owner
-    )
+    crypto_registry = deploy_contract("CryptoRegistryV1", address_provider, populated_base_pool_registry,
+                                      directory="registries", sender=owner)
 
     # add pool to be removed:
     tricrypto2 = crypto_registry_pools["tricrypto2"]

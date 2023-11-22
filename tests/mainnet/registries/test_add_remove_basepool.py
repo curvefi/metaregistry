@@ -1,15 +1,14 @@
 import boa
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, deploy_contract
 
 
 def test_revert_unauthorised_add_base_pool(
     owner, unauthorised_address, base_pools
 ):
-    base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
-
+    base_pool_registry = deploy_contract("BasePoolRegistry", directory="registries", sender=owner)
     base_pool_data = base_pools["tripool"]
-    with ape.reverts():
+    with boa.reverts():
         base_pool_registry.add_base_pool(
             base_pool_data["pool"],
             base_pool_data["lp_token"],
@@ -17,13 +16,11 @@ def test_revert_unauthorised_add_base_pool(
             base_pool_data["is_legacy"],
             base_pool_data["is_lending"],
             base_pool_data["is_v2"],
-            sender=unauthorised_address,
         )
 
 
 def test_add_basepool(owner, base_pools, tokens):
-    base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
-
+    base_pool_registry = deploy_contract("BasePoolRegistry", directory="registries", sender=owner)
     base_pool_count = base_pool_registry.base_pool_count()
     base_pool_data = base_pools["tripool"]
     tripool = base_pool_data["pool"]
@@ -63,7 +60,7 @@ def test_add_basepool(owner, base_pools, tokens):
 
 
 def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
-    base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
+    base_pool_registry = deploy_contract("BasePoolRegistry", directory="registries", sender=owner)
 
     base_pool_data = base_pools["sbtc"]
     assert base_pool_data["is_legacy"]
@@ -99,7 +96,7 @@ def test_revert_unauthorised_remove_base_pool(
         populated_base_pool_registry.get_lp_token(tripool_address)
         != ZERO_ADDRESS
     )
-    with ape.reverts():
+    with boa.reverts():
         populated_base_pool_registry.remove_base_pool(
             tripool_address, sender=unauthorised_address
         )

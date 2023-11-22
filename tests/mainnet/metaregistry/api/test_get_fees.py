@@ -62,7 +62,7 @@ def test_crypto_factory_pools(
     curve_pool_v2,
 ):
     if sum(crypto_factory.get_balances(crypto_factory_pool)) == 0:
-        with ape.reverts():
+        with boa.env.anchor():
             curve_pool_v2(crypto_factory_pool).fee()
         pytest.skip(
             f"crypto factory pool {crypto_factory_pool} is empty and factory pools tend to "

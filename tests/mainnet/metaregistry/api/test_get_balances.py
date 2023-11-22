@@ -48,7 +48,7 @@ def test_crypto_factory_pools(
 ):
     try:
         actual_output = crypto_factory.get_balances(crypto_factory_pool)
-    except ContractLogicError:
+    except KeyError:  # TODO: Pick right exception
         actual_output = []
         pool = curve_pool_v2(crypto_factory_pool)
         for i in range(2):

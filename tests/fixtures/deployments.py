@@ -44,16 +44,16 @@ def base_pool_registry(alice_address):
 
 @pytest.fixture(scope="module", autouse=True)
 def populated_base_pool_registry(base_pool_registry, owner, base_pools):
-    boa.env.eoa = owner
-    for data in base_pools.values():
-        base_pool_registry.add_base_pool(
-            data["pool"],
-            data["lp_token"],
-            data["num_coins"],
-            data["is_legacy"],
-            data["is_lending"],
-            data["is_v2"],
-        )
+    with boa.env.sender(owner):
+        for data in base_pools.values():
+            base_pool_registry.add_base_pool(
+                data["pool"],
+                data["lp_token"],
+                data["num_coins"],
+                data["is_legacy"],
+                data["is_lending"],
+                data["is_v2"],
+            )
     return base_pool_registry
 
 
@@ -69,18 +69,18 @@ def crypto_registry(
         sender=owner,
     )
 
-    boa.env.eoa = owner
-    for _, pool in crypto_registry_pools.items():
-        crypto_registry.add_pool(
-            pool["pool"],
-            pool["lp_token"],
-            pool["gauge"],
-            pool["zap"],
-            pool["num_coins"],
-            pool["name"],
-            pool["base_pool"],
-            pool["has_positive_rebasing_tokens"],
-        )
+    with boa.env.sender(owner):
+        for _, pool in crypto_registry_pools.items():
+            crypto_registry.add_pool(
+                pool["pool"],
+                pool["lp_token"],
+                pool["gauge"],
+                pool["zap"],
+                pool["num_coins"],
+                pool["name"],
+                pool["base_pool"],
+                pool["has_positive_rebasing_tokens"],
+            )
 
     return crypto_registry
 

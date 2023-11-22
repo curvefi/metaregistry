@@ -40,7 +40,7 @@ def set_up_registries(
     else:
         logger.log("Prodmode")
         boa.set_env(NetworkEnv(url))
-        boa.env.add_account(Account.from_key(os.environ[account]))
+        boa.env.eoa = Account.from_key(os.environ[account])
 
     data = next(
         (

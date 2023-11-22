@@ -1,3 +1,4 @@
+import json
 from os import path
 from typing import Union
 
@@ -9,26 +10,24 @@ ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 BASE_DIR = path.join(path.dirname(path.abspath(__file__)), "..")
 
 
-def get_contract_pools(contract: str, address: str) -> list[str]:
+def get_contract_pools(contract_name: str, address: str) -> list[str]:
     """
     Retrieves the list of pools from a deployed contract with the given address.
-    :param contract: The name of the contract to load.
+    :param contract_name: The name of the contract to load.
     :param address: The address of the deployed contract.
     """
-    registry = get_deployed_contract(contract, address)
+    registry = get_deployed_contract(contract_name, address)
     return [registry.pool_list(i) for i in range(registry.pool_count())]
 
 
-def get_deployed_contract(contract_abi: str, address: str) -> VyperContract:
+def get_deployed_contract(contract_name: str, address: str) -> VyperContract:
     """
     Loads a contract and retrieves a deployed instance of it with the given address.
     TODO: Refactor calls to use fixtures instead of re-loading multiple times.
-    :param contract_abi: The name of the contract to load.
+    :param contract_name: The name of the contract ABI to load.
     :param address: The address of the deployed contract.
     """
-    file_name = path.join(
-        BASE_DIR, f"contracts/mainnet/abi/{contract_abi}.json"
-    )
+    file_name = path.join(BASE_DIR, f"contracts/interfaces/{contract_name}.json")
     return boa.load_abi(file_name).at(address)
 
 
@@ -42,5 +41,28 @@ def deploy_contract(
     file_name = path.join(
         BASE_DIR, f"contracts/mainnet/{directory}/{contract}.vy"
     )
-    boa.env.eoa = sender if isinstance(sender, str) else sender.address
-    return boa.load(file_name, *args, **kwargs)
+    with boa.env.sender(sender):
+        return boa.load(file_name, *args, **kwargs)
+
+
+def get_lp_contract(address: str) -> VyperContract:
+    """
+    Gets the LP token contract at the given address.
+    :param address: The address of the LP token contract.
+    """
+    abi = json.dumps([{
+        "name": "totalSupply",
+        "constant": True,
+        "inputs": [],
+        "outputs": [{"name": "", "type": "uint256"}],
+        "payable": False,
+        "stateMutability": "view",
+        "type": "function"
+    }, {
+        "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+        "name": "balanceOf",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+    }])
+    return boa.loads_abi(abi).at(address)
