@@ -1,4 +1,5 @@
-import ape
+import boa
+from tests.utils import ZERO_ADDRESS
 
 
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
@@ -29,12 +30,12 @@ def _get_factory_gauge(
     # as gauge type is zero. This slows down tests significantly
     if _is_dao_onboarded_gauge(gauge, gauge_controller, liquidity_gauge):
         return (
-            [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
+            [gauge] + [ZERO_ADDRESS] * 9,
             [gauge_controller.gauge_types(gauge)] + [0] * 9,
         )
     else:
         return (
-            [gauge] + [ape.utils.ZERO_ADDRESS] * 9,
+            [gauge] + [ZERO_ADDRESS] * 9,
             [default_gauge_type] * 10,
         )
 
@@ -81,7 +82,7 @@ def test_stable_factory_pools(
         )
     )
     num_registry_handlers = len(
-        list(filter((ape.utils.ZERO_ADDRESS).__ne__, pool_registry_handlers))
+        list(filter((ZERO_ADDRESS).__ne__, pool_registry_handlers))
     )
 
     metaregistry_output_gauge = populated_metaregistry.get_gauge(

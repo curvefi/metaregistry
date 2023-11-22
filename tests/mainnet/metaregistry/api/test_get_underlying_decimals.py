@@ -1,5 +1,6 @@
-import ape
+import boa
 import pytest
+from tests.utils import ZERO_ADDRESS
 
 EXCEPTIONS = {
     # eth: ankreth pool returns [18, 0] when it should return:
@@ -27,7 +28,7 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
         actual_output = []
         for i in range(len(underlying_coins)):
 
-            if underlying_coins[i] == ape.utils.ZERO_ADDRESS:
+            if underlying_coins[i] == ZERO_ADDRESS:
                 actual_output.append(0)
                 continue
 

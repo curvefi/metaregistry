@@ -1,6 +1,7 @@
 import itertools
 
-import ape
+from tests.utils import ZERO_ADDRESS
+
 
 # NOTE: This is the most important method in the metaregistry contract since it will be used
 # by integrators to find pools for coin pairs. It finds pools even if the coin pair is not
@@ -12,7 +13,7 @@ def _get_all_combinations(metaregistry, pool):
     pool_coins = [
         coin
         for coin in metaregistry.get_coins(pool)
-        if coin != ape.utils.ZERO_ADDRESS
+        if coin != ZERO_ADDRESS
     ]
     base_combinations = list(itertools.combinations(pool_coins, 2))
     all_combinations = base_combinations
@@ -21,7 +22,7 @@ def _get_all_combinations(metaregistry, pool):
         underlying_coins = [
             coin
             for coin in metaregistry.get_underlying_coins(pool)
-            if coin != ape.utils.ZERO_ADDRESS
+            if coin != ZERO_ADDRESS
         ]
         all_combinations = all_combinations + [
             (pool_coins[0], coin)

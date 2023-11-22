@@ -1,4 +1,3 @@
-import ape
 import pytest
 
 
@@ -10,7 +9,7 @@ def pre_test_checks(metaregistry, pool):
     try:
         if VyperContract(metaregistry.get_lp_token(pool)).totalSupply() == 0:
             pytest.skip("lp token supply is zero")
-    except ape.exceptions.SignatureError:
+    except SignatureError:
         pytest.skip(
             f"SignatureError for token {metaregistry.get_lp_token(pool)}: skipping"
         )

@@ -1,4 +1,4 @@
-import ape
+from tests.utils import ZERO_ADDRESS
 
 
 def test_new_crypto_factory_pool(
@@ -10,7 +10,7 @@ def test_new_crypto_factory_pool(
         metaregistry.find_pool_for_coins(
             tokens["dai"], lp_tokens["cvxFXSFXS-f"], 0
         )
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
 
     crypto_factory.deploy_pool(
@@ -35,7 +35,7 @@ def test_new_crypto_factory_pool(
     assert (
         metaregistry.get_coins(new_pool)
         == [tokens["dai"], lp_tokens["cvxFXSFXS-f"]]
-        + [ape.utils.ZERO_ADDRESS] * 6
+        + [ZERO_ADDRESS] * 6
     )
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool
@@ -56,7 +56,7 @@ def test_new_stable_factory_pool(
         metaregistry.find_pool_for_coins(
             lp_tokens["bveCVX-CVX-f"], lp_tokens["cvxFXSFXS-f"], 0
         )
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
 
     stable_factory.deploy_plain_pool(
@@ -65,8 +65,8 @@ def test_new_stable_factory_pool(
         [
             lp_tokens["bveCVX-CVX-f"],
             lp_tokens["cvxFXSFXS-f"],
-            ape.utils.ZERO_ADDRESS,
-            ape.utils.ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
         ],
         10000,
         4000000,
@@ -81,7 +81,7 @@ def test_new_stable_factory_pool(
     assert (
         metaregistry.get_coins(new_pool)
         == [lp_tokens["bveCVX-CVX-f"], lp_tokens["cvxFXSFXS-f"]]
-        + [ape.utils.ZERO_ADDRESS] * 6
+        + [ZERO_ADDRESS] * 6
     )
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool

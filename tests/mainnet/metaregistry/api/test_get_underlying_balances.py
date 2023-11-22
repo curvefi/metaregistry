@@ -1,7 +1,8 @@
 import warnings
 
-import ape
+import boa
 import pytest
+from tests.utils import ZERO_ADDRESS
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
 
@@ -31,7 +32,7 @@ def _get_underlying_balances(
 
             base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
 
-            if base_pool != ape.utils.ZERO_ADDRESS:
+            if base_pool != ZERO_ADDRESS:
 
                 basepool_lp_token_balance = balances[idx]
                 coin_contract = VyperContract(coin)
@@ -52,7 +53,7 @@ def _get_underlying_balances(
 
                 for idy, balance in enumerate(base_pool_balances):
 
-                    if coin == ape.utils.ZERO_ADDRESS:
+                    if coin == ZERO_ADDRESS:
                         break
                     actual_output[idx] = balance * ratio_in_pool
 

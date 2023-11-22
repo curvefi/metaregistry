@@ -1,4 +1,4 @@
-import ape
+from tests.utils import ZERO_ADDRESS
 
 
 def test_stable_registry_pools(
@@ -39,7 +39,7 @@ def test_crypto_factory_pools(
     for i in range(len(coins)):
         if (
             populated_base_pool_registry.get_base_pool_for_lp_token(coins[i])
-            != ape.utils.ZERO_ADDRESS
+            != ZERO_ADDRESS
         ):
             actual_output = True
             break

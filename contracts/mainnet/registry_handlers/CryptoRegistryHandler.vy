@@ -1,4 +1,4 @@
-# @version 0.3.10
+#pragma version ^0.3.7
 """
 @title Curve Registry Handler for v2 Crypto Registry
 @license MIT

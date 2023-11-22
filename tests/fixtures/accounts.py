@@ -1,6 +1,3 @@
-import logging
-from collections import namedtuple
-
 import pytest
 from eth_account import Account
 from eth_account.hdaccount import HDPath
@@ -20,6 +17,7 @@ def accounts(seed) -> list[LocalAccount]:
     Generate 10 dev accounts from a seed.
     Based on ape's `generate_test_accounts` method:
      https://github.com/ApeWorX/ape/blob/9d4b66786/src/ape/utils/testing.py#L28
+    TODO: replace by boa.env.generate_address()?
     """
     def generate_account(index: int, hd_path_format="m/44'/60'/0'/{}") -> LocalAccount:
         hd_path = HDPath(hd_path_format.format(index))

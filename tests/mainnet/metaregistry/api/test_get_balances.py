@@ -1,6 +1,3 @@
-import ape
-
-
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
 ):
@@ -34,7 +31,7 @@ def test_crypto_registry_pools(
 
     try:
         actual_output = crypto_registry.get_balances(crypto_registry_pool)
-    except ape.exceptions.ContractLogicError:
+    except ContractLogicError:
         actual_output = []
         pool = curve_pool_v2(crypto_registry_pool)
         for i in range(
@@ -55,7 +52,7 @@ def test_crypto_factory_pools(
 
     try:
         actual_output = crypto_factory.get_balances(crypto_factory_pool)
-    except ape.exceptions.ContractLogicError:
+    except ContractLogicError:
         actual_output = []
         pool = curve_pool_v2(crypto_factory_pool)
         for i in range(2):

@@ -1,4 +1,4 @@
-titanoboa==0.1.8
+titanoboa[forking-recommended]==0.1.8
 black
 flake8
 isort

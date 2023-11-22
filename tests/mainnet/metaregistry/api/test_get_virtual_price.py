@@ -1,7 +1,9 @@
 import warnings
 
-import ape
+import boa
 import pytest
+from tests.utils import ZERO_ADDRESS
+
 
 # ---- sanity checks since vprice getters can revert for specific pools states ----
 
@@ -32,7 +34,7 @@ def _check_skem_tokens_with_weird_decimals(
     pool_balances_float = []
     for i in range(len(pool_balances)):
 
-        if coins[i] == ape.utils.ZERO_ADDRESS:
+        if coins[i] == ZERO_ADDRESS:
             break
 
         pool_balances_float.append(pool_balances[i] / 10 ** coin_decimals[i])

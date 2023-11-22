@@ -1,8 +1,8 @@
 import itertools
 import warnings
 
-import ape
 import pytest
+from tests.utils import ZERO_ADDRESS
 
 
 def _reject_pools_with_one_coin(metaregistry, pool):
@@ -10,7 +10,7 @@ def _reject_pools_with_one_coin(metaregistry, pool):
     pool_coins = [
         coin
         for coin in metaregistry.get_coins(pool)
-        if coin != ape.utils.ZERO_ADDRESS
+        if coin != ZERO_ADDRESS
     ]
     if len(list(set(pool_coins))) == 1:
         warnings.warn(f"Pool {pool} has only one coin!")
@@ -26,7 +26,7 @@ def _get_coin_combinations(metaregistry, pool):
     pool_coins = [
         coin
         for coin in metaregistry.get_coins(pool)
-        if coin != ape.utils.ZERO_ADDRESS
+        if coin != ZERO_ADDRESS
     ]
 
     base_combinations = list(itertools.combinations(pool_coins, 2))
@@ -35,7 +35,7 @@ def _get_coin_combinations(metaregistry, pool):
         underlying_coins = [
             coin
             for coin in metaregistry.get_underlying_coins(pool)
-            if coin != ape.utils.ZERO_ADDRESS
+            if coin != ZERO_ADDRESS
         ]
         all_combinations = all_combinations + [
             (pool_coins[0], coin) for coin in underlying_coins
@@ -54,7 +54,7 @@ def _get_coin_indices(pool, coin_a, coin_b, metaregistry, max_coins):
     # check coin markets
     for x in range(max_coins):
         coin = _coins[x]
-        if coin == ape.utils.ZERO_ADDRESS:
+        if coin == ZERO_ADDRESS:
             # if we reach the end of the coins, reset `found_market` and try again
             # with the underlying coins
             found_market = False
@@ -79,7 +79,7 @@ def _get_coin_indices(pool, coin_a, coin_b, metaregistry, max_coins):
 
         for x in range(max_coins):
             coin = underlying_coins[x]
-            if coin == ape.utils.ZERO_ADDRESS:
+            if coin == ZERO_ADDRESS:
                 raise "No available market"
             if coin == coin_a:
                 result[0] = x

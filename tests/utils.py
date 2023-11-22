@@ -5,6 +5,7 @@ import boa
 from boa.vyper.contract import VyperContract
 from eth_account.signers.local import LocalAccount
 
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 BASE_DIR = path.join(path.dirname(path.abspath(__file__)), "..")
 
 
@@ -29,7 +30,7 @@ def get_deployed_contract(contract_abi: str, address: str) -> VyperContract:
     return boa.load_abi(file_name).at(address)
 
 
-def deploy_contract(contract: str, *args, sender: Union[LocalAccount, str], directory: str = ".", **kwargs):
+def deploy_contract(contract: str, *args, sender: Union[LocalAccount, str], directory: str = ".", **kwargs) -> VyperContract:
     file_name = path.join(BASE_DIR, f"contracts/mainnet/{directory}/{contract}.vy")
     boa.env.eoa = sender if isinstance(sender, str) else sender.address
     return boa.load(file_name, *args, **kwargs)

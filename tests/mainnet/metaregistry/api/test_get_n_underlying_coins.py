@@ -1,4 +1,4 @@
-import ape
+from tests.utils import ZERO_ADDRESS
 
 
 def _get_num_coins(registry, pool, base_pool_registry):
@@ -7,16 +7,16 @@ def _get_num_coins(registry, pool, base_pool_registry):
     num_coins = 0
     for coin in coins:
 
-        if coin == ape.utils.ZERO_ADDRESS:
+        if coin == ZERO_ADDRESS:
             break
 
         base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
 
-        if base_pool != ape.utils.ZERO_ADDRESS:
+        if base_pool != ZERO_ADDRESS:
 
             basepool_coins = base_pool_registry.get_coins(base_pool)
             num_bp_coins = sum(
-                [1 for i in basepool_coins if i != ape.utils.ZERO_ADDRESS]
+                [1 for i in basepool_coins if i != ZERO_ADDRESS]
             )
             num_coins += num_bp_coins
 

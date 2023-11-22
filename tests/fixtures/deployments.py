@@ -34,8 +34,8 @@ def base_pool_registry(alice_address):
 
 @pytest.fixture(scope="module", autouse=True)
 def populated_base_pool_registry(base_pool_registry, owner, base_pools):
+    boa.env.eoa = owner
     for data in base_pools.values():
-        boa.env.eoa = owner
         base_pool_registry.add_base_pool(
             data["pool"],
             data["lp_token"],
@@ -54,6 +54,7 @@ def crypto_registry(
     crypto_registry = deploy_contract("CryptoRegistryV1", ADDRESS_PROVIDER, populated_base_pool_registry,
                                       directory="registries", sender=owner)
 
+    boa.env.eoa = owner
     for _, pool in crypto_registry_pools.items():
         crypto_registry.add_pool(
             pool["pool"],
@@ -64,7 +65,6 @@ def crypto_registry(
             pool["name"],
             pool["base_pool"],
             pool["has_positive_rebasing_tokens"],
-            sender=owner,
         )
 
     return crypto_registry
@@ -85,8 +85,7 @@ def metaregistry(address_provider, owner):
 @pytest.fixture(scope="module", autouse=True)
 def stable_registry_handler(stable_registry, owner):
     return deploy_contract(
-        "StableRegistryHandler", stable_registry.address,
-        sender=owner, directory="registry_handlers", override_address=stable_registry.address,
+        "StableRegistryHandler", stable_registry.address, sender=owner, directory="registry_handlers",
     )
 
 
@@ -94,7 +93,7 @@ def stable_registry_handler(stable_registry, owner):
 def stable_factory_handler(populated_base_pool_registry, stable_factory, owner):
     return deploy_contract(
         "StableFactoryHandler", stable_factory.address, populated_base_pool_registry.address,
-        sender=owner, directory="registry_handlers", override_address=stable_factory.address,
+        sender=owner, directory="registry_handlers",
     )
 
 
@@ -109,7 +108,7 @@ def crypto_registry_handler(owner, crypto_registry):
 def crypto_factory_handler(populated_base_pool_registry, crypto_factory, owner):
     return deploy_contract(
         "CryptoFactoryHandler", crypto_factory.address, populated_base_pool_registry.address,
-        sender=owner, directory="registry_handlers", override_address=crypto_factory.address,
+        sender=owner, directory="registry_handlers",
     )
 
 
@@ -123,6 +122,7 @@ def handlers(stable_registry_handler, stable_factory_handler, crypto_registry_ha
     return [stable_registry_handler, stable_factory_handler, crypto_registry_handler, crypto_factory_handler]
 
 
+# TODO: Get rid of the autouse, it might make some tests slower than needed
 @pytest.fixture(scope="module", autouse=True)
 def populated_metaregistry(metaregistry, handlers, owner):
     for handler in handlers:

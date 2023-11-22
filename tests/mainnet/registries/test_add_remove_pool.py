@@ -1,4 +1,5 @@
-import ape
+import boa
+from tests.utils import ZERO_ADDRESS
 
 
 def test_revert_unauthorised_add_pool(
@@ -83,7 +84,7 @@ def test_add_pool(
     )
     assert (
         crypto_registry.get_base_pool(pool_data["pool"])
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
     assert not crypto_registry.is_meta(pool_data["pool"])
     assert crypto_registry.get_pool_name(pool_data["pool"]) == "tricrypto2"
@@ -113,7 +114,7 @@ def test_add_pool(
         tokens["wbtc"].lower(),
         tokens["weth"].lower(),
     ] + [
-        ape.utils.ZERO_ADDRESS
+        ZERO_ADDRESS
     ] * 5
 
     # check if coins and underlying coins (if any) are added to the underlying market:
@@ -205,15 +206,15 @@ def test_remove_pool(
         crypto_registry.pool_count() == pool_count - 1
     )  # one pool should be gone
     assert (
-        crypto_registry.get_zap(tricrypto2["pool"]) == ape.utils.ZERO_ADDRESS
+        crypto_registry.get_zap(tricrypto2["pool"]) == ZERO_ADDRESS
     )
     assert (
         crypto_registry.get_lp_token(tricrypto2["pool"])
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
     assert (
         crypto_registry.get_pool_from_lp_token(tricrypto2["lp_token"])
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
     assert crypto_registry.get_pool_name(tricrypto2["pool"]) == ""
 
@@ -221,13 +222,13 @@ def test_remove_pool(
     assert crypto_registry.get_decimals(tricrypto2["pool"]) == [0] * max_coins
     assert (
         crypto_registry.get_gauges(tricrypto2["pool"])[0][0]
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
     assert crypto_registry.get_gauges(tricrypto2["pool"])[1][0] == 0
 
     assert (
         crypto_registry.get_coins(tricrypto2["pool"])
-        == [ape.utils.ZERO_ADDRESS] * max_coins
+        == [ZERO_ADDRESS] * max_coins
     )
 
     for coin_i in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:

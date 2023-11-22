@@ -1,6 +1,6 @@
 name: unitary
 
-on: ["push", "pull_request"]
+on: ["push"]
 
 jobs:
   unitary:
@@ -21,7 +21,7 @@ jobs:
           python-version: 3.11.6
 
       - name: Install Requirements
-        run: pip install -r requirements.txt
+        run: pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
       - name: Run Tests
         run: pytest

@@ -1,4 +1,3 @@
-import ape
 from tabulate import tabulate
 
 MISSING = "\033[33m✖\033[0m"
@@ -22,7 +21,7 @@ def main():
         }
 
     function_index = get_non_indexed_view_functions(
-        ape.project.MetaRegistry.selectors, ape.project.MetaRegistry.abi, {}
+        MetaRegistry.selectors, MetaRegistry.abi, {}
     )
     registry_coverage = [[PRESENT] * len(function_index)]
     registry_names = [

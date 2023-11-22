@@ -1,4 +1,4 @@
-import ape
+from tests.utils import ZERO_ADDRESS
 
 
 def _get_n_coins_for_pool(registry, pool):
@@ -16,7 +16,7 @@ def _get_n_coins_for_pool(registry, pool):
 
         coins = registry.get_coins(pool)
         actual_output = sum(
-            [1 for coin in coins if coin != ape.utils.ZERO_ADDRESS]
+            [1 for coin in coins if coin != ZERO_ADDRESS]
         )
 
     return actual_output
@@ -68,7 +68,7 @@ def test_crypto_factory_pools(
 
     coins = crypto_factory.get_coins(crypto_factory_pool)
     actual_output = sum(
-        [1 for coin in coins if coin != ape.utils.ZERO_ADDRESS]
+        [1 for coin in coins if coin != ZERO_ADDRESS]
     )
     metaregistry_output = populated_metaregistry.get_n_coins(
         crypto_factory_pool

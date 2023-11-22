@@ -1,7 +1,7 @@
 import sys
 
 import click
-from eth.constants import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS
 from rich.console import Console as RichConsole
 
 from tests.utils import get_deployed_contract
@@ -163,7 +163,7 @@ def main(network: str, account: str):
         crypto_factory_handler,
     ]
 
-    # setup the metaregistry:
+    # set up the metaregistry:
 
     total_gas_used = (
         0  # gets total gas used for setting up. should be about 5mil gas.

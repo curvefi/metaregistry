@@ -126,7 +126,7 @@ pathspec==0.11.2
     # via black
 pip-tools==7.3.0
     # via -r requirements.in
-platformdirs==3.11.0
+platformdirs==4.0.0
     # via
     #   black
     #   virtualenv
@@ -148,7 +148,7 @@ pycryptodome==3.19.0
     #   vyper
 pyflakes==3.1.0
     # via flake8
-pygments==2.17.1
+pygments==2.17.2
     # via rich
 pyproject-hooks==1.0.0
     # via build
@@ -178,17 +178,21 @@ sortedcontainers==2.4.0
     #   trie
 tabulate==0.9.0
     # via -r requirements.in
-titanoboa==0.1.8
-    # via -r requirements.in
+titanoboa[forking-recommended]==0.1.8
+    # via
+    #   -r requirements.in
+    #   titanoboa
 toolz==0.12.0
     # via cytoolz
 trie==2.2.0
     # via py-evm
 typing-extensions==4.8.0
     # via eth-typing
+ujson==5.8.0
+    # via titanoboa
 urllib3==2.1.0
     # via requests
-virtualenv==20.24.6
+virtualenv==20.24.7
     # via pre-commit
 vyper==0.3.10
     # via titanoboa

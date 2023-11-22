@@ -1,4 +1,5 @@
-import ape
+import boa
+from tests.utils import ZERO_ADDRESS
 
 
 def test_revert_unauthorised_add_base_pool(
@@ -53,7 +54,7 @@ def test_add_basepool(owner, base_pools, tokens):
     assert base_pool_coins[0].lower() == tokens["dai"].lower()
     assert base_pool_coins[1].lower() == tokens["usdc"].lower()
     assert base_pool_coins[2].lower() == tokens["usdt"].lower()
-    assert base_pool_coins[3] == ape.utils.ZERO_ADDRESS
+    assert base_pool_coins[3] == ZERO_ADDRESS
     assert base_pool_registry.get_n_coins(tripool) == 3
 
     base_pool_coin_decimals = base_pool_registry.get_decimals(tripool)
@@ -87,7 +88,7 @@ def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
     assert base_pool_coins[0].lower() == tokens["renbtc"].lower()
     assert base_pool_coins[1].lower() == tokens["wbtc"].lower()
     assert base_pool_coins[2].lower() == tokens["sbtc"].lower()
-    assert base_pool_coins[3] == ape.utils.ZERO_ADDRESS
+    assert base_pool_coins[3] == ZERO_ADDRESS
     assert base_pool_registry.get_n_coins(btc_basepool) == 3
 
 
@@ -99,7 +100,7 @@ def test_revert_unauthorised_remove_base_pool(
 
     assert (
         populated_base_pool_registry.get_lp_token(tripool_address)
-        != ape.utils.ZERO_ADDRESS
+        != ZERO_ADDRESS
     )
     with ape.reverts():
         populated_base_pool_registry.remove_base_pool(
@@ -128,13 +129,13 @@ def test_remove_base_pool(populated_base_pool_registry, owner, base_pools):
     )
     assert (
         populated_base_pool_registry.get_lp_token(tripool_address)
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
     assert (
         populated_base_pool_registry.get_base_pool_for_lp_token(
             tripool_lp_token
         )
-        == ape.utils.ZERO_ADDRESS
+        == ZERO_ADDRESS
     )
     assert (
         populated_base_pool_registry.base_pool_list(base_pool_location)

@@ -1,5 +1,5 @@
-import ape
 import pytest
+from tests.utils import ZERO_ADDRESS
 
 
 def test_stable_registry_pools(
@@ -22,7 +22,7 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
         )
     )
     num_registry_handlers = len(
-        list(filter((ape.utils.ZERO_ADDRESS).__ne__, pool_registry_handlers))
+        list(filter((ZERO_ADDRESS).__ne__, pool_registry_handlers))
     )
 
     if num_registry_handlers == 1:

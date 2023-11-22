@@ -1,6 +1,8 @@
 import warnings
 
-import ape
+import boa
+from boa import BoaError
+from tests.utils import ZERO_ADDRESS
 
 
 def _get_underlying_coins(
@@ -8,13 +10,13 @@ def _get_underlying_coins(
 ):
 
     coins = registry.get_coins(pool)
-    underlying_coins = [ape.utils.ZERO_ADDRESS] * max_coins
+    underlying_coins = [ZERO_ADDRESS] * max_coins
 
     for idx, coin in enumerate(coins):
 
         base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
 
-        if base_pool == ape.utils.ZERO_ADDRESS:
+        if base_pool == ZERO_ADDRESS:
 
             underlying_coins[idx] = coin
 
@@ -24,7 +26,7 @@ def _get_underlying_coins(
 
             for bp_coin in basepool_coins:
 
-                if bp_coin == ape.utils.ZERO_ADDRESS:
+                if bp_coin == ZERO_ADDRESS:
                     break
 
                 underlying_coins[idx] = bp_coin
@@ -44,7 +46,7 @@ def _check_fetched_underlying_coins(registry, pool, underlying_coins):
             warnings.warn(f"Pool {pool} might be a lending pool.")
             return registry_underlying_coins
 
-    except ape.exceptions.VirtualMachineError:
+    except BoaError:  # TODO: Make error more specific
         # virtual machine errors prop up for registry.get_underlying_coins if pool
         # is completely depegged. We check this by setting up a revert check and
         # then returning underlying_coins:git
@@ -55,7 +57,7 @@ def _check_fetched_underlying_coins(registry, pool, underlying_coins):
             balances[i] / 10 ** decimals[i] for i in range(len(decimals))
         ]
         if min(float_balances) < 1:
-            with ape.reverts():
+            with boa.reverts():
                 registry.get_underlying_coins(pool)
             return underlying_coins
 
