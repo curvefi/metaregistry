@@ -13,6 +13,5 @@ services:
       context: ./
       target: pre-commit
     container_name: metaregistry-pre-commit
-    command: pre-commit run --all-files
     volumes:
       - ./:/usr/app

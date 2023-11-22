@@ -7,9 +7,9 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 FROM base as pre-commit
-RUN apt-get update && apt-get install git
+RUN apt-get update && apt-get install -y git
 COPY . .
-CMD pre-commit run --all-files
+CMD git add . && pre-commit run --all-files
 
 FROM base as test
 COPY . .

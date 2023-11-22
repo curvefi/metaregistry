@@ -29,9 +29,7 @@ def pytest_sessionstart():
     global ALL_POOLS
 
     # connect to the network. TODO: use Drpc-Key header instead of GET param
-    boa.env.fork(
-        f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={environ['DRPC_KEY']}"
-    )
+    boa.env.fork(url=environ["RPC_ETHEREUM"])
 
     # store instance of registries globally, so we don't have to recreate multiple times when generating tests.
     # TODO: Can we move these to fixtures?
