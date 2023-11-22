@@ -1,9 +1,9 @@
 import boa
+
 from tests.utils import ZERO_ADDRESS
 
 
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
-
     try:
         gauge_controller.gauge_types(_gauge)
     except ape.exceptions.VirtualMachineError:
@@ -22,7 +22,6 @@ def _get_factory_gauge(
     liquidity_gauge,
     default_gauge_type: int = 0,
 ):
-
     gauge = registry.get_gauge(pool)
 
     # we check if the gauge is dao onboarded, else
@@ -45,7 +44,6 @@ def test_stable_registry_pools(
     stable_registry_pool,
     stable_registry,
 ):
-
     actual_output = stable_registry.get_gauges(stable_registry_pool)
     metaregistry_output_gauge = populated_metaregistry.get_gauge(
         stable_registry_pool
@@ -65,7 +63,6 @@ def test_stable_factory_pools(
     gauge_controller,
     liquidity_gauge,
 ):
-
     actual_output = _get_factory_gauge(
         stable_factory, stable_factory_pool, gauge_controller, liquidity_gauge
     )
@@ -99,7 +96,6 @@ def test_stable_factory_pools(
 def test_crypto_registry_pools(
     populated_metaregistry, crypto_registry_pool, crypto_registry
 ):
-
     actual_output = crypto_registry.get_gauges(crypto_registry_pool)
     metaregistry_output_gauge = populated_metaregistry.get_gauge(
         crypto_registry_pool
@@ -119,7 +115,6 @@ def test_crypto_factory_pools(
     gauge_controller,
     liquidity_gauge,
 ):
-
     # warning: gauge_type == 5 : this is true only for crypto pools on ethereum
     actual_output = _get_factory_gauge(
         crypto_factory,

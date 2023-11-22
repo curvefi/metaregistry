@@ -2,30 +2,26 @@ import warnings
 
 import boa
 from boa import BoaError
+
 from tests.utils import ZERO_ADDRESS
 
 
 def _get_underlying_coins(
     registry, base_pool_registry_updated, pool, max_coins
 ):
-
     coins = registry.get_coins(pool)
     underlying_coins = [ZERO_ADDRESS] * max_coins
 
     for idx, coin in enumerate(coins):
-
         base_pool = base_pool_registry_updated.get_base_pool_for_lp_token(coin)
 
         if base_pool == ZERO_ADDRESS:
-
             underlying_coins[idx] = coin
 
         else:
-
             basepool_coins = base_pool_registry_updated.get_coins(base_pool)
 
             for bp_coin in basepool_coins:
-
                 if bp_coin == ZERO_ADDRESS:
                     break
 
@@ -38,9 +34,7 @@ def _get_underlying_coins(
 
 
 def _check_fetched_underlying_coins(registry, pool, underlying_coins):
-
     try:
-
         registry_underlying_coins = registry.get_underlying_coins(pool)
         if registry_underlying_coins != underlying_coins:
             warnings.warn(f"Pool {pool} might be a lending pool.")
@@ -71,7 +65,6 @@ def test_stable_registry_pools(
     stable_registry,
     max_coins,
 ):
-
     metaregistry_output = populated_metaregistry.get_underlying_coins(
         stable_registry_pool
     )
@@ -96,7 +89,6 @@ def test_stable_factory_pools(
     stable_factory,
     max_coins,
 ):
-
     metaregistry_output = populated_metaregistry.get_underlying_coins(
         stable_factory_pool
     )
@@ -121,7 +113,6 @@ def test_crypto_registry_pools(
     crypto_registry,
     max_coins,
 ):
-
     metaregistry_output = populated_metaregistry.get_underlying_coins(
         crypto_registry_pool
     )
@@ -146,7 +137,6 @@ def test_crypto_factory_pools(
     crypto_factory,
     max_coins,
 ):
-
     metaregistry_output = populated_metaregistry.get_underlying_coins(
         crypto_factory_pool
     )

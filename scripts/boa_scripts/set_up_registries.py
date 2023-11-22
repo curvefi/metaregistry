@@ -18,11 +18,12 @@ logger = RichConsole(file=sys.stdout)
 
 
 def deploy_factory_handler():
-
     pass
 
 
-def set_up_registries(network: str, url: str, account: str, fork: bool = False):
+def set_up_registries(
+    network: str, url: str, account: str, fork: bool = False
+):
     """
     Set up registries for the Curve StableSwapNG factory.
     :param network: Network to deploy to.
@@ -41,8 +42,14 @@ def set_up_registries(network: str, url: str, account: str, fork: bool = False):
         boa.set_env(NetworkEnv(url))
         boa.env.add_account(Account.from_key(os.environ[account]))
 
-    data = next((data for _network, data in deploy_utils.curve_dao_network_settings.items()
-                 if _network in network), None)
+    data = next(
+        (
+            data
+            for _network, data in deploy_utils.curve_dao_network_settings.items()
+            if _network in network
+        ),
+        None,
+    )
 
     owner = data.dao_ownership_contract
     fee_receiver = data.fee_receiver_address
@@ -68,8 +75,9 @@ def set_up_registries(network: str, url: str, account: str, fork: bool = False):
     )
 
     if is_new_deployment:
-
-        logger.info(f"Adding a new registry provider entry at id: {max_id + 1}")
+        logger.info(
+            f"Adding a new registry provider entry at id: {max_id + 1}"
+        )
 
         # we're adding a new id
         with accounts.use_sender(account) as account:
@@ -81,7 +89,6 @@ def set_up_registries(network: str, url: str, account: str, fork: bool = False):
             )
 
     else:
-
         assert address_provider.get_id_info(index).description == description
 
         logger.info(
@@ -111,7 +118,6 @@ def set_up_registries(network: str, url: str, account: str, fork: bool = False):
     ].base_pool_registry_address
 
     if metaregistry_address:
-
         metaregistry = Contract(metaregistry_address)
         boss = Contract(metaregistry.owner())
 

@@ -1,7 +1,6 @@
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
 ):
-
     actual_output = stable_registry.get_balances(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_balances(
         stable_registry_pool
@@ -13,7 +12,6 @@ def test_stable_registry_pools(
 def test_stable_factory_pools(
     populated_metaregistry, stable_factory_pool, stable_factory
 ):
-
     actual_output = stable_factory.get_balances(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_balances(
         stable_factory_pool
@@ -28,7 +26,6 @@ def test_crypto_registry_pools(
     crypto_registry,
     curve_pool_v2,
 ):
-
     try:
         actual_output = crypto_registry.get_balances(crypto_registry_pool)
     except ContractLogicError:
@@ -49,7 +46,6 @@ def test_crypto_registry_pools(
 def test_crypto_factory_pools(
     populated_metaregistry, crypto_factory_pool, crypto_factory, curve_pool_v2
 ):
-
     try:
         actual_output = crypto_factory.get_balances(crypto_factory_pool)
     except ContractLogicError:

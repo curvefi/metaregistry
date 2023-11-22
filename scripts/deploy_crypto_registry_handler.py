@@ -15,7 +15,6 @@ def cli():
 @network_option()
 @account_option()
 def main(network, account):
-
     print(
         "Crypto Registry Handler constructor arguments: ",
         encode(["address"], [CRYPTO_REGISTRY_ADDRESS]).hex(),

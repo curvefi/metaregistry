@@ -2,18 +2,15 @@ from tests.utils import ZERO_ADDRESS
 
 
 def _get_num_coins(registry, pool, base_pool_registry):
-
     coins = registry.get_coins(pool)
     num_coins = 0
     for coin in coins:
-
         if coin == ZERO_ADDRESS:
             break
 
         base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
 
         if base_pool != ZERO_ADDRESS:
-
             basepool_coins = base_pool_registry.get_coins(base_pool)
             num_bp_coins = sum(
                 [1 for i in basepool_coins if i != ZERO_ADDRESS]
@@ -21,7 +18,6 @@ def _get_num_coins(registry, pool, base_pool_registry):
             num_coins += num_bp_coins
 
         else:
-
             num_coins += 1
 
     return num_coins
@@ -33,7 +29,6 @@ def test_stable_registry_pools(
     stable_registry,
     populated_base_pool_registry,
 ):
-
     metaregistry_output = populated_metaregistry.get_n_underlying_coins(
         stable_registry_pool
     )
@@ -50,7 +45,6 @@ def test_stable_factory_pools(
     stable_factory,
     populated_base_pool_registry,
 ):
-
     metaregistry_output = populated_metaregistry.get_n_underlying_coins(
         stable_factory_pool
     )
@@ -67,7 +61,6 @@ def test_crypto_registry_pools(
     crypto_registry,
     populated_base_pool_registry,
 ):
-
     metaregistry_output = populated_metaregistry.get_n_underlying_coins(
         crypto_registry_pool
     )
@@ -84,7 +77,6 @@ def test_crypto_factory_pools(
     crypto_factory,
     populated_base_pool_registry,
 ):
-
     metaregistry_output = populated_metaregistry.get_n_underlying_coins(
         crypto_factory_pool
     )

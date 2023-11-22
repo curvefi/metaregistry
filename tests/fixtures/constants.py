@@ -1,12 +1,10 @@
 import pytest
 
-
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
 @pytest.fixture(scope="module")
 def base_pools():
-
     base_pool_data = {}
     base_pool_data["tripool"] = {
         "pool": "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
@@ -40,7 +38,6 @@ def base_pools():
 
 @pytest.fixture(scope="module")
 def crypto_registry_pools(base_pools):
-
     pool_data = {}
     pool_data["tricrypto2"] = {
         "pool": "0xD51a44d3FaE010294C616388b506AcdA1bfAAE46",

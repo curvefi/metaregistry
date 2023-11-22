@@ -2,13 +2,13 @@ import warnings
 
 import boa
 import pytest
+
 from tests.utils import ZERO_ADDRESS
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
 
 
 def pre_test_checks(metaregistry, pool):
-
     if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip(f"Empty pool: {pool}")
 
@@ -16,24 +16,19 @@ def pre_test_checks(metaregistry, pool):
 def _get_underlying_balances(
     metaregistry, pool, registry, base_pool_registry, max_coins
 ):
-
     actual_output = [0] * max_coins
 
     try:
-
         actual_output = registry.get_underlying_balances(pool)
 
     # registry getter borks, so we need to get balances the hard way:
     except (ape.exceptions.ContractLogicError, AttributeError):
-
         coins = metaregistry.get_coins(pool)
         balances = metaregistry.get_balances(pool)
         for idx, coin in enumerate(coins):
-
             base_pool = base_pool_registry.get_base_pool_for_lp_token(coin)
 
             if base_pool != ZERO_ADDRESS:
-
                 basepool_lp_token_balance = balances[idx]
                 coin_contract = VyperContract(coin)
                 try:
@@ -52,7 +47,6 @@ def _get_underlying_balances(
                 base_pool_balances = metaregistry.get_balances(base_pool)
 
                 for idy, balance in enumerate(base_pool_balances):
-
                     if coin == ZERO_ADDRESS:
                         break
                     actual_output[idx] = balance * ratio_in_pool
@@ -67,7 +61,6 @@ def _get_underlying_balances(
 def _test_underlying_balances_getter(
     metaregistry, pool, registry, base_pool_registry, max_coins
 ):
-
     actual_output = _get_underlying_balances(
         metaregistry, pool, registry, base_pool_registry, max_coins
     )
@@ -75,18 +68,14 @@ def _test_underlying_balances_getter(
     underlying_decimals = metaregistry.get_underlying_decimals(pool)
 
     for idx, registry_value in enumerate(actual_output):
-
         try:
-
             assert registry_value == pytest.approx(
                 metaregistry_output[idx]
                 * 10 ** (18 - underlying_decimals[idx])
             )
 
         except AssertionError:
-
             if pool in EXCEPTION_POOLS:
-
                 warnings.warn("Skipping test for pool: {}".format(pool))
                 pytest.skip(
                     "Unresolved output from Borky pool: {}".format(pool)
@@ -151,7 +140,6 @@ def test_crypto_factory_pools(
     crypto_factory,
     max_coins,
 ):
-
     pre_test_checks(populated_metaregistry, crypto_factory_pool)
 
     _test_underlying_balances_getter(

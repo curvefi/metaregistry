@@ -1,10 +1,9 @@
 import sys
 
 import click
-from tests.utils import ZERO_ADDRESS
 from rich.console import Console as RichConsole
 
-from tests.utils import get_deployed_contract
+from tests.utils import ZERO_ADDRESS, get_deployed_contract
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
 
@@ -138,24 +137,39 @@ def cli():
 @network_option()
 @account_option()
 def main(network: str, account: str):
-
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
-    address_provider = get_deployed_contract('AddressProvider', ADDRESS_PROVIDER)
+    address_provider = get_deployed_contract(
+        "AddressProvider", ADDRESS_PROVIDER
+    )
     address_provider_admin = address_provider.admin()
-    proxy_admin = get_deployed_contract('ProxyAdmin', address_provider_admin)
+    proxy_admin = get_deployed_contract("ProxyAdmin", address_provider_admin)
 
     if network == "ethereum:mainnet-fork":
         RICH_CONSOLE.log("Simulation mode.")
         account = accounts[proxy_admin.admins(1)]
 
     # deployed contracts:
-    base_pool_registry = get_deployed_contract('BasePoolRegistry', "0xDE3eAD9B2145bBA2EB74007e58ED07308716B725")
-    crypto_registry = get_deployed_contract('CryptoRegistryV1', "0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0")
-    stable_registry_handler = get_deployed_contract('StableRegistryHandler', "0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68")
-    stable_factory_handler = get_deployed_contract('StableFactoryHandler', "0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9")
-    crypto_registry_handler = get_deployed_contract('CryptoRegistryHandler', "0x5f493fEE8D67D3AE3bA730827B34126CFcA0ae94")
-    crypto_factory_handler = get_deployed_contract('CryptoFactoryHandler', "0xC4F389020002396143B863F6325aA6ae481D19CE")
-    metaregistry = get_deployed_contract('MetaRegistry', "0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC")
+    base_pool_registry = get_deployed_contract(
+        "BasePoolRegistry", "0xDE3eAD9B2145bBA2EB74007e58ED07308716B725"
+    )
+    crypto_registry = get_deployed_contract(
+        "CryptoRegistryV1", "0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0"
+    )
+    stable_registry_handler = get_deployed_contract(
+        "StableRegistryHandler", "0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68"
+    )
+    stable_factory_handler = get_deployed_contract(
+        "StableFactoryHandler", "0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9"
+    )
+    crypto_registry_handler = get_deployed_contract(
+        "CryptoRegistryHandler", "0x5f493fEE8D67D3AE3bA730827B34126CFcA0ae94"
+    )
+    crypto_factory_handler = get_deployed_contract(
+        "CryptoFactoryHandler", "0xC4F389020002396143B863F6325aA6ae481D19CE"
+    )
+    metaregistry = get_deployed_contract(
+        "MetaRegistry", "0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC"
+    )
     registry_handlers = [
         stable_registry_handler,
         stable_factory_handler,
@@ -172,7 +186,6 @@ def main(network: str, account: str):
     # populate base pool registry:
     base_pool_index = 0
     for _, data in BASE_POOLS.items():
-
         # check if base pool already exists in the registry:
         entry_at_index = base_pool_registry.base_pool_list(
             base_pool_index
@@ -210,7 +223,6 @@ def main(network: str, account: str):
     # populate crypto registry:
     crypto_pool_index = 0
     for _, pool in CRYPTO_REGISTRY_POOLS.items():
-
         # check if base pool already exists in the registry:
         entry_at_index = crypto_registry.pool_list(crypto_pool_index).lower()
         if entry_at_index == pool["pool"].lower():
@@ -248,7 +260,6 @@ def main(network: str, account: str):
     # populate metaregistry:
     registry_handler_index = 0
     for registry_handler in registry_handlers:
-
         # check if base pool already exists in the registry:
         entry_at_index = metaregistry.get_registry(
             registry_handler_index

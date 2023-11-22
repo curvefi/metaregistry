@@ -1,11 +1,11 @@
 import boa
+
 from tests.utils import ZERO_ADDRESS
 
 
 def test_revert_unauthorised_add_pool(
     crypto_registry, unauthorised_address, crypto_registry_pools
 ):
-
     pool_data = crypto_registry_pools["tricrypto2"]
 
     with ape.reverts():
@@ -25,7 +25,6 @@ def test_revert_unauthorised_add_pool(
 def test_revert_add_existing_pool(
     crypto_registry, owner, crypto_registry_pools
 ):
-
     pool_data = crypto_registry_pools["tricrypto2"]
 
     with ape.reverts():
@@ -49,7 +48,6 @@ def test_add_pool(
     owner,
     tokens,
 ):
-
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider.address, populated_base_pool_registry, sender=owner
     )
@@ -82,10 +80,7 @@ def test_add_pool(
         crypto_registry.get_pool_from_lp_token(pool_data["lp_token"])
         == pool_data["pool"]
     )
-    assert (
-        crypto_registry.get_base_pool(pool_data["pool"])
-        == ZERO_ADDRESS
-    )
+    assert crypto_registry.get_base_pool(pool_data["pool"]) == ZERO_ADDRESS
     assert not crypto_registry.is_meta(pool_data["pool"])
     assert crypto_registry.get_pool_name(pool_data["pool"]) == "tricrypto2"
 
@@ -143,7 +138,6 @@ def test_add_pool(
 def test_revert_unauthorised_remove_pool(
     crypto_registry, unauthorised_address, crypto_registry_pools
 ):
-
     with ape.reverts():
         crypto_registry.remove_pool(
             crypto_registry_pools["tricrypto2"]["pool"],
@@ -159,7 +153,6 @@ def test_remove_pool(
     max_coins,
     tokens,
 ):
-
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider.address, populated_base_pool_registry, sender=owner
     )
@@ -205,13 +198,8 @@ def test_remove_pool(
     assert (
         crypto_registry.pool_count() == pool_count - 1
     )  # one pool should be gone
-    assert (
-        crypto_registry.get_zap(tricrypto2["pool"]) == ZERO_ADDRESS
-    )
-    assert (
-        crypto_registry.get_lp_token(tricrypto2["pool"])
-        == ZERO_ADDRESS
-    )
+    assert crypto_registry.get_zap(tricrypto2["pool"]) == ZERO_ADDRESS
+    assert crypto_registry.get_lp_token(tricrypto2["pool"]) == ZERO_ADDRESS
     assert (
         crypto_registry.get_pool_from_lp_token(tricrypto2["lp_token"])
         == ZERO_ADDRESS
@@ -220,10 +208,7 @@ def test_remove_pool(
 
     assert crypto_registry.get_n_coins(tricrypto2["pool"]) == 0
     assert crypto_registry.get_decimals(tricrypto2["pool"]) == [0] * max_coins
-    assert (
-        crypto_registry.get_gauges(tricrypto2["pool"])[0][0]
-        == ZERO_ADDRESS
-    )
+    assert crypto_registry.get_gauges(tricrypto2["pool"])[0][0] == ZERO_ADDRESS
     assert crypto_registry.get_gauges(tricrypto2["pool"])[1][0] == 0
 
     assert (
@@ -233,7 +218,6 @@ def test_remove_pool(
 
     for coin_i in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:
         for coin_j in [tokens["usdt"], tokens["wbtc"], tokens["weth"]]:
-
             assert crypto_registry.get_coin_indices(
                 tricrypto2["pool"], coin_i, coin_j
             ) == (

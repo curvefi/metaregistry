@@ -2,17 +2,15 @@ import warnings
 
 import boa
 import pytest
-from tests.utils import ZERO_ADDRESS
 
+from tests.utils import ZERO_ADDRESS
 
 # ---- sanity checks since vprice getters can revert for specific pools states ----
 
 
 def _check_pool_has_no_liquidity(metaregistry, pool, pool_balances, lp_token):
-
     # skip if pool has little to no liquidity, since vprice queries will most likely bork:
     if sum(pool_balances) == 0:
-
         with ape.reverts():
             metaregistry.get_virtual_price_from_lp_token(lp_token)
 
@@ -28,12 +26,10 @@ def _check_pool_has_no_liquidity(metaregistry, pool, pool_balances, lp_token):
 def _check_skem_tokens_with_weird_decimals(
     metaregistry, pool, lp_token, pool_balances, coins, coin_decimals
 ):
-
     # check if pool balances after accounting for decimals is legible.
     # some scam tokens can have weird token properties (e.g. ELONX)
     pool_balances_float = []
     for i in range(len(pool_balances)):
-
         if coins[i] == ZERO_ADDRESS:
             break
 
@@ -60,7 +56,6 @@ def _check_pool_is_depegged(
     coin_decimals,
     lp_token,
 ):
-
     for i in range(len(pool_balances)):
         # check if pool balances are skewed: vprice calc will bork if one of the coin
         # balances is close to zero.
@@ -77,14 +72,15 @@ def _check_pool_is_depegged(
                     f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
                     f"{pool_balances[i] / 10 ** coin_decimals[i]}"
                 )
-            except AssertionError:  # ok to catch this assertion error since we continue testing
+            except (
+                AssertionError
+            ):  # ok to catch this assertion error since we continue testing
                 warnings.warn(
                     "pool virtual price getter did not revert. continuing test"
                 )
 
 
 def pre_test_checks(metaregistry, pool):
-
     pool_balances = metaregistry.get_balances(pool)
     lp_token = metaregistry.get_lp_token(pool)
 
@@ -115,7 +111,6 @@ def pre_test_checks(metaregistry, pool):
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
 ):
-
     # if checks fail, pytest skips, else lp_token is returned:
     lp_token = pre_test_checks(populated_metaregistry, stable_registry_pool)
     actual_output = stable_registry.get_virtual_price_from_lp_token(lp_token)
@@ -128,7 +123,6 @@ def test_stable_registry_pools(
 def test_stable_factory_pools(
     populated_metaregistry, stable_factory_pool, curve_pool
 ):
-
     # if checks fail, pytest skips, else lp_token is returned:
     lp_token = pre_test_checks(populated_metaregistry, stable_factory_pool)
 
@@ -146,7 +140,6 @@ def test_stable_factory_pools(
 def test_crypto_registry_pools(
     populated_metaregistry, crypto_registry_pool, crypto_registry
 ):
-
     # if checks fail, pytest skips, else lp_token is returned:
     lp_token = pre_test_checks(populated_metaregistry, crypto_registry_pool)
     actual_output = crypto_registry.get_virtual_price_from_lp_token(lp_token)
@@ -159,7 +152,6 @@ def test_crypto_registry_pools(
 def test_crypto_factory_pools(
     populated_metaregistry, crypto_factory_pool, curve_pool
 ):
-
     # if checks fail, pytest skips, else lp_token is returned:
     lp_token = pre_test_checks(populated_metaregistry, crypto_factory_pool)
     actual_output = curve_pool(crypto_factory_pool).get_virtual_price()

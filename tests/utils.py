@@ -26,11 +26,21 @@ def get_deployed_contract(contract_abi: str, address: str) -> VyperContract:
     :param contract_abi: The name of the contract to load.
     :param address: The address of the deployed contract.
     """
-    file_name = path.join(BASE_DIR, f"contracts/mainnet/abi/{contract_abi}.json")
+    file_name = path.join(
+        BASE_DIR, f"contracts/mainnet/abi/{contract_abi}.json"
+    )
     return boa.load_abi(file_name).at(address)
 
 
-def deploy_contract(contract: str, *args, sender: Union[LocalAccount, str], directory: str = ".", **kwargs) -> VyperContract:
-    file_name = path.join(BASE_DIR, f"contracts/mainnet/{directory}/{contract}.vy")
+def deploy_contract(
+    contract: str,
+    *args,
+    sender: Union[LocalAccount, str],
+    directory: str = ".",
+    **kwargs,
+) -> VyperContract:
+    file_name = path.join(
+        BASE_DIR, f"contracts/mainnet/{directory}/{contract}.vy"
+    )
     boa.env.eoa = sender if isinstance(sender, str) else sender.address
     return boa.load(file_name, *args, **kwargs)

@@ -1,11 +1,11 @@
 import boa
+
 from tests.utils import ZERO_ADDRESS
 
 
 def test_revert_unauthorised_add_base_pool(
     owner, unauthorised_address, base_pools
 ):
-
     base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
     base_pool_data = base_pools["tripool"]
@@ -22,7 +22,6 @@ def test_revert_unauthorised_add_base_pool(
 
 
 def test_add_basepool(owner, base_pools, tokens):
-
     base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
     base_pool_count = base_pool_registry.base_pool_count()
@@ -64,7 +63,6 @@ def test_add_basepool(owner, base_pools, tokens):
 
 
 def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
-
     base_pool_registry = ape.project.BasePoolRegistry.deploy(sender=owner)
 
     base_pool_data = base_pools["sbtc"]
@@ -95,7 +93,6 @@ def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
 def test_revert_unauthorised_remove_base_pool(
     populated_base_pool_registry, unauthorised_address, base_pools
 ):
-
     tripool_address = base_pools["tripool"]["pool"]
 
     assert (
@@ -109,7 +106,6 @@ def test_revert_unauthorised_remove_base_pool(
 
 
 def test_remove_base_pool(populated_base_pool_registry, owner, base_pools):
-
     tripool_address = base_pools["tripool"]["pool"]
     tripool_lp_token = base_pools["tripool"]["lp_token"]
 

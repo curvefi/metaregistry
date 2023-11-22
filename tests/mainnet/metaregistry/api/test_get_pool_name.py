@@ -1,18 +1,17 @@
 import pytest
+
 from tests.utils import ZERO_ADDRESS
 
 
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
 ):
-
     assert populated_metaregistry.get_pool_name(
         stable_registry_pool
     ) == stable_registry.get_pool_name(stable_registry_pool)
 
 
 def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
-
     # same issues where a pool that was first in a registry got ported over to the
     # factory incorrectly. so we try different handler indices to check if we get
     # the right result:
@@ -26,16 +25,13 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
     )
 
     if num_registry_handlers == 1:
-
         assert (
             populated_metaregistry.get_pool_name(stable_factory_pool)
             == VyperContract(stable_factory_pool).name()
         )
 
     elif num_registry_handlers == 2:
-
         with pytest.raises(AssertionError):
-
             assert (
                 populated_metaregistry.get_pool_name(stable_factory_pool)
                 == VyperContract(stable_factory_pool).name()
@@ -47,14 +43,12 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
         )
 
     else:
-
         raise
 
 
 def test_crypto_registry_pools(
     populated_metaregistry, crypto_registry_pool, crypto_registry
 ):
-
     assert populated_metaregistry.get_pool_name(
         crypto_registry_pool
     ) == crypto_registry.get_pool_name(crypto_registry_pool)
@@ -63,7 +57,6 @@ def test_crypto_registry_pools(
 def test_crypto_factory_pools(
     populated_metaregistry, crypto_factory_pool, crypto_factory
 ):
-
     assert (
         populated_metaregistry.get_pool_name(crypto_factory_pool)
         == VyperContract(crypto_factory.get_token(crypto_factory_pool)).name()

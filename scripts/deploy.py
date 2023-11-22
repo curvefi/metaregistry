@@ -19,7 +19,6 @@ def cli():
 @network_option()
 @account_option()
 def main(network, account):
-
     # deploy basepool registry:
     base_pool_registry = account.deploy(project.BasePoolRegistry)
 

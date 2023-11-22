@@ -2,7 +2,6 @@ import pytest
 
 
 def pre_test_checks(metaregistry, pool):
-
     if sum(metaregistry.get_balances(pool)) == 0:
         pytest.skip("empty pool: skipping")
 
@@ -18,7 +17,6 @@ def pre_test_checks(metaregistry, pool):
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
 ):
-
     pre_test_checks(populated_metaregistry, stable_registry_pool)
 
     actual_output = stable_registry.get_admin_balances(stable_registry_pool)
@@ -34,7 +32,6 @@ def test_stable_factory_pools(
     stable_factory_pool,
     curve_pool,
 ):
-
     pre_test_checks(populated_metaregistry, stable_factory_pool)
 
     pool = curve_pool(stable_factory_pool)
@@ -51,7 +48,6 @@ def test_stable_factory_pools(
 def _get_crypto_pool_admin_fees(
     populated_metaregistry, pool, fee_receiver, project, alice_address, chain
 ):
-
     lp_token = VyperContract(populated_metaregistry.get_lp_token(pool))
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
 
@@ -84,13 +80,17 @@ def test_crypto_registry_pools(
     chain,
     project,
 ):
-
     pre_test_checks(populated_metaregistry, crypto_registry_pool)
 
     pool = curve_pool_v2(crypto_registry_pool)
     fee_receiver = pool.admin_fee_receiver()
     admin_balances = _get_crypto_pool_admin_fees(
-        populated_metaregistry, pool, fee_receiver, project, alice_address, chain
+        populated_metaregistry,
+        pool,
+        fee_receiver,
+        project,
+        alice_address,
+        chain,
     )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)
@@ -107,13 +107,17 @@ def test_crypto_factory_pools(
     chain,
     project,
 ):
-
     pre_test_checks(populated_metaregistry, crypto_factory_pool)
 
     pool = curve_pool_v2(crypto_factory_pool)
     fee_receiver = crypto_factory.fee_receiver()
     admin_balances = _get_crypto_pool_admin_fees(
-        populated_metaregistry, pool, fee_receiver, project, alice_address, chain
+        populated_metaregistry,
+        pool,
+        fee_receiver,
+        project,
+        alice_address,
+        chain,
     )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)

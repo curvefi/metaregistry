@@ -34,8 +34,7 @@ def test_new_crypto_factory_pool(
 
     assert (
         metaregistry.get_coins(new_pool)
-        == [tokens["dai"], lp_tokens["cvxFXSFXS-f"]]
-        + [ZERO_ADDRESS] * 6
+        == [tokens["dai"], lp_tokens["cvxFXSFXS-f"]] + [ZERO_ADDRESS] * 6
     )
     assert test_pool_name in metaregistry.get_pool_name(new_pool)
     assert metaregistry.get_pool_from_lp_token(lp_token) == new_pool

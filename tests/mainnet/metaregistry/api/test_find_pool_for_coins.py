@@ -2,18 +2,14 @@ import itertools
 
 from tests.utils import ZERO_ADDRESS
 
-
 # NOTE: This is the most important method in the metaregistry contract since it will be used
 # by integrators to find pools for coin pairs. It finds pools even if the coin pair is not
 # a direct coin pair, but has a path through a metapool.
 
 
 def _get_all_combinations(metaregistry, pool):
-
     pool_coins = [
-        coin
-        for coin in metaregistry.get_coins(pool)
-        if coin != ZERO_ADDRESS
+        coin for coin in metaregistry.get_coins(pool) if coin != ZERO_ADDRESS
     ]
     base_combinations = list(itertools.combinations(pool_coins, 2))
     all_combinations = base_combinations
@@ -34,7 +30,6 @@ def _get_all_combinations(metaregistry, pool):
 
 
 def test_all(populated_metaregistry, pool):
-
     combinations = _get_all_combinations(populated_metaregistry, pool)
     for combination in combinations:
         pools_containing_pair = populated_metaregistry.find_pools_for_coins(

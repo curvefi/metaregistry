@@ -2,7 +2,6 @@ from tests.utils import ZERO_ADDRESS
 
 
 def test_all(populated_metaregistry, populated_base_pool_registry, pool):
-
     coins = populated_metaregistry.get_coins(pool)
     actual_output = ZERO_ADDRESS
     for coin in coins:

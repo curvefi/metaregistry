@@ -11,6 +11,7 @@ from tests.utils import get_deployed_contract
 def seed() -> bytes:
     return Mnemonic.to_seed("test")
 
+
 @pytest.fixture(scope="session")
 def accounts(seed) -> list[LocalAccount]:
     """
@@ -19,12 +20,16 @@ def accounts(seed) -> list[LocalAccount]:
      https://github.com/ApeWorX/ape/blob/9d4b66786/src/ape/utils/testing.py#L28
     TODO: replace by boa.env.generate_address()?
     """
-    def generate_account(index: int, hd_path_format="m/44'/60'/0'/{}") -> LocalAccount:
+
+    def generate_account(
+        index: int, hd_path_format="m/44'/60'/0'/{}"
+    ) -> LocalAccount:
         hd_path = HDPath(hd_path_format.format(index))
         private_key = f"0x{hd_path.derive(seed).hex()}"
         return Account.from_key(private_key)
 
     return [generate_account(index) for index in range(10)]
+
 
 @pytest.fixture(scope="session")
 def alice_address(accounts):
@@ -43,5 +48,7 @@ def random_address(accounts):
 
 @pytest.fixture(scope="module")
 def owner(accounts):
-    address_provider = get_deployed_contract('AddressProvider', "0x0000000022D53366457F9d5E68Ec105046FC4383")
+    address_provider = get_deployed_contract(
+        "AddressProvider", "0x0000000022D53366457F9d5E68Ec105046FC4383"
+    )
     return address_provider.admin()

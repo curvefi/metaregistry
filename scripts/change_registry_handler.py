@@ -39,7 +39,6 @@ else:
 
 
 def main():
-
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
     address_provider = AddressProvider.at(ADDRESS_PROVIDER)
     address_provider_admin = address_provider.admin()

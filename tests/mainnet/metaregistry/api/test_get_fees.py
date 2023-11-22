@@ -39,7 +39,6 @@ def test_crypto_registry_pools(
     crypto_registry,
     curve_pool_v2,
 ):
-
     if sum(crypto_registry.get_balances(crypto_registry_pool)) == 0:
         with boa.reverts():
             curve_pool_v2(crypto_registry_pool).fee()
@@ -62,7 +61,6 @@ def test_crypto_factory_pools(
     crypto_factory,
     curve_pool_v2,
 ):
-
     if sum(crypto_factory.get_balances(crypto_factory_pool)) == 0:
         with ape.reverts():
             curve_pool_v2(crypto_factory_pool).fee()

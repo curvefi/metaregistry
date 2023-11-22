@@ -1,4 +1,5 @@
 import boa
+
 from tests.utils import ZERO_ADDRESS
 
 
@@ -11,7 +12,6 @@ def test_add_metapool(
     base_pools,
     tokens,
 ):
-
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider, populated_base_pool_registry, sender=owner
     )
@@ -160,7 +160,6 @@ def test_add_metapool(
     ]
     for coin_a in coins:
         for coin_b in coins:
-
             # if both coins are the same, then it should return ZERO_ADDRESS:
             if coin_a == coin_b:
                 assert (
@@ -207,7 +206,6 @@ def test_remove_metapool(
     base_pools,
     tokens,
 ):
-
     crypto_registry = ape.project.CryptoRegistryV1.deploy(
         address_provider, populated_base_pool_registry, sender=owner
     )
@@ -253,18 +251,12 @@ def test_remove_metapool(
     )  # one pool should be gone
 
     assert crypto_registry.get_zap(eurt3crv["pool"]) == ZERO_ADDRESS
-    assert (
-        crypto_registry.get_lp_token(eurt3crv["pool"])
-        == ZERO_ADDRESS
-    )
+    assert crypto_registry.get_lp_token(eurt3crv["pool"]) == ZERO_ADDRESS
     assert (
         crypto_registry.get_pool_from_lp_token(eurt3crv["lp_token"])
         == ZERO_ADDRESS
     )
-    assert (
-        crypto_registry.get_base_pool(eurt3crv["pool"])
-        == ZERO_ADDRESS
-    )
+    assert crypto_registry.get_base_pool(eurt3crv["pool"]) == ZERO_ADDRESS
     assert not crypto_registry.is_meta(eurt3crv["pool"])
     assert crypto_registry.get_pool_name(eurt3crv["pool"]) == ""
 
@@ -274,17 +266,11 @@ def test_remove_metapool(
     assert crypto_registry.get_underlying_decimals(eurt3crv["pool"]) == [0] * 8
 
     # gauge checks:
-    assert (
-        crypto_registry.get_gauges(eurt3crv["pool"])[0][0]
-        == ZERO_ADDRESS
-    )
+    assert crypto_registry.get_gauges(eurt3crv["pool"])[0][0] == ZERO_ADDRESS
     assert crypto_registry.get_gauges(eurt3crv["pool"])[1][0] == 0
 
     # coin checks:
-    assert (
-        crypto_registry.get_coins(eurt3crv["pool"])
-        == [ZERO_ADDRESS] * 8
-    )
+    assert crypto_registry.get_coins(eurt3crv["pool"]) == [ZERO_ADDRESS] * 8
     assert (
         crypto_registry.get_underlying_coins(eurt3crv["pool"])
         == [ZERO_ADDRESS] * 8
@@ -300,7 +286,6 @@ def test_remove_metapool(
     # find pool for coins:
     for coin_a in coins:
         for coin_b in coins:
-
             assert crypto_registry.get_coin_indices(
                 eurt3crv["pool"], coin_a, coin_b
             ) == (
