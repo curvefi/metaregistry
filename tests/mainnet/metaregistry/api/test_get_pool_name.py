@@ -1,6 +1,6 @@
 import pytest
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
 
 def test_stable_registry_pools(
@@ -24,40 +24,38 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
         list(filter((ZERO_ADDRESS).__ne__, pool_registry_handlers))
     )
 
+    name = populated_metaregistry.get_pool_name(stable_factory_pool)
     if num_registry_handlers == 1:
-        assert (
-            populated_metaregistry.get_pool_name(stable_factory_pool)
-            == VyperContract(stable_factory_pool).name()
-        )
-
-    elif num_registry_handlers == 2:
+        assert name == get_deployed_token_contract(stable_factory_pool).name()
+    else:
         with pytest.raises(AssertionError):
             assert (
-                populated_metaregistry.get_pool_name(stable_factory_pool)
-                == VyperContract(stable_factory_pool).name()
+                name == get_deployed_token_contract(stable_factory_pool).name()
             )
 
+        pool_name2 = populated_metaregistry.get_pool_name(
+            stable_factory_pool, 1
+        )
         assert (
-            populated_metaregistry.get_pool_name(stable_factory_pool, 1)
-            == VyperContract(stable_factory_pool).name()
+            pool_name2
+            == get_deployed_token_contract(stable_factory_pool).name()
         )
 
-    else:
-        raise
+    assert num_registry_handlers in (1, 2)
 
 
 def test_crypto_registry_pools(
     populated_metaregistry, crypto_registry_pool, crypto_registry
 ):
-    assert populated_metaregistry.get_pool_name(
-        crypto_registry_pool
-    ) == crypto_registry.get_pool_name(crypto_registry_pool)
+    pool_name = populated_metaregistry.get_pool_name(crypto_registry_pool)
+    assert pool_name == crypto_registry.get_pool_name(crypto_registry_pool)
 
 
 def test_crypto_factory_pools(
     populated_metaregistry, crypto_factory_pool, crypto_factory
 ):
-    assert (
-        populated_metaregistry.get_pool_name(crypto_factory_pool)
-        == VyperContract(crypto_factory.get_token(crypto_factory_pool)).name()
+    pool_name = populated_metaregistry.get_pool_name(crypto_factory_pool)
+    contract = get_deployed_token_contract(
+        crypto_factory.get_token(crypto_factory_pool)
     )
+    assert pool_name == contract.name()

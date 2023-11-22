@@ -31,7 +31,7 @@ def pytest_sessionstart():
     # connect to the network. TODO: use Drpc-Key header instead of GET param
     boa.env.fork(url=environ["RPC_ETHEREUM"])
 
-    # store instance of registries globally, so we don't have to recreate multiple times when generating tests.
+    # store registries globally, so we don't have to recreate multiple times when generating tests.
     # TODO: Can we move these to fixtures?
     STABLE_REGISTRY_POOLS = get_contract_pools(
         "StableRegistry", "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"

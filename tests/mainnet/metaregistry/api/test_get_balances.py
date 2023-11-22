@@ -28,7 +28,7 @@ def test_crypto_registry_pools(
 ):
     try:
         actual_output = crypto_registry.get_balances(crypto_registry_pool)
-    except ContractLogicError:
+    except KeyError:  # TODO: Pick right exception
         actual_output = []
         pool = curve_pool_v2(crypto_registry_pool)
         for i in range(

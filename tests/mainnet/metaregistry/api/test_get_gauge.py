@@ -1,5 +1,3 @@
-import boa
-
 from tests.utils import ZERO_ADDRESS
 
 

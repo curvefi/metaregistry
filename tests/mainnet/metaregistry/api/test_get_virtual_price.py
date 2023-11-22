@@ -3,7 +3,7 @@ import warnings
 import boa
 import pytest
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
 # ---- sanity checks since vprice getters can revert for specific pools states ----
 
@@ -37,7 +37,10 @@ def _check_skem_tokens_with_weird_decimals(
 
         if (
             coin_decimals[i] == 0
-            and VyperContract(metaregistry.get_coins(pool)[0]).decimals() == 0
+            and get_deployed_token_contract(
+                metaregistry.get_coins(pool)[0]
+            ).decimals()
+            == 0
         ):
             with boa.env.anchor():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)

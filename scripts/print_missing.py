@@ -1,3 +1,4 @@
+import boa
 from tabulate import tabulate
 
 MISSING = "\033[33m✖\033[0m"
@@ -20,8 +21,9 @@ def main():
             if registry_selectors[k] in view_fns
         }
 
+    metaregistry = boa.load_partial("contracts/mainnet/MetaRegistry.vy")
     function_index = get_non_indexed_view_functions(
-        MetaRegistry.selectors, MetaRegistry.abi, {}
+        metaregistry.selectors, metaregistry.abi, {}
     )
     registry_coverage = [[PRESENT] * len(function_index)]
     registry_names = [

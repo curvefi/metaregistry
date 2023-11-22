@@ -6,7 +6,9 @@ from tests.utils import ZERO_ADDRESS, deploy_contract
 def test_revert_unauthorised_add_base_pool(
     owner, unauthorised_address, base_pools
 ):
-    base_pool_registry = deploy_contract("BasePoolRegistry", directory="registries", sender=owner)
+    base_pool_registry = deploy_contract(
+        "BasePoolRegistry", directory="registries", sender=owner
+    )
     base_pool_data = base_pools["tripool"]
     with boa.reverts():
         base_pool_registry.add_base_pool(
@@ -20,7 +22,9 @@ def test_revert_unauthorised_add_base_pool(
 
 
 def test_add_basepool(owner, base_pools, tokens):
-    base_pool_registry = deploy_contract("BasePoolRegistry", directory="registries", sender=owner)
+    base_pool_registry = deploy_contract(
+        "BasePoolRegistry", directory="registries", sender=owner
+    )
     base_pool_count = base_pool_registry.base_pool_count()
     base_pool_data = base_pools["tripool"]
     tripool = base_pool_data["pool"]
@@ -60,7 +64,9 @@ def test_add_basepool(owner, base_pools, tokens):
 
 
 def test_add_basepool_with_legacy_abi(owner, base_pools, tokens):
-    base_pool_registry = deploy_contract("BasePoolRegistry", directory="registries", sender=owner)
+    base_pool_registry = deploy_contract(
+        "BasePoolRegistry", directory="registries", sender=owner
+    )
 
     base_pool_data = base_pools["sbtc"]
     assert base_pool_data["is_legacy"]

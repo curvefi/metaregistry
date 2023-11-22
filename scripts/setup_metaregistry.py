@@ -133,9 +133,6 @@ def cli():
     pass
 
 
-@cli.command(cls=NetworkBoundCommand)
-@network_option()
-@account_option()
 def main(network: str, account: str):
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
     address_provider = get_deployed_contract(
@@ -146,7 +143,7 @@ def main(network: str, account: str):
 
     if network == "ethereum:mainnet-fork":
         RICH_CONSOLE.log("Simulation mode.")
-        account = accounts[proxy_admin.admins(1)]
+        account = proxy_admin.admins(1)
 
     # deployed contracts:
     base_pool_registry = get_deployed_contract(

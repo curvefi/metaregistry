@@ -12,8 +12,13 @@ def test_add_metapool(
     base_pools,
     tokens,
 ):
-    crypto_registry = deploy_contract("CryptoRegistryV1", address_provider, populated_base_pool_registry,
-                                      directory="registries", sender=owner)
+    crypto_registry = deploy_contract(
+        "CryptoRegistryV1",
+        address_provider,
+        populated_base_pool_registry,
+        directory="registries",
+        sender=owner,
+    )
 
     pool_count = crypto_registry.pool_count()
     assert pool_count == 0
@@ -205,8 +210,13 @@ def test_remove_metapool(
     base_pools,
     tokens,
 ):
-    crypto_registry = deploy_contract("CryptoRegistryV1", address_provider, populated_base_pool_registry,
-                                      directory="registries", sender=owner)
+    crypto_registry = deploy_contract(
+        "CryptoRegistryV1",
+        address_provider,
+        populated_base_pool_registry,
+        directory="registries",
+        sender=owner,
+    )
 
     # add EURT3CRV pool
     eurt3crv = crypto_registry_pools["eurt3crv"]

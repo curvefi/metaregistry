@@ -27,7 +27,9 @@ def get_deployed_contract(contract_name: str, address: str) -> VyperContract:
     :param contract_name: The name of the contract ABI to load.
     :param address: The address of the deployed contract.
     """
-    file_name = path.join(BASE_DIR, f"contracts/interfaces/{contract_name}.json")
+    file_name = path.join(
+        BASE_DIR, f"contracts/interfaces/{contract_name}.json"
+    )
     return boa.load_abi(file_name).at(address)
 
 
@@ -45,24 +47,55 @@ def deploy_contract(
         return boa.load(file_name, *args, **kwargs)
 
 
-def get_lp_contract(address: str) -> VyperContract:
+def get_deployed_token_contract(address: str) -> VyperContract:
     """
-    Gets the LP token contract at the given address.
+    Gets the LP token contract at the given address. This uses a subset of the ERC20 ABI.
     :param address: The address of the LP token contract.
     """
-    abi = json.dumps([{
-        "name": "totalSupply",
-        "constant": True,
-        "inputs": [],
-        "outputs": [{"name": "", "type": "uint256"}],
-        "payable": False,
-        "stateMutability": "view",
-        "type": "function"
-    }, {
-        "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
-        "name": "balanceOf",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
-        "type": "function"
-    }])
+    abi = json.dumps(
+        [
+            {
+                "constant": True,
+                "inputs": [],
+                "name": "name",
+                "outputs": [{"name": "", "type": "string"}],
+                "payable": False,
+                "stateMutability": "view",
+                "type": "function",
+            },
+            {
+                "constant": True,
+                "inputs": [],
+                "name": "decimals",
+                "outputs": [{"name": "", "type": "uint8"}],
+                "payable": False,
+                "stateMutability": "view",
+                "type": "function",
+            },
+            {
+                "name": "totalSupply",
+                "constant": True,
+                "inputs": [],
+                "outputs": [{"name": "", "type": "uint256"}],
+                "payable": False,
+                "stateMutability": "view",
+                "type": "function",
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "account",
+                        "type": "address",
+                    }
+                ],
+                "name": "balanceOf",
+                "outputs": [
+                    {"internalType": "uint256", "name": "", "type": "uint256"}
+                ],
+                "stateMutability": "view",
+                "type": "function",
+            },
+        ]
+    )
     return boa.loads_abi(abi).at(address)

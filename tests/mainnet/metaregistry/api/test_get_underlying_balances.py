@@ -1,9 +1,8 @@
 import warnings
 
-import boa
 import pytest
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
 
@@ -30,10 +29,13 @@ def _get_underlying_balances(
 
             if base_pool != ZERO_ADDRESS:
                 basepool_lp_token_balance = balances[idx]
-                coin_contract = VyperContract(coin)
+                coin_contract = get_deployed_token_contract(coin)
                 try:
                     lp_token_supply = coin_contract.totalSupply()
-                except (KeyError, AttributeError):  # TODO: Pick the right exception
+                except (
+                    KeyError,
+                    AttributeError,
+                ):  # TODO: Pick the right exception
                     assert "totalSupply" not in [
                         i.name
                         for i in coin_contract.contract_type.view_methods

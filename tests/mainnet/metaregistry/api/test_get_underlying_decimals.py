@@ -1,7 +1,6 @@
-import boa
 import pytest
 
-from tests.utils import ZERO_ADDRESS
+from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
 EXCEPTIONS = {
     # eth: ankreth pool returns [18, 0] when it should return:
@@ -32,7 +31,9 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
                 continue
 
             try:
-                token_contract = VyperContract(underlying_coins[i])
+                token_contract = get_deployed_token_contract(
+                    underlying_coins[i]
+                )
                 actual_output.append(token_contract.decimals())
             except KeyError:  # TODO: Pick the right exception
                 pytest.skip("Unverified contract. Skipping test.")
