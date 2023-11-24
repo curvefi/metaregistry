@@ -2,7 +2,7 @@ eth-ape
 ape-vyper
 ape-alchemy
 ape-hardhat
-ape-ledger
+ape-ledger[ledger]
 black
 flake8
 isort
