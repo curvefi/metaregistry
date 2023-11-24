@@ -1,4 +1,5 @@
 import pytest
+from boa import BoaError
 
 from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
@@ -7,8 +8,7 @@ EXCEPTIONS = {
     "0xA96A65c051bF88B4095Ee1f2451C2A9d43F53Ae2": [18, 18],
     # compound pools. ctokens are 8 decimals. underlying is dai usdc:
     "0xA2B47E3D5c44877cca798226B7B8118F9BFb7A56": [18, 6],
-    # cream-yearn cytokens are 8 decimals, whereas underlying is
-    # dai usdc usdt:
+    # cream-yearn cytokens are 8 decimals, whereas underlying is dai usdc usdt:
     "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF": [18, 6, 6],
     # usdt pool has cDAI, cUSDC and USDT (which is [8, 8, 6]):
     "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C": [18, 6, 6],
@@ -35,9 +35,9 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
                     underlying_coins[i]
                 )
                 actual_output.append(token_contract.decimals())
-            except KeyError:  # TODO: Pick the right exception
+            except BoaError:
                 pytest.skip("Unverified contract. Skipping test.")
-            except ZeroDivisionError:  # TODO: Pick the right exception
+            except ZeroDivisionError:
                 if (
                     underlying_coins[i]
                     == "0x6810e776880C02933D47DB1b9fc05908e5386b96"

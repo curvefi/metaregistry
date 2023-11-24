@@ -1,56 +1,75 @@
+import json
+
 import boa
-from tabulate import tabulate
+from rich.console import Console
+from rich.table import Table
+from vyper.compiler.output import build_abi_output
 
-MISSING = "\033[33m✖\033[0m"
-PRESENT = "\033[32m✓\033[0m"
+MISSING = "[red]✖[/red]"
+PRESENT = "[green]✓[/green]"
+META_NAME = "MetaRegistry"
 
 
-def main():
-    def get_non_indexed_view_functions(
-        registry_selectors, registry_abi, fn_index
-    ):
-        view_fns = {
-            d["name"]
-            for d in registry_abi
-            if d.get("stateMutability") == "view"
-        }
-        non_indexed_fns = dict(registry_selectors.items() - fn_index.items())
-        return {
-            k: registry_selectors[k]
-            for k, v in non_indexed_fns.items()
-            if registry_selectors[k] in view_fns
-        }
+def get_view_functions(abi: list[dict]) -> set[str]:
+    """
+    Get the view functions from an ABI.
+    :param abi: the ABI to get the view functions from
+    """
+    return {d["name"] for d in abi if d.get("stateMutability") == "view"}
 
-    metaregistry = boa.load_partial("contracts/mainnet/MetaRegistry.vy")
-    function_index = get_non_indexed_view_functions(
-        metaregistry.selectors, metaregistry.abi, {}
+
+def main() -> None:
+    """
+    Calculate the missing functions from the registry and print them in a table.
+    """
+    console = Console()
+    metaregistry = boa.load_partial(f"contracts/mainnet/{META_NAME}.vy")
+    meta_functions = get_view_functions(
+        abi=build_abi_output(metaregistry.compiler_data)
     )
-    registry_coverage = [[PRESENT] * len(function_index)]
     registry_names = [
-        f"{a}{b}"
-        for a in ["Crypto", "Stable"]
-        for b in ["Factory", "Registry"]
+        "CryptoFactory",
+        "CryptoRegistry",
+        "StableFactory",
+        "StableRegistry",
     ]
 
+    registry_functions = {META_NAME: meta_functions}
     for registry_name in registry_names:
-        # registry = getattr(interface, registry_name)  # TODO: fix this!
-        registry = None
-        non_indexed_view_fns = get_non_indexed_view_functions(
-            registry.selectors, registry.abi, function_index
-        )
-        function_index.update(non_indexed_view_fns)
-        registry_coverage.append(
-            [
-                PRESENT if fn in registry.selectors else MISSING
-                for fn in function_index.keys()
-            ]
-        )
+        with open(f"contracts/interfaces/{registry_name}.json") as f:
+            registry_abi = json.load(f)
+        registry_functions[registry_name] = get_view_functions(registry_abi)
 
-    registry_coverage = [
-        coverage + [MISSING] * (len(function_index) - len(coverage))
-        for coverage in registry_coverage
-    ]
-    res = sorted(zip(function_index.values(), *registry_coverage))
-    print(
-        tabulate(res, headers=["Functions", "MetaRegistry"] + registry_names)
+    table = create_table(registry_functions)
+    return console.print(table)
+
+
+def create_table(registry_functions: dict[str, set[str]]) -> Table:
+    """
+    Create a table with the missing functions.
+    :param registry_functions: the functions from the registries
+    :return: the table with the missing functions
+    """
+    table = Table(title="Missing Functions")
+    all_functions = set.union(*registry_functions.values())
+    registries = [META_NAME] + sorted(
+        registry_name
+        for registry_name in registry_functions
+        if registry_name != META_NAME
     )
+    table.add_column("Function Name")
+    for registry_name in registries:
+        table.add_column(registry_name)
+    for function_name in sorted(all_functions):
+        cells = [
+            PRESENT
+            if function_name in registry_functions[registry_name]
+            else MISSING
+            for registry_name in registries
+        ]
+        table.add_row(function_name, *cells)
+    return table
+
+
+if __name__ == "__main__":
+    main()

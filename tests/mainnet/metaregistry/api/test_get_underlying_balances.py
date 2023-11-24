@@ -1,6 +1,7 @@
 import warnings
 
 import pytest
+from boa import BoaError
 
 from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
@@ -21,7 +22,7 @@ def _get_underlying_balances(
         actual_output = registry.get_underlying_balances(pool)
 
     # registry getter borks, so we need to get balances the hard way:
-    except (KeyError, AttributeError):  # TODO: Pick the right exception
+    except (BoaError, AttributeError):
         coins = metaregistry.get_coins(pool)
         balances = metaregistry.get_balances(pool)
         for idx, coin in enumerate(coins):
@@ -32,10 +33,7 @@ def _get_underlying_balances(
                 coin_contract = get_deployed_token_contract(coin)
                 try:
                     lp_token_supply = coin_contract.totalSupply()
-                except (
-                    KeyError,
-                    AttributeError,
-                ):  # TODO: Pick the right exception
+                except (BoaError, AttributeError):
                     assert "totalSupply" not in [
                         i.name
                         for i in coin_contract.contract_type.view_methods

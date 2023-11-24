@@ -40,7 +40,7 @@ def _check_fetched_underlying_coins(registry, pool, underlying_coins):
             warnings.warn(f"Pool {pool} might be a lending pool.")
             return registry_underlying_coins
 
-    except BoaError:  # TODO: Make error more specific
+    except BoaError:
         # virtual machine errors prop up for registry.get_underlying_coins if pool
         # is completely depegged. We check this by setting up a revert check and
         # then returning underlying_coins:git

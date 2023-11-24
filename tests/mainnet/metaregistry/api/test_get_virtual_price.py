@@ -2,6 +2,7 @@ import warnings
 
 import boa
 import pytest
+from boa import BoaError
 
 from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 
@@ -11,13 +12,13 @@ from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
 def _check_pool_has_no_liquidity(metaregistry, pool, pool_balances, lp_token):
     # skip if pool has little to no liquidity, since vprice queries will most likely bork:
     if sum(pool_balances) == 0:
-        with boa.env.anchor():
+        with boa.reverts():
             metaregistry.get_virtual_price_from_lp_token(lp_token)
 
         pytest.skip(f"empty pool: {pool}")
 
     elif sum(pool_balances) < 100:  # tiny pool
-        with boa.env.anchor():
+        with boa.reverts():
             metaregistry.get_virtual_price_from_lp_token(lp_token)
 
         pytest.skip(f"tiny pool: {pool}")
@@ -42,7 +43,7 @@ def _check_skem_tokens_with_weird_decimals(
             ).decimals()
             == 0
         ):
-            with boa.env.anchor():
+            with boa.reverts():
                 metaregistry.get_virtual_price_from_lp_token(lp_token)
             pytest.skip(
                 f"skem token {coins[i]} in pool {pool} with zero decimals"
@@ -68,7 +69,7 @@ def _check_pool_is_depegged(
             and min(pool_balances_float) < 1
         ):
             try:
-                with boa.env.anchor():
+                with boa.reverts():
                     metaregistry.get_virtual_price_from_lp_token(lp_token)
 
                 pytest.skip(
@@ -135,8 +136,8 @@ def test_stable_factory_pools(
             populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
         )
         assert actual_output == metaregistry_output
-    except KeyError:  # TODO: Pick the right exception
-        with boa.env.anchor():
+    except BoaError:
+        with boa.reverts():
             populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
 
 

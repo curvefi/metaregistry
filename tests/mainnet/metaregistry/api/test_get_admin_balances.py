@@ -1,5 +1,6 @@
 import boa
 import pytest
+from boa import BoaError
 from eth.codecs.abi.exceptions import DecodeError
 
 from tests.utils import get_deployed_token_contract
@@ -10,14 +11,10 @@ def pre_test_checks(metaregistry, pool):
         pytest.skip("empty pool: skipping")
 
     try:
-        if (
-            get_deployed_token_contract(
-                metaregistry.get_lp_token(pool)
-            ).totalSupply()
-            == 0
-        ):
+        contract = get_deployed_token_contract(metaregistry.get_lp_token(pool))
+        if contract.totalSupply() == 0:
             pytest.skip("LP token supply is zero")
-    except DecodeError as err:  # TODO: Document why this happens
+    except (BoaError, DecodeError) as err:  # TODO: Document why this happens
         pytest.skip(
             f"{type(err).__name__} for token {metaregistry.get_lp_token(pool)}: "
             f"Skipping because of {err.msg}"

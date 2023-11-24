@@ -1,10 +1,12 @@
+from boa import BoaError
+
 from tests.utils import ZERO_ADDRESS
 
 
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):
     try:
         gauge_controller.gauge_types(_gauge)
-    except KeyError:  # TODO: Pick the right exception
+    except BoaError:
         return False
 
     if liquidity_gauge(_gauge).is_killed():

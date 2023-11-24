@@ -8,7 +8,6 @@ from tests.utils import get_contract_pools
 pytest_plugins = [
     "fixtures.accounts",
     "fixtures.constants",
-    "fixtures.contracts",
     "fixtures.deployments",
     "fixtures.functions",
 ]

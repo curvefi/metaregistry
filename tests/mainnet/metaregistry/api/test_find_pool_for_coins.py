@@ -13,8 +13,8 @@ def _get_all_combinations(metaregistry, pool):
     pool_coins = [
         coin for coin in metaregistry.get_coins(pool) if coin != ZERO_ADDRESS
     ]
-    base_combinations = list(itertools.combinations(pool_coins, 2))
-    all_combinations = base_combinations
+    all_combinations = list(itertools.combinations(pool_coins, 2))
+    first_coin = pool_coins[0]
 
     if metaregistry.is_meta(pool):
         underlying_coins = [
@@ -22,10 +22,10 @@ def _get_all_combinations(metaregistry, pool):
             for coin in metaregistry.get_underlying_coins(pool)
             if coin != ZERO_ADDRESS
         ]
-        all_combinations = all_combinations + [
-            (pool_coins[0], coin)
+        all_combinations += [
+            (first_coin, coin)
             for coin in underlying_coins
-            if pool_coins[0] != coin
+            if first_coin != coin
         ]
 
     return all_combinations
