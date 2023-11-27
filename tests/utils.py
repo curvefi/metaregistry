@@ -55,18 +55,18 @@ def get_deployed_token_contract(address: str) -> VyperContract:
     abi = json.dumps(
         [
             {
+                "name": "name",
                 "constant": True,
                 "inputs": [],
-                "name": "name",
                 "outputs": [{"name": "", "type": "string"}],
                 "payable": False,
                 "stateMutability": "view",
                 "type": "function",
             },
             {
+                "name": "decimals",
                 "constant": True,
                 "inputs": [],
-                "name": "decimals",
                 "outputs": [{"name": "", "type": "uint8"}],
                 "payable": False,
                 "stateMutability": "view",
@@ -74,14 +74,14 @@ def get_deployed_token_contract(address: str) -> VyperContract:
             },
             {
                 "name": "totalSupply",
-                "constant": True,
                 "inputs": [],
-                "outputs": [{"name": "", "type": "uint256"}],
-                "payable": False,
+                "outputs": [{"type": "uint256", "name": ""}],
                 "stateMutability": "view",
                 "type": "function",
+                "gas": 2531,
             },
             {
+                "name": "balanceOf",
                 "inputs": [
                     {
                         "internalType": "address",
@@ -89,7 +89,6 @@ def get_deployed_token_contract(address: str) -> VyperContract:
                         "type": "address",
                     }
                 ],
-                "name": "balanceOf",
                 "outputs": [
                     {"internalType": "uint256", "name": "", "type": "uint256"}
                 ],

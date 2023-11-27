@@ -1,83 +1,110 @@
-import click
-from ape import project
-from ape.cli import NetworkBoundCommand, account_option, network_option
+"""
+Deploy the contracts to the network.
+Usage for fork mode:
+    scripts/deploy.py
+    requires the RPC_ETHEREUM environment variable to be set
+Usage for prod mode:
+    scripts/deploy.py --prod
+    requires the URL and ACCOUNT environment variables to be set
+"""
+import boa
 from eth_abi import encode
+from rich import Console as RichConsole
+
+from scripts.deployment_utils import setup_environment
 
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 STABLE_REGISTRY_ADDRESS = "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
 STABLE_FACTORY_ADDRESS = "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
-CRYPTO_REGISTRY_ADDRESS = ""  # left blank because a new one gets deployed
 CRYPTO_FACTORY_ADDRESS = "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99"
 
 
-@click.group(short_help="Deploy the project")
-def cli():
-    pass
+def main():
+    """
+    Deploy the contracts to the network.
+    It does the following:
+    1. deploys the base pool registry
+    2. deploys the crypto registry
+    3. deploys the stable registry handler
+    4. deploys the stable factory handler
+    5. deploys the crypto registry handler
+    6. deploys the crypto factory handler
+    7. deploys the metaregistry
+    """
+    console = RichConsole()
+    setup_environment(console)
 
-
-@cli.command(cls=NetworkBoundCommand)
-@network_option()
-@account_option()
-def main(network, account):
     # deploy basepool registry:
-    base_pool_registry = account.deploy(project.BasePoolRegistry)
+    base_pool_registry = boa.load(
+        "contracts/mainnet/registries/BasePoolRegistry.vy"
+    )
 
     # deploy crypto registry:
-    print(
+    console.log(
         "Crypto Registry constructor arguments: ",
         encode(["address", "address"], [ADDRESS_PROVIDER, base_pool_registry]),
     )
-    crypto_registry = account.deploy(
-        project.CryptoRegistryV1,
+    crypto_registry = boa.load(
+        "contracts/mainnet/registries/CryptoRegistryV1.vy",
         ADDRESS_PROVIDER,
         base_pool_registry,
     )
 
     # deploy stable registry handler:
-    print(
+    console.log(
         "Stable Registry Handler constructor arguments: ",
         encode(["address"], [STABLE_REGISTRY_ADDRESS]).hex(),
     )
-    account.deploy(project.StableRegistryHandler, STABLE_REGISTRY_ADDRESS)
+    boa.load(
+        "contracts/mainnet/registry_handlers/StableRegistryHandler.vy",
+        STABLE_REGISTRY_ADDRESS,
+    )
 
     # deploy stable factory handler:
-    print(
+    console.log(
         "Stable Factory Handler constructor arguments: ",
         encode(
             ["address", "address"],
             [STABLE_FACTORY_ADDRESS, base_pool_registry],
         ).hex(),
     )
-    account.deploy(
-        project.StableFactoryHandler,
+    boa.load(
+        "contracts/mainnet/registry_handlers/StableFactoryHandler.vy",
         STABLE_FACTORY_ADDRESS,
         base_pool_registry,
     )
 
     # deploy crypto registry handler:
-    print(
+    console.log(
         "Crypto Registry Handler constructor arguments: ",
         encode(["address"], [crypto_registry]).hex(),
     )
-    account.deploy(project.CryptoRegistryHandler, crypto_registry)
+    boa.load(
+        "contracts/mainnet/registry_handlers/CryptoRegistryHandler.vy",
+        crypto_registry,
+    )
 
     # deploy crypto factory handler:
-    print(
+    console.log(
         "Crypto Factory Handler constructor arguments: ",
         encode(
             ["address", "address"],
             [CRYPTO_FACTORY_ADDRESS, base_pool_registry],
         ).hex(),
     )
-    account.deploy(
-        project.CryptoFactoryHandler,
+    boa.load(
+        "contracts/mainnet/registry_handlers/CryptoFactoryHandler.vy",
         CRYPTO_FACTORY_ADDRESS,
         base_pool_registry,
     )
 
     # deploy metaregistry:
-    print(
+    console.log(
         "MetaRegistry constructor arguments: ",
         encode(["address"], [ADDRESS_PROVIDER]).hex(),
     )
-    account.deploy(project.MetaRegistry, ADDRESS_PROVIDER)
+    boa.load("contracts/mainnet/MetaRegistry.vy", ADDRESS_PROVIDER)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,4 @@
+import logging
 from os import environ
 
 import boa
@@ -27,20 +28,28 @@ def pytest_sessionstart():
     global STABLE_REGISTRY_POOLS
     global ALL_POOLS
 
+    logging.info("Connecting to Ethereum fork")
     # connect to the network. TODO: use Drpc-Key header instead of GET param
     boa.env.fork(url=environ["RPC_ETHEREUM"])
 
     # store registries globally, so we don't have to recreate multiple times when generating tests.
     # TODO: Can we move these to fixtures?
+    logging.info("Retrieving stable registry pools")
     STABLE_REGISTRY_POOLS = get_contract_pools(
         "StableRegistry", "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
     )
+
+    logging.info("Retrieving stable factory pools")
     STABLE_FACTORY_POOLS = get_contract_pools(
         "StableFactory", "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
     )
+
+    logging.info("Retrieving crypto registry pools")
     CRYPTO_REGISTRY_POOLS = get_contract_pools(
         "CryptoRegistry", "0x8F942C20D02bEfc377D41445793068908E2250D0"
     )
+
+    logging.info("Retrieving crypto factory pools")
     CRYPTO_FACTORY_POOLS = get_contract_pools(
         "CryptoFactory", "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99"
     )

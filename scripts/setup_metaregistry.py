@@ -1,8 +1,19 @@
+"""
+Sets up the metaregistry.
+
+Usage for fork mode:
+    scripts/setup_metaregistry.py
+    requires the RPC_ETHEREUM environment variable to be set
+Usage for prod mode:
+    scripts/setup_metaregistry.py --prod
+    requires the URL and ACCOUNT environment variables to be set
+"""
 import sys
 
-import click
+import boa
 from rich.console import Console as RichConsole
 
+from scripts.deployment_utils import setup_environment
 from tests.utils import ZERO_ADDRESS, get_deployed_contract
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
@@ -128,22 +139,24 @@ CRYPTO_REGISTRY_POOLS = {
 }
 
 
-@click.group(short_help="Deploy the project")
-def cli():
-    pass
+def main():
+    """
+    This script sets up the metaregistry. It does the following:
+    1. Adds base pools to base pool registry.
+    2. Adds crypto pools to crypto registry.
+    3. Adds registry handlers to metaregistry.
+    4. Adds metaregistry to address provider.
+    """
 
+    setup_environment(RICH_CONSOLE)
+    account = boa.env.eoa
 
-def main(network: str, account: str):
     # admin only: only admin of ADDRESSPROVIDER's proxy admin can do the following:
     address_provider = get_deployed_contract(
         "AddressProvider", ADDRESS_PROVIDER
     )
     address_provider_admin = address_provider.admin()
     proxy_admin = get_deployed_contract("ProxyAdmin", address_provider_admin)
-
-    if network == "ethereum:mainnet-fork":
-        RICH_CONSOLE.log("Simulation mode.")
-        account = proxy_admin.admins(1)
 
     # deployed contracts:
     base_pool_registry = get_deployed_contract(
@@ -323,3 +336,7 @@ def main(network: str, account: str):
             "0x853d955aCEf822Db058eb8505911ED77F175b99e",
         )
     )
+
+
+if __name__ == "__main__":
+    main()
