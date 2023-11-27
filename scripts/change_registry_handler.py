@@ -3,11 +3,9 @@ import sys
 import boa
 from rich.console import Console as RichConsole
 
-from scripts.deployment_utils import setup_environment
-from tests.utils import ZERO_ADDRESS, get_deployed_contract
+from scripts.deployment_utils import setup_environment, ZERO_ADDRESS, get_deployed_contract
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
-ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 CRYPTO_REGISTRY_HANDLER = "0x5f493fEE8D67D3AE3bA730827B34126CFcA0ae94"
 CRYPTO_REGISTRY_HANDLER_ID = 2
 OLD_CRYPTO_REGISTRY_HANDLER = "0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56"

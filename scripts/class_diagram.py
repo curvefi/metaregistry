@@ -3,6 +3,9 @@ Generates a mermaid class diagram with the contract selectors and
  the dependencies between contracts.
 Usage:
     python scripts/class_diagram.py [glob_pattern] (--internal) (--members)
+
+Unfortunately, rich doesn't support images in the terminal yet, so you'll have to
+copy the source or link to the image and paste it in your browser.
 """
 import sys
 from base64 import b64encode

@@ -1,3 +1,6 @@
+"""
+Print the missing functions from the registry.
+"""
 import json
 
 import boa
