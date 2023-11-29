@@ -36,6 +36,7 @@ def setup_environment(console: RichConsole):
     boa.env.eoa = FIDDY_DEPLOYER
     return False
 
+
 def get_deployed_contract(contract_name: str, address: str) -> VyperContract:
     """
     Loads a contract and retrieves a deployed instance of it with the given address.

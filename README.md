@@ -8,7 +8,7 @@ Mainnet:
 
 1. Curve Stable Registry: A registry of custom pool implementations deployed by Curve Core.
 2. Curve Stable Factory: A permissionless [StableSwap](https://curve.fi/files/stableswap-paper.pdf) pool factory, which also acts as a registry for pools that its users create.
-3. Curve Crypto Registry: A registry of custom CryptoSwap pool implementaions deployed by Curve Core.
+3. Curve Crypto Registry: A registry of custom CryptoSwap pool implementations deployed by Curve Core.
 4. Curve Crypto Factory: A permissionless [CryptoSwap](https://curve.fi/files/crypto-pools-paper.pdf) pool factory, which also acts as a registry for pools that its users create.
 
 Each of the child registries are accompanied by a RegistryHandler, which is a contract that wraps around the child registry and enforces the abi implemented in the MetaRegistry. These registry handlers are then added to the MetaRegistry using the `MetaRegistry.add_registry_handler` method.
@@ -67,9 +67,9 @@ Out[1]: '3pool'
 
 #### `MetaRegistry.is_meta`
 
-Metapools are pools that pair a coin to a base pool comprising of multiple coins.
+Meta-pools are pools that pair a coin to a base pool comprising multiple coins.
 
-An example is the [`LUSD-3CRV`](https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca) pool which pairs [Liquity's](https://www.liquity.org/) [`LUSD`](https://etherscan.io/address/0x5f98805a4e8be255a32880fdec7f6728c6568ba0) against [`3CRV`](https://etherscan.io/address/0x6c3f90f043a72fa612cbac8115ee7e52bde6e490), where `3CRV` is a liquidity pool token that represents a share of a pool containing `DAI`, `USDC` and `USDT`:
+An example is the [`LUSD-3CRV`](https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca) pool which pairs [Liquidity's](https://www.liquity.org/) [`LUSD`](https://etherscan.io/address/0x5f98805a4e8be255a32880fdec7f6728c6568ba0) against [`3CRV`](https://etherscan.io/address/0x6c3f90f043a72fa612cbac8115ee7e52bde6e490), where `3CRV` is a liquidity pool token that represents a share of a pool containing `DAI`, `USDC` and `USDT`:
 
 ```
 In [1]: metaregistry.is_meta("0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca")
@@ -294,7 +294,7 @@ For CryptoSwap, the getter returns:
 4. Allowed extra profit
 5. Fee gamma
 6. Adjustment step
-7. MA (moving average) half time
+7. MA (moving average) half-time
 
 ```
 
@@ -338,7 +338,7 @@ Out[1]: '0xc4AD29ba4B3c580e6D59105FFf484999997675Ff'
 
 #### `MetaRegistry.get_pool_asset_type`
 
-Gets the asset type of a pool. `0` = `USD`, `1` = `ETH`, `2` = `BTC`, `3` = Other, `4` = CryptoPool token. The asset type is a property of StableSwaps, and is not enforced in CryptoSwap pools (which always return `4`).
+Gets the asset type of pool. `0` = `USD`, `1` = `ETH`, `2` = `BTC`, `3` = Other, `4` = CryptoPool token. The asset type is a property of StableSwaps, and is not enforced in CryptoSwap pools (which always return `4`).
 
 StableSwap pool example for `LUSD-3CRV` pool which is a `USD` stablecoin pool:
 

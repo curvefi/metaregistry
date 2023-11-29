@@ -4,6 +4,7 @@ from typing import Union
 
 import boa
 from boa.vyper.contract import VyperContract
+from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 from eth_account.signers.local import LocalAccount
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -98,3 +99,31 @@ def get_deployed_token_contract(address: str) -> VyperContract:
         ]
     )
     return boa.loads_abi(abi).at(address)
+
+
+def check_decode_error(e: ABIDecodeError):
+    """
+    Checks that the error message is the expected decode error.
+    This seems to be happening in some pools, but it's not clear if it's a boa or contract issue.
+    :param e: The error to check.
+    """
+    assert e.msg == "Value length is not the expected size of 32 bytes"
+    assert len(e.value) == 4096
+
+
+def assert_negative_coin_balance(metaregistry, pool):
+    """
+    The implementation of get_balance calculates (balance - admin_balance) but sometimes the coin
+    balance might be lower than the admin balance, resulting in an uint underflow.
+    """
+    coins = [
+        coin for coin in metaregistry.get_coins(pool) if coin != ZERO_ADDRESS
+    ]
+    coin_balances = [
+        get_deployed_token_contract(coin).balanceOf(pool) for coin in coins
+    ]
+    admin_balances = metaregistry.get_admin_balances(pool)
+    assert any(
+        coin_balance < admin_balance
+        for coin_balance, admin_balance in zip(coin_balances, admin_balances)
+    )

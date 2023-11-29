@@ -21,6 +21,3 @@ repos:
     hooks:
       - id: isort
         args: ["--profile", "black", --line-length=79]
-
-default_language_version:
-  python: python3.11

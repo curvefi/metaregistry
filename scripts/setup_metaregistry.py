@@ -13,7 +13,11 @@ import sys
 import boa
 from rich.console import Console as RichConsole
 
-from scripts.deployment_utils import ZERO_ADDRESS, get_deployed_contract, setup_environment
+from scripts.deployment_utils import (
+    ZERO_ADDRESS,
+    get_deployed_contract,
+    setup_environment,
+)
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
 

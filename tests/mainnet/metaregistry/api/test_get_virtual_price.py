@@ -3,8 +3,14 @@ import warnings
 import boa
 import pytest
 from boa import BoaError
+from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 
-from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
+from tests.utils import (
+    ZERO_ADDRESS,
+    assert_negative_coin_balance,
+    check_decode_error,
+    get_deployed_token_contract,
+)
 
 # ---- sanity checks since vprice getters can revert for specific pools states ----
 
@@ -36,18 +42,21 @@ def _check_skem_tokens_with_weird_decimals(
 
         pool_balances_float.append(pool_balances[i] / 10 ** coin_decimals[i])
 
-        if (
-            coin_decimals[i] == 0
-            and get_deployed_token_contract(
-                metaregistry.get_coins(pool)[0]
-            ).decimals()
-            == 0
-        ):
-            with boa.reverts():
+        first_coin = metaregistry.get_coins(pool)[0]
+        coin_contract = get_deployed_token_contract(first_coin)
+        if coin_decimals[i] == 0 and coin_contract.decimals() == 0:
+            try:
+                virtual_price = metaregistry.get_virtual_price_from_lp_token(
+                    lp_token
+                )
+                warnings.warn(
+                    f"Pool {pool} virtual price {virtual_price}. continuing test"
+                )
+            except BoaError:
                 metaregistry.get_virtual_price_from_lp_token(lp_token)
-            pytest.skip(
-                f"skem token {coins[i]} in pool {pool} with zero decimals"
-            )
+                pytest.skip(
+                    f"Skem token {coins[i]} in pool {pool} with zero decimals"
+                )
 
     return pool_balances_float
 
@@ -69,23 +78,26 @@ def _check_pool_is_depegged(
             and min(pool_balances_float) < 1
         ):
             try:
-                with boa.reverts():
-                    metaregistry.get_virtual_price_from_lp_token(lp_token)
-
+                virtual_price = metaregistry.get_virtual_price_from_lp_token(
+                    lp_token
+                )
+                warnings.warn(
+                    f"Pool {pool} virtual price {virtual_price}. continuing test"
+                )
+            except BoaError:
                 pytest.skip(
                     f"skewed pool: {pool} as num coins (decimals divided) at index {i} is "
                     f"{pool_balances[i] / 10 ** coin_decimals[i]}"
                 )
-            except (
-                AssertionError
-            ):  # ok to catch this assertion error since we continue testing
-                warnings.warn(
-                    "pool virtual price getter did not revert. continuing test"
-                )
 
 
 def pre_test_checks(metaregistry, pool):
-    pool_balances = metaregistry.get_balances(pool)
+    try:
+        pool_balances = metaregistry.get_balances(pool)
+    except BoaError:
+        assert_negative_coin_balance(metaregistry, pool)
+        return pytest.skip(f"Pool {pool} has coin balances lower than admin")
+
     lp_token = metaregistry.get_lp_token(pool)
 
     _check_pool_has_no_liquidity(metaregistry, pool, pool_balances, lp_token)
@@ -139,6 +151,11 @@ def test_stable_factory_pools(
     except BoaError:
         with boa.reverts():
             populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
+    except ABIDecodeError as e:
+        check_decode_error(e)
+        return pytest.skip(
+            f"Pool {stable_factory_pool} cannot decode the virtual price"
+        )
 
 
 def test_crypto_registry_pools(

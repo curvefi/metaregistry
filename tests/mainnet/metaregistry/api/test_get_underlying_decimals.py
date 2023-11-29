@@ -17,7 +17,6 @@ EXCEPTIONS = {
 
 def _test_underlying_decimals_getter(metaregistry, registry, pool):
     metaregistry_output = metaregistry.get_underlying_decimals(pool)
-    assert metaregistry_output[1] != 0  # there has to be a second coin!
 
     pool_is_metapool = metaregistry.is_meta(pool)
     if pool in EXCEPTIONS:

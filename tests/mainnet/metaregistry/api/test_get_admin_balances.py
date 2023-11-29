@@ -3,7 +3,11 @@ import pytest
 from boa import BoaError
 from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 
-from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
+from tests.utils import (
+    assert_negative_coin_balance,
+    check_decode_error,
+    get_deployed_token_contract,
+)
 
 
 def pre_test_checks(metaregistry, pool):
@@ -29,29 +33,10 @@ def pre_test_checks(metaregistry, pool):
         if contract.totalSupply() == 0:
             return pytest.skip("LP token supply is zero")
     except ABIDecodeError as e:
-        assert e.msg == "Value length is not the expected size of 32 bytes"
-        assert len(e.value) == 4096
+        check_decode_error(e)
         return pytest.skip(
             f"Pool {pool} cannot decode the total supply of its LP token {lp_token}"
         )
-
-
-def assert_negative_coin_balance(metaregistry, pool):
-    """
-    The implementation of get_balance calculates (balance - admin_balance) but sometimes the coin
-    balance might be lower than the admin balance, resulting in an uint underflow.
-    """
-    coins = [
-        coin for coin in metaregistry.get_coins(pool) if coin != ZERO_ADDRESS
-    ]
-    coin_balances = [
-        get_deployed_token_contract(coin).balanceOf(pool) for coin in coins
-    ]
-    admin_balances = metaregistry.get_admin_balances(pool)
-    assert any(
-        coin_balance < admin_balance
-        for coin_balance, admin_balance in zip(coin_balances, admin_balances)
-    )
 
 
 def test_stable_registry_pools(
