@@ -1,4 +1,7 @@
+import pytest
 from boa import BoaError
+
+from tests.utils import assert_negative_coin_balance
 
 
 def test_stable_registry_pools(
@@ -15,7 +18,16 @@ def test_stable_registry_pools(
 def test_stable_factory_pools(
     populated_metaregistry, stable_factory_pool, stable_factory
 ):
-    actual_output = stable_factory.get_balances(stable_factory_pool)
+    try:
+        actual_output = stable_factory.get_balances(stable_factory_pool)
+    except BoaError:
+        assert_negative_coin_balance(
+            populated_metaregistry, stable_factory_pool
+        )
+        return pytest.skip(
+            f"Pool {stable_factory_pool} has coin balances lower than admin"
+        )
+
     metaregistry_output = populated_metaregistry.get_balances(
         stable_factory_pool
     )

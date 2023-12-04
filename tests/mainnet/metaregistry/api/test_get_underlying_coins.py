@@ -146,6 +146,11 @@ def test_crypto_factory_pools(
         crypto_factory_pool,
         max_coins,
     )
-
-    for idx, coin in enumerate(actual_output):
-        assert coin == metaregistry_output[idx]
+    try:
+        assert actual_output == metaregistry_output
+    except AssertionError:
+        # there exist some pools with an LP token as the first coin, that's incorrect
+        # example: 0xf5d5305790c1af08e9dF44b30A1afe56cCda72df
+        first_coin = metaregistry_output[0]
+        assert populated_metaregistry.get_pool_from_lp_token(first_coin)
+        assert actual_output == metaregistry_output[1:] + [ZERO_ADDRESS]

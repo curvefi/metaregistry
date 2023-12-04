@@ -12,6 +12,8 @@ EXCEPTIONS = {
     "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF": [18, 6, 6],
     # usdt pool has cDAI, cUSDC and USDT (which is [8, 8, 6]):
     "0x52EA46506B9CC5Ef470C5bf89f17Dc28bB35D85C": [18, 6, 6],
+    # pool has REUSD as first coin, which returns 0 decimals, but registry has 18:
+    "0x066B6e1E93FA7dcd3F0Eb7f8baC7D5A747CE0BF9": [18, 18, 6, 6],
 }
 
 
@@ -60,8 +62,7 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
     else:
         actual_output = list(registry.get_decimals(pool))
 
-    for idx, decimals in enumerate(actual_output):
-        assert decimals == metaregistry_output[idx]
+    assert actual_output == metaregistry_output[: len(actual_output)]
 
 
 def test_stable_registry_pools(

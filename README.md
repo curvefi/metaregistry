@@ -338,7 +338,7 @@ Out[1]: '0xc4AD29ba4B3c580e6D59105FFf484999997675Ff'
 
 #### `MetaRegistry.get_pool_asset_type`
 
-Gets the asset type of pool. `0` = `USD`, `1` = `ETH`, `2` = `BTC`, `3` = Other, `4` = CryptoPool token. The asset type is a property of StableSwaps, and is not enforced in CryptoSwap pools (which always return `4`).
+Gets the asset type of a pool. `0` = `USD`, `1` = `ETH`, `2` = `BTC`, `3` = Other, `4` = CryptoPool token. The asset type is a property of StableSwaps, and is not enforced in CryptoSwap pools (which always return `4`).
 
 StableSwap pool example for `LUSD-3CRV` pool which is a `USD` stablecoin pool:
 

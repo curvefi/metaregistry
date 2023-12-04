@@ -43,19 +43,16 @@ def set_up_registries(
         boa.env.eoa = Account.from_key(os.environ[account])
 
     data = next(
-        (
-            data
-            for _network, data in deploy_utils.curve_dao_network_settings.items()
-            if _network in network
-        ),
-        None,
+        data
+        for _network, data in deploy_utils.curve_dao_network_settings.items()
+        if _network in network
     )
 
     owner = data.dao_ownership_contract
     fee_receiver = data.fee_receiver_address
-    address_provider = Contract(data.address_provider)
     assert owner, f"Curve's DAO contracts may not be on {network}."
     assert fee_receiver, f"Curve's DAO contracts may not be on {network}."
+    address_provider = Contract(data.address_provider)
 
     # -------------------------- Register into AddressProvider --------------------------
 

@@ -3,14 +3,22 @@ import warnings
 import pytest
 from boa import BoaError
 
-from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
+from tests.utils import (
+    ZERO_ADDRESS,
+    assert_negative_coin_balance,
+    get_deployed_token_contract,
+)
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
 
 
 def pre_test_checks(metaregistry, pool):
-    if sum(metaregistry.get_balances(pool)) == 0:
-        pytest.skip(f"Empty pool: {pool}")
+    try:
+        if sum(metaregistry.get_balances(pool)) == 0:
+            pytest.skip(f"Empty pool: {pool}")
+    except BoaError:
+        assert_negative_coin_balance(metaregistry, pool)
+        pytest.skip(f"Pool {pool} has coin balances lower than admin")
 
 
 def _get_underlying_balances(
@@ -64,7 +72,20 @@ def _test_underlying_balances_getter(
     actual_output = _get_underlying_balances(
         metaregistry, pool, registry, base_pool_registry, max_coins
     )
-    metaregistry_output = metaregistry.get_underlying_balances(pool)
+    try:
+        metaregistry_output = metaregistry.get_underlying_balances(pool)
+    except BoaError:
+        registry_handler = metaregistry.get_registry_handlers_from_pool(pool)[
+            0
+        ]
+        assert (
+            metaregistry.get_base_registry(registry_handler)
+            == registry.address
+        )
+        base_pool = registry.get_base_pool(pool)
+        assert base_pool_registry.get_lp_token(base_pool) == ZERO_ADDRESS
+        pytest.skip(f"Pool {pool} is meta pool but base pool has no LP token")
+
     underlying_decimals = metaregistry.get_underlying_decimals(pool)
 
     for idx, registry_value in enumerate(actual_output):
