@@ -6,7 +6,7 @@ from boa import BoaError
 from tests.utils import (
     ZERO_ADDRESS,
     assert_negative_coin_balance,
-    get_deployed_token_contract,
+    get_deployed_contract,
 )
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
@@ -38,7 +38,7 @@ def _get_underlying_balances(
 
             if base_pool != ZERO_ADDRESS:
                 basepool_lp_token_balance = balances[idx]
-                coin_contract = get_deployed_token_contract(coin)
+                coin_contract = get_deployed_contract("ERC20", coin)
                 try:
                     lp_token_supply = coin_contract.totalSupply()
                 except (BoaError, AttributeError):

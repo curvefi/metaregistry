@@ -9,7 +9,7 @@ from tests.utils import (
     ZERO_ADDRESS,
     assert_negative_coin_balance,
     check_decode_error,
-    get_deployed_token_contract,
+    get_deployed_contract,
 )
 
 # ---- sanity checks since vprice getters can revert for specific pools states ----
@@ -43,7 +43,7 @@ def _check_skem_tokens_with_weird_decimals(
         pool_balances_float.append(pool_balances[i] / 10 ** coin_decimals[i])
 
         first_coin = metaregistry.get_coins(pool)[0]
-        coin_contract = get_deployed_token_contract(first_coin)
+        coin_contract = get_deployed_contract("ERC20", first_coin)
         if coin_decimals[i] == 0 and coin_contract.decimals() == 0:
             try:
                 virtual_price = metaregistry.get_virtual_price_from_lp_token(

@@ -1,4 +1,3 @@
-import json
 from os import path
 from typing import Union
 
@@ -48,59 +47,6 @@ def deploy_contract(
         return boa.load(file_name, *args, **kwargs)
 
 
-def get_deployed_token_contract(address: str) -> VyperContract:
-    """
-    Gets the LP token contract at the given address. This uses a subset of the ERC20 ABI.
-    :param address: The address of the LP token contract.
-    """
-    abi = json.dumps(
-        [
-            {
-                "name": "name",
-                "constant": True,
-                "inputs": [],
-                "outputs": [{"name": "", "type": "string"}],
-                "payable": False,
-                "stateMutability": "view",
-                "type": "function",
-            },
-            {
-                "name": "decimals",
-                "constant": True,
-                "inputs": [],
-                "outputs": [{"name": "", "type": "uint8"}],
-                "payable": False,
-                "stateMutability": "view",
-                "type": "function",
-            },
-            {
-                "name": "totalSupply",
-                "inputs": [],
-                "outputs": [{"type": "uint256", "name": ""}],
-                "stateMutability": "view",
-                "type": "function",
-                "gas": 2531,
-            },
-            {
-                "name": "balanceOf",
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "account",
-                        "type": "address",
-                    }
-                ],
-                "outputs": [
-                    {"internalType": "uint256", "name": "", "type": "uint256"}
-                ],
-                "stateMutability": "view",
-                "type": "function",
-            },
-        ]
-    )
-    return boa.loads_abi(abi).at(address)
-
-
 def check_decode_error(e: ABIDecodeError):
     """
     Checks that the error message is the expected decode error.
@@ -120,7 +66,7 @@ def assert_negative_coin_balance(metaregistry, pool):
         coin for coin in metaregistry.get_coins(pool) if coin != ZERO_ADDRESS
     ]
     coin_balances = [
-        get_deployed_token_contract(coin).balanceOf(pool) for coin in coins
+        get_deployed_contract("ERC20", coin).balanceOf(pool) for coin in coins
     ]
     admin_balances = metaregistry.get_admin_balances(pool)
     assert any(

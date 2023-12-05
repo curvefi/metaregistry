@@ -1,7 +1,7 @@
 import pytest
 from boa import BoaError
 
-from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
+from tests.utils import ZERO_ADDRESS, get_deployed_contract
 
 EXCEPTIONS = {
     # eth: ankreth pool returns [18, 0] when it should return:
@@ -32,8 +32,8 @@ def _test_underlying_decimals_getter(metaregistry, registry, pool):
                 continue
 
             try:
-                token_contract = get_deployed_token_contract(
-                    underlying_coins[i]
+                token_contract = get_deployed_contract(
+                    "ERC20", underlying_coins[i]
                 )
                 actual_output.append(token_contract.decimals())
             except BoaError:

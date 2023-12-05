@@ -31,6 +31,7 @@ def pytest_sessionstart():
     logging.info("Connecting to Ethereum fork")
     # connect to the network. TODO: use Drpc-Key header instead of GET param
     boa.env.fork(url=environ["RPC_ETHEREUM"])
+    # TODO: boa.env.enable_fast_mode()
 
     # store registries globally, so we don't have to recreate multiple times when generating tests.
     # TODO: Can we move these to fixtures?

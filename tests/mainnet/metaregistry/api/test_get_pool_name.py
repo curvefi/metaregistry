@@ -1,6 +1,4 @@
-import pytest
-
-from tests.utils import ZERO_ADDRESS, get_deployed_token_contract
+from tests.utils import ZERO_ADDRESS, get_deployed_contract
 
 
 def test_stable_registry_pools(
@@ -21,25 +19,20 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
         )
     )
     num_registry_handlers = len(
-        list(filter((ZERO_ADDRESS).__ne__, pool_registry_handlers))
+        handler != ZERO_ADDRESS for handler in pool_registry_handlers
     )
 
     name = populated_metaregistry.get_pool_name(stable_factory_pool)
+    token_contract = get_deployed_contract("ERC20", stable_factory_pool)
     if num_registry_handlers == 1:
-        assert name == get_deployed_token_contract(stable_factory_pool).name()
+        assert name == token_contract.name()
     else:
-        with pytest.raises(AssertionError):
-            assert (
-                name == get_deployed_token_contract(stable_factory_pool).name()
-            )
+        assert name != token_contract.name()
 
         pool_name2 = populated_metaregistry.get_pool_name(
             stable_factory_pool, 1
         )
-        assert (
-            pool_name2
-            == get_deployed_token_contract(stable_factory_pool).name()
-        )
+        assert pool_name2 == token_contract.name()
 
     assert num_registry_handlers in (1, 2)
 
@@ -55,7 +48,6 @@ def test_crypto_factory_pools(
     populated_metaregistry, crypto_factory_pool, crypto_factory
 ):
     pool_name = populated_metaregistry.get_pool_name(crypto_factory_pool)
-    contract = get_deployed_token_contract(
-        crypto_factory.get_token(crypto_factory_pool)
-    )
+    lp_token = crypto_factory.get_token(crypto_factory_pool)
+    contract = get_deployed_contract("ERC20", lp_token)
     assert pool_name == contract.name()

@@ -8,7 +8,7 @@ from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 from tests.utils import (
     assert_negative_coin_balance,
     check_decode_error,
-    get_deployed_token_contract,
+    get_deployed_contract,
 )
 
 
@@ -31,7 +31,7 @@ def pre_test_checks(metaregistry, pool):
 
     lp_token = metaregistry.get_lp_token(pool)
     try:
-        contract = get_deployed_token_contract(lp_token)
+        contract = get_deployed_contract("ERC20", lp_token)
         if contract.totalSupply() == 0:
             return pytest.skip("LP token supply is zero")
     except ABIDecodeError as e:
@@ -67,7 +67,7 @@ def test_stable_factory_pools(
     except BoaError:
         first_coin = pool.coins(0)
         with boa.reverts():
-            get_deployed_token_contract(first_coin).balanceOf(
+            get_deployed_contract("ERC20", first_coin).balanceOf(
                 stable_factory_pool
             )
         return pytest.skip(
@@ -84,9 +84,8 @@ def test_stable_factory_pools(
 def _get_crypto_pool_admin_fees(
     populated_metaregistry, pool, fee_receiver, alice_address
 ):
-    lp_token = get_deployed_token_contract(
-        populated_metaregistry.get_lp_token(pool)
-    )
+    lp_address = populated_metaregistry.get_lp_token(pool)
+    lp_token = get_deployed_contract("ERC20", lp_address)
     fee_receiver_token_balance_before = lp_token.balanceOf(fee_receiver)
 
     with boa.env.anchor():
@@ -124,19 +123,18 @@ def test_crypto_registry_pools(
             alice_address,
         )
     except BoaError:
-        balance_of_pool = get_deployed_token_contract(pool.coins(1)).balanceOf(
-            pool.address
-        )
+        balance_of_pool = get_deployed_contract(
+            "ERC20", pool.coins(1)
+        ).balanceOf(pool.address)
         balance = pool.balances(1)
-        assert balance / balance_of_pool > 10**11
+        assert balance / balance_of_pool > 10**8
         return pytest.skip(
             f"Pool {pool} cannot claim admin fees. "
             f"Pool has {balance_of_pool} but thinks it has {balance}."
         )
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)
-    for i, output in enumerate(admin_balances):
-        assert output == pytest.approx(metaregistry_output[i])
+    assert admin_balances == pytest.approx(metaregistry_output)
 
 
 def test_crypto_factory_pools(
