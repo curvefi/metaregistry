@@ -18,23 +18,28 @@ def test_stable_factory_pools(populated_metaregistry, stable_factory_pool):
             stable_factory_pool
         )
     )
-    num_registry_handlers = len(
-        handler != ZERO_ADDRESS for handler in pool_registry_handlers
+    pool_registry_handlers = [
+        handler
+        for handler in pool_registry_handlers
+        if handler != ZERO_ADDRESS
+    ]
+    num_registry_handlers = len(pool_registry_handlers)
+
+    pool_name = populated_metaregistry.get_pool_name(stable_factory_pool)
+    token_name = get_deployed_contract("ERC20", stable_factory_pool).name()
+    assert num_registry_handlers in (1, 2), (
+        f"Invalid number of registry handlers for {stable_factory_pool}. "
+        f"Metaregistry returned {num_registry_handlers} handlers: {pool_registry_handlers}"
     )
-
-    name = populated_metaregistry.get_pool_name(stable_factory_pool)
-    token_contract = get_deployed_contract("ERC20", stable_factory_pool)
     if num_registry_handlers == 1:
-        assert name == token_contract.name()
-    else:
-        assert name != token_contract.name()
+        assert pool_name == token_name
+        return
 
-        pool_name2 = populated_metaregistry.get_pool_name(
-            stable_factory_pool, 1
-        )
-        assert pool_name2 == token_contract.name()
-
-    assert num_registry_handlers in (1, 2)
+    assert pool_name != token_name
+    second_pool_name = populated_metaregistry.get_pool_name(
+        stable_factory_pool, 1
+    )
+    assert second_pool_name == token_name
 
 
 def test_crypto_registry_pools(

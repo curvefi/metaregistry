@@ -19,7 +19,8 @@ def _get_all_combinations(metaregistry, pool):
 
     # there exist some pools with an LP token as the first coin, that's incorrect
     # example: 0xf5d5305790c1af08e9df44b30a1afe56ccda72df
-    is_first_coin_lp_token = metaregistry.get_pool_from_lp_token(first_coin)
+    lp_token_pool = metaregistry.get_pool_from_lp_token(first_coin)
+    is_first_coin_lp_token = lp_token_pool and lp_token_pool != ZERO_ADDRESS
 
     if metaregistry.is_meta(pool) and not is_first_coin_lp_token:
         underlying_coins = [
@@ -46,8 +47,13 @@ def test_all(populated_metaregistry, pool):
         pools_containing_pair = populated_metaregistry.find_pools_for_coins(
             coin1, coin2
         )
-        assert pool in pools_containing_pair
+        assert pool in pools_containing_pair, (
+            f"Cannot find pool {pool} for coin combination {coin1} and {coin2}. "
+            f"Pools found {pools_containing_pair}"
+        )
 
-        for i, found_pool in enumerate(pools_containing_pair):
-            pool = populated_metaregistry.find_pool_for_coins(coin1, coin2, i)
-            assert pool == found_pool
+        # test with specified index
+        assert pools_containing_pair == [
+            populated_metaregistry.find_pool_for_coins(coin1, coin2, i)
+            for i in range(len(pools_containing_pair))
+        ]
