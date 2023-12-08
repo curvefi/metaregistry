@@ -1,4 +1,4 @@
-from tests.utils import ZERO_ADDRESS
+from scripts.constants import ZERO_ADDRESS
 
 
 def test_all(populated_metaregistry, populated_base_pool_registry, pool):

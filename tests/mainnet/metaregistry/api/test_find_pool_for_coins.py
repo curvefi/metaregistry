@@ -3,7 +3,7 @@ from os import environ
 
 import pytest
 
-from tests.utils import ZERO_ADDRESS
+from scripts.constants import ZERO_ADDRESS
 
 # NOTE: This is the most important method in the metaregistry contract since it will be used
 # by integrators to find pools for coin pairs. It finds pools even if the coin pair is not

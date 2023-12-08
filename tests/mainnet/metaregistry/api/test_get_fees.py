@@ -11,7 +11,6 @@ def test_stable_registry_pools(
     populated_metaregistry,
     stable_registry_pool,
     stable_registry,
-    stable_registry_handler,  # TODO: Check if this is needed
 ):
     actual_output = stable_registry.get_fees(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_registry_pool)
@@ -24,7 +23,6 @@ def test_stable_factory_pools(
     populated_metaregistry,
     stable_factory_pool,
     stable_factory,
-    stable_factory_handler,  # TODO: Check if this is needed
 ):
     actual_output = stable_factory.get_fees(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_factory_pool)

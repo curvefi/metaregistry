@@ -5,11 +5,8 @@ import pytest
 from boa import BoaError
 from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 
-from tests.utils import (
-    assert_negative_coin_balance,
-    check_decode_error,
-    get_deployed_contract,
-)
+from scripts.deployment_utils import get_deployed_contract
+from tests.utils import assert_decode_error, assert_negative_coin_balance
 
 
 def pre_test_checks(metaregistry, pool):
@@ -35,7 +32,7 @@ def pre_test_checks(metaregistry, pool):
         if contract.totalSupply() == 0:
             return pytest.skip("LP token supply is zero")
     except ABIDecodeError as e:
-        check_decode_error(e)
+        assert_decode_error(e)
         return pytest.skip(
             f"Pool {pool} cannot decode the total supply of its LP token {lp_token}"
         )
@@ -157,10 +154,10 @@ def test_crypto_factory_pools(
 
     metaregistry_output = populated_metaregistry.get_admin_balances(pool)
     for i, output in enumerate(admin_balances):
-        # TODO: Check if this level of difference is acceptable
         try:
             assert output == pytest.approx(metaregistry_output[i])
         except AssertionError:
+            # TODO: Check if this level of difference is acceptable
             assert output == pytest.approx(metaregistry_output[i], rel=0.009)
             logging.warning(
                 f"Pool {pool} has a difference in admin balance {i}: "

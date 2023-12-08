@@ -8,15 +8,16 @@ Usage for prod mode:
     requires the URL and ACCOUNT environment variables to be set
 """
 import boa
+from constants import (
+    ADDRESS_PROVIDER,
+    CRYPTO_FACTORY_ADDRESS,
+    STABLE_FACTORY_ADDRESS,
+    STABLE_REGISTRY_ADDRESS,
+)
 from eth_abi import encode
 from rich import Console as RichConsole
 
 from scripts.deployment_utils import setup_environment
-
-ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
-STABLE_REGISTRY_ADDRESS = "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
-STABLE_FACTORY_ADDRESS = "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
-CRYPTO_FACTORY_ADDRESS = "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99"
 
 
 def main():

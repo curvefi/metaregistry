@@ -24,6 +24,6 @@ jobs:
         run: pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
       - name: Run Tests
-        run: pytest
+        run: pytest -n 16
         env:
           RPC_ETHEREUM: ${{ secrets.RPC_ETHEREUM }}

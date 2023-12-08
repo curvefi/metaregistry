@@ -3,7 +3,7 @@ from typing import Callable
 import pytest
 from boa.vyper.contract import VyperContract
 
-from tests.utils import get_deployed_contract
+from scripts.deployment_utils import get_deployed_contract
 
 # ---- Factories ----
 

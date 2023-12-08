@@ -6,8 +6,8 @@ from boa.vyper.contract import VyperContract
 from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 from eth_account.signers.local import LocalAccount
 
-ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
-BASE_DIR = path.join(path.dirname(path.abspath(__file__)), "..")
+from scripts.constants import BASE_DIR, ZERO_ADDRESS
+from scripts.deployment_utils import get_deployed_contract
 
 
 def get_contract_pools(contract_name: str, address: str) -> list[str]:
@@ -18,19 +18,6 @@ def get_contract_pools(contract_name: str, address: str) -> list[str]:
     """
     registry = get_deployed_contract(contract_name, address)
     return [registry.pool_list(i) for i in range(registry.pool_count())]
-
-
-def get_deployed_contract(contract_name: str, address: str) -> VyperContract:
-    """
-    Loads a contract and retrieves a deployed instance of it with the given address.
-    TODO: Refactor calls to use fixtures instead of re-loading multiple times.
-    :param contract_name: The name of the contract ABI to load.
-    :param address: The address of the deployed contract.
-    """
-    file_name = path.join(
-        BASE_DIR, f"contracts/interfaces/{contract_name}.json"
-    )
-    return boa.load_abi(file_name).at(address)
 
 
 def deploy_contract(
@@ -47,10 +34,10 @@ def deploy_contract(
         return boa.load(file_name, *args, **kwargs)
 
 
-def check_decode_error(e: ABIDecodeError):
+def assert_decode_error(e: ABIDecodeError):
     """
     Checks that the error message is the expected decode error.
-    This seems to be happening in some pools, but it's not clear if it's a boa or contract issue.
+    TODO: This happens in some pools, but it's not clear if it's a boa or contract issue.
     :param e: The error to check.
     """
     assert e.msg == "Value length is not the expected size of 32 bytes"

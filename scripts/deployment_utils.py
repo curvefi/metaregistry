@@ -1,5 +1,5 @@
 import sys
-from os import environ
+from os import environ, path
 
 import boa
 from boa.network import NetworkEnv
@@ -7,9 +7,7 @@ from boa.vyper.contract import VyperContract
 from eth_account import Account
 from rich.console import Console as RichConsole
 
-ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
-FIDDY_DEPLOYER = "0x2d12D0907A388811e3AA855A550F959501d303EE"
-ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+from scripts.constants import BASE_DIR, FIDDY_DEPLOYER
 
 
 def setup_environment(console: RichConsole):
@@ -43,5 +41,7 @@ def get_deployed_contract(contract_name: str, address: str) -> VyperContract:
     :param contract_name: The name of the contract ABI to load.
     :param address: The address of the deployed contract.
     """
-    file_name = f"contracts/interfaces/{contract_name}.json"
+    file_name = path.join(
+        BASE_DIR, f"contracts/interfaces/{contract_name}.json"
+    )
     return boa.load_abi(file_name).at(address)

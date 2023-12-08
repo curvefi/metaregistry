@@ -1,4 +1,5 @@
-from tests.utils import ZERO_ADDRESS, get_deployed_contract
+from scripts.constants import ZERO_ADDRESS
+from scripts.deployment_utils import get_deployed_contract
 
 
 def test_stable_registry_pools(

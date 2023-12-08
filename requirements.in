@@ -6,3 +6,5 @@ pip-tools
 pre-commit
 tabulate
 rich
+pytest
+pytest-xdist

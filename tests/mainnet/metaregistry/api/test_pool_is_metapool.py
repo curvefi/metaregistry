@@ -1,4 +1,4 @@
-from tests.utils import ZERO_ADDRESS
+from scripts.constants import ZERO_ADDRESS
 
 
 def test_stable_registry_pools(

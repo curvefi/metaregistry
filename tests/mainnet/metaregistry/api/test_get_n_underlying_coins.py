@@ -1,4 +1,4 @@
-from tests.utils import ZERO_ADDRESS
+from scripts.constants import ZERO_ADDRESS
 
 
 def _get_num_coins(registry, pool, base_pool_registry):

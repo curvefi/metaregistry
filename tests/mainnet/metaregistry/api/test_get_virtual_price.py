@@ -5,12 +5,9 @@ import pytest
 from boa import BoaError
 from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 
-from tests.utils import (
-    ZERO_ADDRESS,
-    assert_negative_coin_balance,
-    check_decode_error,
-    get_deployed_contract,
-)
+from scripts.constants import ZERO_ADDRESS
+from scripts.deployment_utils import get_deployed_contract
+from tests.utils import assert_decode_error, assert_negative_coin_balance
 
 # ---- sanity checks since vprice getters can revert for specific pools states ----
 
@@ -152,7 +149,7 @@ def test_stable_factory_pools(
         with boa.reverts():
             populated_metaregistry.get_virtual_price_from_lp_token(lp_token)
     except ABIDecodeError as e:
-        check_decode_error(e)
+        assert_decode_error(e)
         return pytest.skip(
             f"Pool {stable_factory_pool} cannot decode the virtual price"
         )

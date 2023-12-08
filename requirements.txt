@@ -81,6 +81,8 @@ exceptiongroup==1.2.0
     # via
     #   hypothesis
     #   pytest
+execnet==2.0.2
+    # via pytest-xdist
 filelock==3.13.1
     # via virtualenv
 flake8==6.1.0
@@ -156,7 +158,12 @@ pygments==2.17.2
 pyproject-hooks==1.0.0
     # via build
 pytest==7.4.3
-    # via titanoboa
+    # via
+    #   -r requirements.in
+    #   pytest-xdist
+    #   titanoboa
+pytest-xdist==3.5.0
+    # via -r requirements.in
 pyyaml==6.0.1
     # via pre-commit
 regex==2023.10.3

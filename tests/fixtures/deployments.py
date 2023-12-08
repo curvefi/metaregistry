@@ -2,47 +2,48 @@ import boa
 import pytest
 from boa.vyper.contract import VyperContract
 
-from tests.utils import deploy_contract, get_deployed_contract
+from scripts.deployment_utils import get_deployed_contract
+from tests.utils import deploy_contract
 
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def gauge_controller() -> VyperContract:
     return get_deployed_contract(
         "GaugeController", "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB"
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def stable_registry() -> VyperContract:
     return get_deployed_contract(
         "StableRegistry", "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def stable_factory() -> VyperContract:
     return get_deployed_contract(
         "StableFactory", "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def crypto_factory() -> VyperContract:
     return get_deployed_contract(
         "CryptoFactory", "0xF18056Bbd320E96A48e3Fbf8bC061322531aac99"
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def base_pool_registry(alice_address):
     return deploy_contract(
         "BasePoolRegistry", sender=alice_address, directory="registries"
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def populated_base_pool_registry(base_pool_registry, owner, base_pools):
     with boa.env.sender(owner):
         for data in base_pools.values():
@@ -57,7 +58,7 @@ def populated_base_pool_registry(base_pool_registry, owner, base_pools):
     return base_pool_registry
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def crypto_registry(
     populated_base_pool_registry, owner, crypto_registry_pools
 ):
@@ -85,19 +86,19 @@ def crypto_registry(
     return crypto_registry
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def address_provider(crypto_registry, owner):
     contract = get_deployed_contract("AddressProvider", ADDRESS_PROVIDER)
     contract.set_address(5, crypto_registry, sender=owner)
     return contract
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def metaregistry(address_provider, owner):
     return deploy_contract("MetaRegistry", address_provider, sender=owner)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def stable_registry_handler(stable_registry, owner):
     return deploy_contract(
         "StableRegistryHandler",
@@ -107,7 +108,7 @@ def stable_registry_handler(stable_registry, owner):
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def stable_factory_handler(
     populated_base_pool_registry, stable_factory, owner
 ):
@@ -120,7 +121,7 @@ def stable_factory_handler(
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def crypto_registry_handler(owner, crypto_registry):
     return deploy_contract(
         "CryptoRegistryHandler",
@@ -130,7 +131,7 @@ def crypto_registry_handler(owner, crypto_registry):
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def crypto_factory_handler(
     populated_base_pool_registry, crypto_factory, owner
 ):
@@ -165,8 +166,7 @@ def handlers(
     ]
 
 
-# TODO: Get rid of the autouse, it might make some tests slower than needed
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def populated_metaregistry(metaregistry, handlers, owner):
     for handler in handlers:
         metaregistry.add_registry_handler(handler.address, sender=owner)

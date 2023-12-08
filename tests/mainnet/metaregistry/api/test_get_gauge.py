@@ -1,6 +1,6 @@
 from boa import BoaError
 
-from tests.utils import ZERO_ADDRESS
+from scripts.constants import ZERO_ADDRESS
 
 
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):

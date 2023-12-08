@@ -1,6 +1,7 @@
 import boa
 
-from tests.utils import ZERO_ADDRESS, deploy_contract
+from scripts.constants import ZERO_ADDRESS
+from tests.utils import deploy_contract
 
 
 def test_add_metapool(
