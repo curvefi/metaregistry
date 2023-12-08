@@ -1,4 +1,4 @@
-titanoboa[forking-recommended] @ git+https://github.com/vyperlang/titanoboa
+titanoboa[forking-recommended] @ git+https://github.com/DanielSchiavini/titanoboa@a326e93
 black
 flake8
 isort
