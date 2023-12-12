@@ -1,4 +1,4 @@
-import ape
+import boa
 import pytest
 
 
@@ -11,9 +11,7 @@ def test_stable_registry_pools(
     populated_metaregistry,
     stable_registry_pool,
     stable_registry,
-    stable_registry_handler,
 ):
-
     actual_output = stable_registry.get_fees(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_registry_pool)
     _check_dissimilar_length_array_elements_are_equal(
@@ -25,9 +23,7 @@ def test_stable_factory_pools(
     populated_metaregistry,
     stable_factory_pool,
     stable_factory,
-    stable_factory_handler,
 ):
-
     actual_output = stable_factory.get_fees(stable_factory_pool)
     metaregistry_output = populated_metaregistry.get_fees(stable_factory_pool)
     _check_dissimilar_length_array_elements_are_equal(
@@ -41,9 +37,8 @@ def test_crypto_registry_pools(
     crypto_registry,
     curve_pool_v2,
 ):
-
     if sum(crypto_registry.get_balances(crypto_registry_pool)) == 0:
-        with ape.reverts():
+        with boa.reverts():
             curve_pool_v2(crypto_registry_pool).fee()
         pytest.skip(
             f"crypto factory pool {crypto_registry_pool} is empty and factory pools tend to "
@@ -64,9 +59,8 @@ def test_crypto_factory_pools(
     crypto_factory,
     curve_pool_v2,
 ):
-
     if sum(crypto_factory.get_balances(crypto_factory_pool)) == 0:
-        with ape.reverts():
+        with boa.reverts():
             curve_pool_v2(crypto_factory_pool).fee()
         pytest.skip(
             f"crypto factory pool {crypto_factory_pool} is empty and factory pools tend to "

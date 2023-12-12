@@ -1,8 +1,0 @@
-{
-  "scripts": {
-    "preinstall": "npm i -g ganache-cli@6.12.1"
-  },
-  "devDependencies": {
-    "hardhat": "^2.10.1"
-  }
-}

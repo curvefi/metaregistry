@@ -1,42 +1,29 @@
 name: unitary
 
-on: ["push", "pull_request"]
-
-env:
-  ETHERSCAN_TOKEN: ${{ secrets.ETHERSKEM_TOKEN }}
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  WEB3_INFURA_PROJECT_ID: ${{ secrets.INFURA_TOKEN }}
-  WEB3_ALCHEMY_PROJECT_ID: ${{secrets.ALCHEMY_API_KEY}}
+on: ["push"]
 
 jobs:
   unitary:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Compiler Installations
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: |
-            ~/.vvm
+          path: ~/.vvm
           key: compiler-cache
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
         with:
-          node-version: 16
-
-      - name: Install Hardhat
-        run: npm ci
-
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
+          python-version: 3.11.6
 
       - name: Install Requirements
-        run: pip install -r requirements.txt
+        run: pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
       - name: Run Tests
-        run: ape test
+        run: pytest -n 16
+        env:
+          RPC_ETHEREUM: ${{ secrets.RPC_ETHEREUM }}

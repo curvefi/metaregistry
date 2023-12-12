@@ -1,23 +1,28 @@
-import click
-from ape import project
-from ape.cli import NetworkBoundCommand, account_option, network_option
-from eth_abi import encode
+"""
+Deploy the Crypto Registry Handler contract
+Requires the Crypto Registry contract to be deployed first.
+
+Usage for fork mode:
+    scripts/deploy_crypto_registry_handler.py
+    requires the RPC_ETHEREUM environment variable to be set
+Usage for prod mode:
+    scripts/deploy_crypto_registry_handler.py --prod
+    requires the URL and ACCOUNT environment variables to be set
+"""
+import boa
+from rich import Console as RichConsole
+
+from scripts.deployment_utils import setup_environment
 
 CRYPTO_REGISTRY_ADDRESS = "0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0"
 
 
-@click.group(short_help="Deploy the registry handler")
-def cli():
-    pass
+def main():
+    console = RichConsole()
+    console.log("Deploying Crypto Registry Handler contract...")
+    setup_environment(console)
+    boa.load("contracts/mainnet/registry_handlers/CryptoRegistryHandler.vy")
 
 
-@cli.command(cls=NetworkBoundCommand)
-@network_option()
-@account_option()
-def main(network, account):
-
-    print(
-        "Crypto Registry Handler constructor arguments: ",
-        encode(["address"], [CRYPTO_REGISTRY_ADDRESS]).hex(),
-    )
-    account.deploy(project.CryptoRegistryHandler, CRYPTO_REGISTRY_ADDRESS)
+if __name__ == "__main__":
+    main()

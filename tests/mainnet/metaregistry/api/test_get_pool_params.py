@@ -1,7 +1,6 @@
 def test_stable_registry_pools(
     populated_metaregistry, stable_registry_pool, stable_registry
 ):
-
     actual_pool_params = [0] * 20
     actual_pool_params[0] = stable_registry.get_A(stable_registry_pool)
     metaregistry_output = populated_metaregistry.get_pool_params(
@@ -14,7 +13,6 @@ def test_stable_registry_pools(
 def test_stable_factory_pools(
     populated_metaregistry, stable_factory_pool, stable_factory
 ):
-
     metaregistry_output = populated_metaregistry.get_pool_params(
         stable_factory_pool
     )
@@ -30,7 +28,6 @@ def test_crypto_registry_pools(
     crypto_registry,
     curve_pool_v2,
 ):
-
     metaregistry_output = populated_metaregistry.get_pool_params(
         crypto_registry_pool
     )
@@ -50,7 +47,6 @@ def test_crypto_registry_pools(
 def test_crypto_factory_pools(
     populated_metaregistry, crypto_factory_pool, curve_pool_v2
 ):
-
     metaregistry_output = populated_metaregistry.get_pool_params(
         crypto_factory_pool
     )

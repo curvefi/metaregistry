@@ -1,4 +1,4 @@
-# @version 0.3.4
+#pragma version ^0.3.7
 """
 @title Curve Registry Handler for v2 Factory
 @license MIT

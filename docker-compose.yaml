@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  test:
+    build: ./
+    container_name: metaregistry-test
+    env_file: .env
+    volumes:
+      - ./:/usr/app
+
+  pre-commit:
+    build:
+      context: ./
+      target: pre-commit
+    container_name: metaregistry-pre-commit
+    volumes:
+      - ./:/usr/app

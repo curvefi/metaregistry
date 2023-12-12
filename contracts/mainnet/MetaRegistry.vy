@@ -1,4 +1,4 @@
-# @version 0.3.7
+#pragma version ^0.3.7
 """
 @title Curve Meta Registry
 @license MIT
@@ -122,7 +122,7 @@ def _get_registry_handlers_from_pool(_pool: address) -> address[MAX_REGISTRIES]:
             c += 1
 
     if pool_registry_handler[0] == empty(address):
-        raise("no registry")
+        raise "no registry"
     return pool_registry_handler
 
 

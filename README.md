@@ -8,7 +8,7 @@ Mainnet:
 
 1. Curve Stable Registry: A registry of custom pool implementations deployed by Curve Core.
 2. Curve Stable Factory: A permissionless [StableSwap](https://curve.fi/files/stableswap-paper.pdf) pool factory, which also acts as a registry for pools that its users create.
-3. Curve Crypto Registry: A registry of custom CryptoSwap pool implementaions deployed by Curve Core.
+3. Curve Crypto Registry: A registry of custom CryptoSwap pool implementations deployed by Curve Core.
 4. Curve Crypto Factory: A permissionless [CryptoSwap](https://curve.fi/files/crypto-pools-paper.pdf) pool factory, which also acts as a registry for pools that its users create.
 
 Each of the child registries are accompanied by a RegistryHandler, which is a contract that wraps around the child registry and enforces the abi implemented in the MetaRegistry. These registry handlers are then added to the MetaRegistry using the `MetaRegistry.add_registry_handler` method.
@@ -67,9 +67,9 @@ Out[1]: '3pool'
 
 #### `MetaRegistry.is_meta`
 
-Metapools are pools that pair a coin to a base pool comprising of multiple coins.
+Meta-pools are pools that pair a coin to a base pool comprising multiple coins.
 
-An example is the [`LUSD-3CRV`](https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca) pool which pairs [Liquity's](https://www.liquity.org/) [`LUSD`](https://etherscan.io/address/0x5f98805a4e8be255a32880fdec7f6728c6568ba0) against [`3CRV`](https://etherscan.io/address/0x6c3f90f043a72fa612cbac8115ee7e52bde6e490), where `3CRV` is a liquidity pool token that represents a share of a pool containing `DAI`, `USDC` and `USDT`:
+An example is the [`LUSD-3CRV`](https://etherscan.io/address/0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca) pool which pairs [Liquidity's](https://www.liquity.org/) [`LUSD`](https://etherscan.io/address/0x5f98805a4e8be255a32880fdec7f6728c6568ba0) against [`3CRV`](https://etherscan.io/address/0x6c3f90f043a72fa612cbac8115ee7e52bde6e490), where `3CRV` is a liquidity pool token that represents a share of a pool containing `DAI`, `USDC` and `USDT`:
 
 ```
 In [1]: metaregistry.is_meta("0xed279fdd11ca84beef15af5d39bb4d4bee23f0ca")
@@ -294,7 +294,7 @@ For CryptoSwap, the getter returns:
 4. Allowed extra profit
 5. Fee gamma
 6. Adjustment step
-7. MA (moving average) half time
+7. MA (moving average) half-time
 
 ```
 
@@ -387,34 +387,13 @@ Set up the python environment using the following steps:
 ```
 
 > python -m venv venv
-> source ./venv/bin/active
-> pip install --upgrade pip
+> source ./venv/bin/activate
+> python -m pip install --upgrade pip
 > pip install -r ./requirements.txt
 
 ```
 
-This project uses `eth-ape >= 0.4.0` developed at [Apeworx](https://apeworx.io). The various plugins used are:
-
-1. [`ape-vyper`](https://github.com/ApeWorX/ape-vyper)
-2. [`ape-hardhat`](https://github.com/ApeWorX/ape-hardhat)
-3. [`ape-alchemy`](https://github.com/ApeWorX/ape-alchemy)
-4. [`ape-ledger`](https://github.com/ApeWorX/ape-ledger)
-5. [`ape-etherscan`](https://github.com/ApeWorX/ape-etherscan)
-
-To install these, please follow instructions laid out in their respective Github repositories (by clicking on the links above).
-
-Note: If you choose to run tests using `Alchemy` as the upstream provider, please set up an alchemy api key into an environment variable labelled `WEB3_ALCHEMY_PROJECT_ID` or `WEB3_ALCHEMY_API_KEY`. If you choose to use a local node (`geth` or `erigon`) please change the hardhat upstream provider for mainnet-fork to `geth` in [ape-config.yaml](ape-config.yaml):
-
-```
-
-hardhat:
-  port: auto
-  fork:
-    ethereum:
-      mainnet:
-        upstream_provider: geth
-        # upstream_provider: alchemy
-```
+This project uses [`titanoboa`](https://github.com/vyperlang/titanoboa) for deployment and testing.
 
 ### Testing
 
@@ -462,22 +441,14 @@ The following command simulates metaregistry setup. For Prod transactions, set n
 #### Deployments
 
 Ethereum Mainnet:
-
-
-`base_pool_registry`: [0xDE3eAD9B2145bBA2EB74007e58ED07308716B725](https://etherscan.io/address/0xDE3eAD9B2145bBA2EB74007e58ED07308716B725#code)
-
-`crypto_registry`: [0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0](https://etherscan.io/address/0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0#code)
-
-`stable_registry_handler`: [0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68](https://etherscan.io/address/0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68#code)
-
-`stable_factory_handler`: [0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9](https://etherscan.io/address/0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9#code)
-
-`crypto_registry_handler`: [0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56](https://etherscan.io/address/0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56#code)
-
-`crypto_factory_handler`: [0xC4F389020002396143B863F6325aA6ae481D19CE](https://etherscan.io/address/0xC4F389020002396143B863F6325aA6ae481D19CE#code)
-
-`metaregistry`: [0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC](https://etherscan.io/address/0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC#code)
+- `base_pool_registry`: [0xDE3eAD9B2145bBA2EB74007e58ED07308716B725](https://etherscan.io/address/0xDE3eAD9B2145bBA2EB74007e58ED07308716B725#code)
+- `crypto_registry`: [0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0](https://etherscan.io/address/0x9a32aF1A11D9c937aEa61A3790C2983257eA8Bc0#code)
+- `stable_registry_handler`: [0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68](https://etherscan.io/address/0x46a8a9CF4Fc8e99EC3A14558ACABC1D93A27de68#code)
+- `stable_factory_handler`: [0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9](https://etherscan.io/address/0x127db66E7F0b16470Bec194d0f496F9Fa065d0A9#code)
+- `crypto_registry_handler`: [0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56](https://etherscan.io/address/0x22ceb131d3170f9f2FeA6b4b1dE1B45fcfC86E56#code)
+- `crypto_factory_handler`: [0xC4F389020002396143B863F6325aA6ae481D19CE](https://etherscan.io/address/0xC4F389020002396143B863F6325aA6ae481D19CE#code)
+- `metaregistry`: [0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC](https://etherscan.io/address/0xF98B45FA17DE75FB1aD0e7aFD971b0ca00e379fC#code)
 
 ### License
 
-(c) Curve.Fi, 2022 - [All rights reserved](LICENSE).
+(c) Curve.Fi, 2023 - [All rights reserved](LICENSE).

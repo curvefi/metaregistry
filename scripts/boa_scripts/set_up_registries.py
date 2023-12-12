@@ -18,11 +18,19 @@ logger = RichConsole(file=sys.stdout)
 
 
 def deploy_factory_handler():
-
     pass
 
 
-def set_up_registries(network, url, account, fork: bool = False):
+def set_up_registries(
+    network: str, url: str, account: str, fork: bool = False
+):
+    """
+    Set up registries for the Curve StableSwapNG factory.
+    :param network: Network to deploy to.
+    :param url: URL to connect to.
+    :param account: Account to use.
+    :param fork: Whether to deploy to a fork (test) network.
+    """
 
     logger.log(f"Connecting to {network} ...")
     if fork:
@@ -32,18 +40,19 @@ def set_up_registries(network, url, account, fork: bool = False):
     else:
         logger.log("Prodmode")
         boa.set_env(NetworkEnv(url))
-        boa.env.add_account(Account.from_key(os.environ[account]))
+        boa.env.eoa = Account.from_key(os.environ[account])
 
-    for _network, data in deploy_utils.curve_dao_network_settings.items():
+    data = next(
+        data
+        for _network, data in deploy_utils.curve_dao_network_settings.items()
+        if _network in network
+    )
 
-        if _network in network:
-
-            owner = data.dao_ownership_contract
-            fee_receiver = data.fee_receiver_address
-            address_provider = Contract(data.address_provider)
-
+    owner = data.dao_ownership_contract
+    fee_receiver = data.fee_receiver_address
     assert owner, f"Curve's DAO contracts may not be on {network}."
     assert fee_receiver, f"Curve's DAO contracts may not be on {network}."
+    address_provider = Contract(data.address_provider)
 
     # -------------------------- Register into AddressProvider --------------------------
 
@@ -52,21 +61,20 @@ def set_up_registries(network, url, account, fork: bool = False):
     boss = Contract(address_provider.admin())
 
     # check if account can handle boss:
-    account_is_boss_handler = False
-    for i in range(2):
-        if account.address.lower() == boss.admins(i).lower():
-            account_is_boss_handler = True
-            break
-
+    account_is_boss_handler = any(
+        account.address.lower() == boss.admins(i).lower() for i in range(2)
+    )
     assert account_is_boss_handler  # only authorised accounts can write to address provider  # noqa: E501
 
-    for index in range(max_id + 1):
-        if address_provider.get_id_info(index).description is description:
-            break
+    is_new_deployment = not any(
+        address_provider.get_id_info(i).description is description
+        for i in range(max_id + 1)
+    )
 
-    if index == max_id:
-
-        logger.info(f"Adding a new registry provider entry at id: {index + 1}")
+    if is_new_deployment:
+        logger.info(
+            f"Adding a new registry provider entry at id: {max_id + 1}"
+        )
 
         # we're adding a new id
         with accounts.use_sender(account) as account:
@@ -78,7 +86,6 @@ def set_up_registries(network, url, account, fork: bool = False):
             )
 
     else:
-
         assert address_provider.get_id_info(index).description == description
 
         logger.info(
@@ -108,7 +115,6 @@ def set_up_registries(network, url, account, fork: bool = False):
     ].base_pool_registry_address
 
     if metaregistry_address:
-
         metaregistry = Contract(metaregistry_address)
         boss = Contract(metaregistry.owner())
 
@@ -134,14 +140,11 @@ def set_up_registries(network, url, account, fork: bool = False):
 
 
 def main():
-
-    fork = False
-
     set_up_registries(
         "ethereum:mainnet",
         os.environ["RPC_ETHEREUM"],
         "FIDDYDEPLOYER",
-        fork=fork,
+        fork=False,
     )
 
 

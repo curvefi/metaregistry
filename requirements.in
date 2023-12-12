@@ -1,8 +1,4 @@
-eth-ape
-ape-vyper
-ape-alchemy
-ape-hardhat
-ape-ledger
+titanoboa[forking-recommended] @ git+https://github.com/vyperlang/titanoboa@e85ab24
 black
 flake8
 isort
@@ -10,3 +6,5 @@ pip-tools
 pre-commit
 tabulate
 rich
+pytest
+pytest-xdist
