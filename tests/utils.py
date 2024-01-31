@@ -2,7 +2,7 @@ from os import path
 from typing import Union
 
 import boa
-from boa.vyper.contract import VyperContract
+from boa.contracts.vyper.vyper_contract import VyperContract
 from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 from eth_account.signers.local import LocalAccount
 

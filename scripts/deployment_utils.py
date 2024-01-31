@@ -2,8 +2,8 @@ import sys
 from os import environ, path
 
 import boa
+from boa.contracts.vyper.vyper_contract import VyperContract
 from boa.network import NetworkEnv
-from boa.vyper.contract import VyperContract
 from eth_account import Account
 from rich.console import Console as RichConsole
 
