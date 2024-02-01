@@ -1,7 +1,7 @@
 from typing import Callable
 
 import pytest
-from boa.contracts.vyper.vyper_contract import VyperContract
+from boa.vyper.contract import VyperContract
 
 from scripts.deployment_utils import get_deployed_contract
 
