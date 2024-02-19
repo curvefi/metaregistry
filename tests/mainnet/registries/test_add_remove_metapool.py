@@ -1,6 +1,6 @@
 import boa
 
-from scripts.constants import ZERO_ADDRESS
+from scripts.utils.constants import ZERO_ADDRESS
 from tests.utils import deploy_contract
 
 

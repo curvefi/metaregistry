@@ -2,8 +2,8 @@ import boa
 import pytest
 from eth_account.signers.local import LocalAccount
 
-from scripts.constants import ADDRESS_PROVIDER
 from scripts.deployment_utils import get_deployed_contract
+from scripts.utils.constants import ADDRESS_PROVIDER
 
 
 @pytest.fixture(scope="session")

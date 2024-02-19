@@ -1,8 +1,8 @@
 import pytest
 from boa import BoaError
 
-from scripts.constants import ZERO_ADDRESS
 from scripts.deployment_utils import get_deployed_contract
+from scripts.utils.constants import ZERO_ADDRESS
 
 EXCEPTIONS = {
     # eth: ankreth pool returns [18, 0] when it should return:

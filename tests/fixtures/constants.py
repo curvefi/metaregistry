@@ -1,6 +1,6 @@
 import pytest
 
-from scripts.constants import BASE_POOLS, CRYPTO_REGISTRY_POOLS
+from scripts.utils.constants import BASE_POOLS, CRYPTO_REGISTRY_POOLS
 
 
 @pytest.fixture(scope="module")

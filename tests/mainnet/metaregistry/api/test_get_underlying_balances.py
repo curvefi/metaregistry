@@ -3,8 +3,8 @@ import warnings
 import pytest
 from boa import BoaError
 
-from scripts.constants import ZERO_ADDRESS
 from scripts.deployment_utils import get_deployed_contract
+from scripts.utils.constants import ZERO_ADDRESS
 from tests.utils import assert_negative_coin_balance
 
 EXCEPTION_POOLS = ["0x79a8C46DeA5aDa233ABaFFD40F3A0A2B1e5A4F27"]
