@@ -3,7 +3,7 @@ import warnings
 import pytest
 from boa import BoaError
 
-from scripts.deployment_utils import get_deployed_contract
+from scripts.utils import get_deployed_contract
 from scripts.utils.constants import ZERO_ADDRESS
 from tests.utils import assert_negative_coin_balance
 

@@ -1,7 +1,7 @@
 import pytest
 from boa import BoaError
 
-from scripts.deployment_utils import get_deployed_contract
+from scripts.utils import get_deployed_contract
 from scripts.utils.constants import ZERO_ADDRESS
 
 EXCEPTIONS = {
