@@ -1,8 +1,8 @@
 from os.path import abspath, dirname, join
 
-BASE_DIR = join(dirname(abspath(__file__)), "..")
+from eth.constants import ZERO_ADDRESS
 
-ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+BASE_DIR = join(dirname(abspath(__file__)), "..")
 
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 STABLE_REGISTRY_ADDRESS = "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"

@@ -2,8 +2,7 @@ import itertools
 import warnings
 
 import pytest
-
-from scripts.utils.constants import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
 
 
 def _reject_pools_with_one_coin(metaregistry, pool):

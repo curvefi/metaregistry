@@ -1,4 +1,4 @@
-from scripts.utils.constants import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
 
 
 def _get_num_coins(registry, pool, base_pool_registry):

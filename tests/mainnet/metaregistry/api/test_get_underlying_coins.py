@@ -2,8 +2,7 @@ import warnings
 
 import boa
 from boa import BoaError
-
-from scripts.utils.constants import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
 
 
 def _get_underlying_coins(
