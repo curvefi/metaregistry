@@ -1,4 +1,4 @@
-#pragma version ^0.3.7
+#pragma version 0.3.10
 """
 @title Curve Meta Registry
 @license MIT
