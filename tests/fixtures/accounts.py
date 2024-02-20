@@ -35,3 +35,13 @@ def owner(accounts):
         "AddressProvider", ADDRESS_PROVIDER
     )
     return address_provider.admin()
+
+
+@pytest.fixture(scope="module")
+def ng_fee_receiver():
+    return boa.env.generate_address()
+
+
+@pytest.fixture(scope="module")
+def ng_owner():
+    return boa.env.generate_address()
