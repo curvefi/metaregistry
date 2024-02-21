@@ -22,6 +22,9 @@ from scripts.utils.constants import (
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
 
+# TODO: Metaregistry and Base Pool Registry no longer have a dependency AddressProvider's admin.
+# Adjust the code accordingly:
+
 
 def main():
     """

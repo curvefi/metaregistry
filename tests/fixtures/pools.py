@@ -122,7 +122,7 @@ def twocrypto_ng_pool(
             2000000000000,
             146000000000000,
             866,
-            1777655918836068423,
+            1500 * 10**18,
         )
 
     return twocrypto_ng_amm_deployer.at(swap)
