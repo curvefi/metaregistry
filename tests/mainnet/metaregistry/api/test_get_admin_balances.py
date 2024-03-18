@@ -5,7 +5,7 @@ import pytest
 from boa import BoaError
 from eth.codecs.abi.exceptions import DecodeError as ABIDecodeError
 
-from scripts.deployment_utils import get_deployed_contract
+from scripts.utils import get_deployed_contract
 from tests.utils import assert_decode_error, assert_negative_coin_balance
 
 

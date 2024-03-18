@@ -40,12 +40,19 @@ event BasePoolRemoved:
     basepool: indexed(address)
 
 
-ADDRESS_PROVIDER: constant(address) = 0x0000000022D53366457F9d5E68Ec105046FC4383
+admin: public(address)
+future_admin: public(address)
+
 base_pool: HashMap[address, BasePool]
 base_pool_list: public(address[100])
 get_base_pool_for_lp_token: public(HashMap[address, address])
 base_pool_count: public(uint256)
 last_updated: public(uint256)
+
+
+@external
+def __init__():
+    self.admin = msg.sender
 
 
 @internal
@@ -225,7 +232,7 @@ def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_leg
     @param _is_lending True if the base pool is a Curve Lending pool
     @param _is_v2 True if the base pool is a Curve CryptoSwap pool
     """
-    assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
+    assert msg.sender == self.admin  # dev: admin-only function
     assert self.base_pool[_pool].lp_token == empty(address)  # dev: pool exists
 
     # add pool to base_pool_list
@@ -252,7 +259,7 @@ def remove_base_pool(_pool: address):
     @notice Remove a base pool from the registry
     @param _pool Address of the base pool
     """
-    assert msg.sender == AddressProvider(ADDRESS_PROVIDER).admin()  # dev: admin-only function
+    assert msg.sender == self.admin # dev: admin-only function
     assert _pool != empty(address)
     assert self.base_pool[_pool].lp_token != empty(address)  # dev: pool doesn't exist
 
@@ -284,3 +291,26 @@ def remove_base_pool(_pool: address):
 
     self.last_updated = block.timestamp
     log BasePoolRemoved(_pool)
+
+
+@external
+def commit_transfer_ownership(_addr: address):
+    """
+    @notice Transfer ownership of this contract to `addr`
+    @param _addr Address of the new owner
+    """
+    assert msg.sender == self.admin  # dev: admin only
+    self.future_admin = _addr
+
+
+@external
+def accept_transfer_ownership():
+    """
+    @notice Accept a pending ownership transfer
+    @dev Only callable by the new owner
+    """
+    _admin: address = self.future_admin
+    assert msg.sender == _admin  # dev: future admin only
+
+    self.admin = _admin
+    self.future_admin = empty(address)

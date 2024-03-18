@@ -2,8 +2,8 @@ import boa
 import pytest
 from eth_account.signers.local import LocalAccount
 
-from scripts.constants import ADDRESS_PROVIDER
 from scripts.deployment_utils import get_deployed_contract
+from scripts.utils.constants import ADDRESS_PROVIDER
 
 
 @pytest.fixture(scope="session")
@@ -35,3 +35,13 @@ def owner(accounts):
         "AddressProvider", ADDRESS_PROVIDER
     )
     return address_provider.admin()
+
+
+@pytest.fixture(scope="module")
+def ng_fee_receiver():
+    return boa.env.generate_address()
+
+
+@pytest.fixture(scope="module")
+def ng_owner():
+    return boa.env.generate_address()

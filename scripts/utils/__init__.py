@@ -5,9 +5,41 @@ import boa
 from boa.network import NetworkEnv
 from boa.vyper.contract import VyperContract
 from eth_account import Account
+from eth_utils import keccak
 from rich.console import Console as RichConsole
 
-from scripts.constants import BASE_DIR, FIDDY_DEPLOYER
+from scripts.utils.constants import BASE_DIR, FIDDY_DEPLOYER
+
+
+def get_create2_deployment_address(
+    compiled_bytecode,
+    abi_encoded_ctor,
+    salt,
+    create2deployer,
+    blueprint=False,
+    blueprint_preamble=b"\xFE\x71\x00",
+):
+    deployment_bytecode = compiled_bytecode + abi_encoded_ctor
+    if blueprint:
+        # Add blueprint preamble to disable calling the contract:
+        blueprint_bytecode = blueprint_preamble + deployment_bytecode
+        # Add code for blueprint deployment:
+        len_blueprint_bytecode = len(blueprint_bytecode).to_bytes(2, "big")
+        deployment_bytecode = (
+            b"\x61"
+            + len_blueprint_bytecode
+            + b"\x3d\x81\x60\x0a\x3d\x39\xf3"
+            + blueprint_bytecode
+        )
+
+    return (
+        create2deployer.computeAddress(salt, keccak(deployment_bytecode)),
+        deployment_bytecode,
+    )
+
+
+def deploy_via_create2_factory(deployment_bytecode, salt, create2deployer):
+    create2deployer.deploy(0, salt, deployment_bytecode)
 
 
 def setup_environment(console: RichConsole):

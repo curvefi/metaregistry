@@ -37,9 +37,9 @@ def crypto_factory() -> VyperContract:
 
 
 @pytest.fixture(scope="module")
-def base_pool_registry(alice_address):
+def base_pool_registry(owner):
     return deploy_contract(
-        "BasePoolRegistry", sender=alice_address, directory="registries"
+        "BasePoolRegistry", sender=owner, directory="registries"
     )
 
 
@@ -94,8 +94,8 @@ def address_provider(crypto_registry, owner):
 
 
 @pytest.fixture(scope="module")
-def metaregistry(address_provider, owner):
-    return deploy_contract("MetaRegistry", address_provider, sender=owner)
+def metaregistry(owner):
+    return deploy_contract("MetaRegistry", sender=owner)
 
 
 @pytest.fixture(scope="module")

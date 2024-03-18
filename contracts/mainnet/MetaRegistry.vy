@@ -1,4 +1,4 @@
-#pragma version ^0.3.7
+#pragma version 0.3.10
 """
 @title Curve Meta Registry
 @license MIT
@@ -57,8 +57,8 @@ ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
 
 # ---- storage variables ---- #
-address_provider: public(AddressProvider)
-owner: public(address)
+admin: public(address)
+future_admin: public(address)
 
 # get registry/registry_handler by index, index starts at 0:
 get_registry: public(HashMap[uint256, address])
@@ -67,9 +67,8 @@ registry_length: public(uint256)
 
 # ---- constructor ---- #
 @external
-def __init__(_address_provider: address):
-    self.address_provider = AddressProvider(_address_provider)
-    self.owner = AddressProvider(_address_provider).admin()
+def __init__():
+    self.admin = msg.sender
 
 
 # ---- internal methods ---- #
@@ -133,7 +132,7 @@ def add_registry_handler(_registry_handler: address):
     @notice Adds a registry from the address provider entry
     @param _registry_handler Address of the handler contract
     """
-    assert msg.sender == self.owner  # dev: only owner
+    assert msg.sender == self.admin  # dev: only admin
 
     self._update_single_registry(self.registry_length, _registry_handler)
 
@@ -145,7 +144,7 @@ def update_registry_handler(_index: uint256, _registry_handler: address):
     @param _index The index of the registry in get_registry
     @param _registry_handler Address of the new handler contract
     """
-    assert msg.sender == self.owner  # dev: only owner
+    assert msg.sender == self.admin  # dev: only admin
     assert _index < self.registry_length
 
     self._update_single_registry(_index, _registry_handler)
@@ -559,3 +558,26 @@ def pool_list(_index: uint256) -> address:
             return RegistryHandler(handler).pool_list(_index - pools_skip)
         pools_skip += count
     return empty(address)
+
+
+@external
+def commit_transfer_ownership(_addr: address):
+    """
+    @notice Transfer ownership of this contract to `addr`
+    @param _addr Address of the new owner
+    """
+    assert msg.sender == self.admin  # dev: admin only
+    self.future_admin = _addr
+
+
+@external
+def accept_transfer_ownership():
+    """
+    @notice Accept a pending ownership transfer
+    @dev Only callable by the new owner
+    """
+    _admin: address = self.future_admin
+    assert msg.sender == _admin  # dev: future admin only
+
+    self.admin = _admin
+    self.future_admin = empty(address)

@@ -1,6 +1,5 @@
 from boa import BoaError
-
-from scripts.constants import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
 
 
 def _is_dao_onboarded_gauge(_gauge, gauge_controller, liquidity_gauge):

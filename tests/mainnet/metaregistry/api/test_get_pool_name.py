@@ -1,4 +1,5 @@
-from scripts.constants import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
+
 from scripts.deployment_utils import get_deployed_contract
 
 
