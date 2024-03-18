@@ -9,4 +9,5 @@ venv/
 bvenv/
 .env
 .hypothesis/
-*.gz
+.gz
+.json.gz
