@@ -6,14 +6,13 @@
 @notice An entrypoint contract for Curve's various registries
 """
 
-event NewAddressIdentifier:
+event NewEntry:
     id: indexed(uint256)
     addr: address
     description: String[64]
 
-event AddressModified:
+event EntryModified:
     id: indexed(uint256)
-    new_address: address
     version: uint256
 
 event CommitNewAdmin:
@@ -26,21 +25,23 @@ event NewAdmin:
 
 struct AddressInfo:
     addr: address
-    type: String[64]
     description: String[256]
+    tags: DynArray[String[64], 20]
     version: uint256
-    is_active: bool
     last_modified: uint256
 
 
-registry: address
 admin: public(address)
 transfer_ownership_deadline: public(uint256)
 future_admin: public(address)
 
-queue_length: uint256
+num_entries: public(uint256)
+check_tag_exists: public(HashMap[String[64], bool])
+check_id_exists: public(HashMap[uint256, bool])
+ids: public(DynArray[uint256, 1000])
+tags: public(DynArray[String[64], 1000])
+id_tag_mapping: HashMap[bytes32, bool]
 get_id_info: public(HashMap[uint256, AddressInfo])
-get_ids_for_type: public(HashMap[String[64], DynArray[uint256, 1000]])
 
 
 @external
@@ -48,17 +49,7 @@ def __init__(_admin: address):
     self.admin = _admin
 
 
-# -------------------------- State-Mutable Methods ---------------------------
-
-
-@view
-@external
-def max_id() -> uint256:
-    """
-    @notice Get the highest ID set within the address provider
-    @return uint256 max ID
-    """
-    return self.queue_length - 1
+# ------------------------------ View Methods --------------------------------
 
 
 @view
@@ -66,84 +57,155 @@ def max_id() -> uint256:
 def get_address(_id: uint256) -> address:
     """
     @notice Fetch the address associated with `_id`
-    @dev Returns ZERO_ADDRESS if `_id` has not been defined, or has been unset
+    @dev Returns empty(address) if `_id` has not been defined, or has been unset
     @param _id Identifier to fetch an address for
     @return Current address associated to `_id`
     """
     return self.get_id_info[_id].addr
 
 
+@view
+@external
+def get_addresses_for_tags(_tag: String[64]) -> DynArray[address, 100]:
+    """
+    @notice Fetch all addresses that are tagged with `_tag`
+    @param _tag tag to fetch an address for
+    @return Array of addresses tagged with `_tag`
+    """
+
+    tagged_ids: DynArray[address, 100] = []
+    for _id in self.ids:
+        if self.id_tag_mapping[keccak256(concat(uint2str(_id), _tag))]:
+            tagged_ids.append(self.get_id_info[_id].addr)
+
+    return tagged_ids
+
+
 # -------------------------- State-Mutable Methods ---------------------------
 
 
 @external
-def add_new_type(_new_type: String[64]):
-    self.types
+def add_new_tags(_new_tags: DynArray[String[64], 20]):
+    """
+    @notice Add new tag
+    @dev method allows a max number of entry of 20
+    @param _new_tags An array of types to add to the registry
+           e.g. ['StableSwap', 'CryptoSwap', ...] 
+    """
+    for _new_tag in _new_tags:
+        if not self.check_tag_exists[_new_tag]:
+            self.check_tag_exists[_new_tag] = True
+            self.tags.append(_new_tag)
+
+
+@internal
+def _update_entry_metadata(_id: uint256):
+
+    version: uint256 = self.get_id_info[_id].version + 1
+    self.get_id_info[_id].version = version
+    self.get_id_info[_id].last_modified = block.timestamp
+
+    log EntryModified(_id, version)
 
 
 @external
 def add_new_id(
     _address: address, 
-    _type: String[64],
     _id: uint256,
-    _description: String[64]
-) -> uint256:
+    _tags: DynArray[String[64], 20],
+    _description: String[64],
+):
     """
-    @notice Add a new identifier to the registry
-    @param _address Initial address to assign to new identifier
-    @param _type keccak hash of the type of entry. For e.g. keccak(b'StableSwap')
-    @param _id ID to assign the address to
+    @notice Enter a new registry item
+    @param _address Address assigned to the _id
+    @param _id Address assigned to the input _id
+    @param _tags tags defining the entry. e.g. ['StableSwap', 'Factory']
+                 Entry can have a maximum of 20 tags. Tags need to be
+                 added to the AddressProvider via `add_new_tags` before id can be added.
     @param _description Human-readable description of the identifier
-    @return uint256 identifier
     """
     assert msg.sender == self.admin  # dev: admin-only function
-    assert self.get_id_info[_id].addr == empty(address)  # dev: id occupied
+    assert not self.check_id_exists[_id]  # dev: id exists
+    assert len(_tags) > 0  # dev: entry needs at least one tag
 
-    id: uint256 = self.queue_length
-    self.get_id_info[id] = AddressInfo({
-        addr: _address,
-        type: String[64],
-        description: _description,
-        version: 1,
-        is_active: True,
-        last_modified: block.timestamp,
-    })
-    self.queue_length = id + 1
+    self.check_id_exists[_id] = True
+    self.ids.append(_id)
 
-    log NewAddressIdentifier(id, _address, _description)
+    # Check if tags are correct and add them to tag > id mapping:
+    for _tag in _tags:
+        assert self.check_tag_exists[_tag]  # dev: unrecognised tag
+        self.id_tag_mapping[
+            keccak256(concat(uint2str(_id), _tag))
+        ] = True
 
-    return id
+    # Add entry:
+    self.get_id_info[_id] = AddressInfo(
+        {
+            addr: _address,
+            description: _description,
+            tags: _tags,
+            version: 1,
+            last_modified: block.timestamp,
+        }
+    )
+    self.num_entries += 1
+
+    log NewEntry(_id, _address, _description)
 
 
 @external
-def set_address(_id: uint256, _address: address) -> bool:
+def update_address(_id: uint256, _address: address):
     """
     @notice Set a new address for an existing identifier
     @param _id Identifier to set the new address for
     @param _address Address to set
-    @return bool success
     """
     assert msg.sender == self.admin  # dev: admin-only function
-    assert _address.is_contract  # dev: not a contract
-    assert self.queue_length > _id  # dev: id does not exist
 
-    version: uint256 = self.get_id_info[_id].version + 1
-
+    # Update address:
     self.get_id_info[_id].addr = _address
-    self.get_id_info[_id].is_active = True
-    self.get_id_info[_id].version = version
-    self.get_id_info[_id].last_modified = block.timestamp
 
-    if _id == 0:
-        self.registry = _address
-
-    log AddressModified(_id, _address, version)
-
-    return True
+    # Update metadata (version, update time):
+    self._update_entry_metadata(_id)
 
 
 @external
-def unset_address(_id: uint256) -> bool:
+def update_description(_id: uint256, _description: String[256]):
+    """
+    @notice Update description for an existing _id
+    @param _id Identifier to set the new description for
+    @param _description New description to set
+    """
+    assert msg.sender == self.admin  # dev: admin-only function
+    assert self.get_id_info[_id].addr != empty(address)  # dev: id is empty
+
+    # Update description:
+    self.get_id_info[_id].description = _description
+
+    # Update metadata (version, update time):
+    self._update_entry_metadata(_id)
+
+
+@external
+def update_tags(_id: uint256, _tags: DynArray[String[64], 20]):
+    """
+    @notice Update tags for an existing _id
+    @param _id Identifier to set the new description for
+    @param _tags New tags to set to
+    """
+    assert msg.sender == self.admin  # dev: admin-only function
+    assert self.get_id_info[_id].addr != empty(address)  # dev: id is empty
+
+    # Update tags:
+    self.get_id_info[_id].tags = _tags
+
+    # Update metadata (version, update time):
+    self._update_entry_metadata(_id)
+
+
+
+@external
+def remove_id(_id: uint256) -> bool:
     """
     @notice Unset an existing identifier
     @dev An identifier cannot ever be removed, it can only have the
@@ -152,17 +214,20 @@ def unset_address(_id: uint256) -> bool:
     @return bool success
     """
     assert msg.sender == self.admin  # dev: admin-only function
-    assert self.get_id_info[_id].is_active  # dev: not active
+    assert self.get_id_info[_id].addr != empty(address)  # dev: inactive id
 
-    self.get_id_info[_id].is_active = False
     self.get_id_info[_id].addr = empty(address)
     self.get_id_info[_id].last_modified = block.timestamp
-    self.get_id_info[_id].description = empty(String[64])
+    self.get_id_info[_id].description = ''
+    self.get_id_info[_id].tags = []
+    self.get_id_info[_id].version = 0
 
-    if _id == 0:
-        self.registry = empty(address)
+    self.num_entries -= 1
 
-    log AddressModified(_id, empty(address), self.get_id_info[_id].version)
+    self.check_id_exists[_id] = False
+
+    # Emit 0 in version to notify removal of id:
+    log EntryModified(_id, 0)
 
     return True
 
