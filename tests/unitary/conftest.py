@@ -10,12 +10,6 @@ pytest_plugins = [
     "tests.fixtures.functions",
 ]
 
-
-@pytest.fixture(scope="module")
-def metaregistry(ng_owner):
-    return deploy_contract("MetaRegistry", sender=ng_owner)
-
-
 @pytest.fixture(scope="module")
 def base_pool_registry(ng_owner):
     return deploy_contract(
@@ -39,70 +33,58 @@ def populated_base_pool_registry(base_pool_registry, ng_owner, base_pools):
 
 
 @pytest.fixture(scope="module")
-def stable_factory_handler(
-    populated_base_pool_registry, stableswap_ng_factory, owner
+def stable_ng_factory_handler(
+    populated_base_pool_registry, stableswap_ng_factory, ng_owner
 ):
-    return deploy_contract(
-        "StableFactoryHandler",
+    with boa.env.prank(ng_owner):
+        return boa.load(
+        "contracts/mainnet/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
         stableswap_ng_factory.address,
         populated_base_pool_registry.address,
-        sender=owner,
-        directory="registry_handlers",
     )
 
 
 @pytest.fixture(scope="module")
-def crypto_registry_handler(owner, crypto_registry):
-    return deploy_contract(
-        "CryptoRegistryHandler",
-        crypto_registry.address,
-        sender=owner,
-        directory="registry_handlers",
+def twocrypto_ng_factory_handler(twocrypto_ng_factory, ng_owner):
+    with boa.env.prank(ng_owner):
+        return boa.load(
+        "contracts/mainnet/registry_handlers/ng/CurveTwocryptoFactoryHandler.vy",
+        twocrypto_ng_factory.address,
     )
 
-
+        
 @pytest.fixture(scope="module")
-def crypto_factory_handler(
-    populated_base_pool_registry, crypto_factory, owner
-):
-    return deploy_contract(
-        "CryptoFactoryHandler",
-        crypto_factory.address,
-        populated_base_pool_registry.address,
-        sender=owner,
-        directory="registry_handlers",
+def tricrypto_ng_factory_handler(tricrypto_ng_factory, ng_owner):
+    with boa.env.prank(ng_owner):
+        return boa.load(
+        "contracts/mainnet/registry_handlers/ng/CurveTricryptoFactoryHandler.vy",
+        tricrypto_ng_factory.address,
     )
-
-
-@pytest.fixture(scope="module")
-def registries(
-    stable_registry, stable_factory, crypto_registry, crypto_factory
-):
-    return [stable_registry, stable_factory, crypto_registry, crypto_factory]
 
 
 @pytest.fixture(scope="module")
 def handlers(
-    stable_registry_handler,
-    stable_factory_handler,
-    crypto_registry_handler,
-    crypto_factory_handler,
+    stable_ng_factory_handler, twocrypto_ng_factory_handler, tricrypto_ng_factory_handler
 ):
     return [
-        stable_registry_handler,
-        stable_factory_handler,
-        crypto_registry_handler,
-        crypto_factory_handler,
+        stable_ng_factory_handler, 
+        twocrypto_ng_factory_handler, 
+        tricrypto_ng_factory_handler
     ]
 
 
 @pytest.fixture(scope="module")
-def populated_metaregistry(metaregistry, handlers, owner):
+def registries(handlers):
+    registries = []
     for handler in handlers:
-        metaregistry.add_registry_handler(handler.address, sender=owner)
-    return metaregistry
+        registries.append(handler.base_registry())
+    return registries
 
 
 @pytest.fixture(scope="module")
-def stable_registry_handler_index():
-    return 0
+def metaregistry(handlers, ng_owner):
+    
+    metaregistry_contract = deploy_contract("MetaRegistry", sender=ng_owner)
+    for handler in handlers:
+        metaregistry_contract.add_registry_handler(handler.address, sender=ng_owner)
+    return metaregistry_contract
