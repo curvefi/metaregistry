@@ -38,8 +38,8 @@ future_admin: public(address)
 num_entries: public(uint256)
 check_tag_exists: public(HashMap[String[64], bool])
 check_id_exists: public(HashMap[uint256, bool])
-ids: public(DynArray[uint256, 1000])
-tags: public(DynArray[String[64], 1000])
+_ids: DynArray[uint256, 1000]
+_tags: DynArray[String[64], 1000]
 id_tag_mapping: HashMap[bytes32, bool]
 get_id_info: public(HashMap[uint256, AddressInfo])
 
@@ -50,6 +50,36 @@ def __init__(_admin: address):
 
 
 # ------------------------------ View Methods --------------------------------
+
+
+@view
+@external
+def tags() -> DynArray[String[64], 1000]:
+    """
+    @notice Returns active tags registered in the AddressProvider.
+    @returns An array of tags.
+    """
+    _tags: DynArray[String[64], 1000] = []
+    for _tag in self._tags:
+        if self.check_tag_exists[_tag]:
+            _tags.append(_tag)
+
+    return _tags
+
+
+@view
+@external
+def ids() -> DynArray[uint256, 1000]:
+    """
+    @notice returns IDs of active registry items in the AddressProvider.
+    @returns An array of IDs.
+    """
+    _ids: DynArray[uint256, 1000] = []
+    for _id in self._ids:
+        if self.check_id_exists[_id]:
+            _ids.append(_id)
+
+    return _ids
 
 
 @view
@@ -74,7 +104,7 @@ def get_addresses_for_tags(_tag: String[64]) -> DynArray[address, 100]:
     """
 
     tagged_ids: DynArray[address, 100] = []
-    for _id in self.ids:
+    for _id in self._ids:
         if self.id_tag_mapping[keccak256(concat(uint2str(_id), _tag))]:
             tagged_ids.append(self.get_id_info[_id].addr)
 
@@ -95,7 +125,7 @@ def add_new_tags(_new_tags: DynArray[String[64], 20]):
     for _new_tag in _new_tags:
         if not self.check_tag_exists[_new_tag]:
             self.check_tag_exists[_new_tag] = True
-            self.tags.append(_new_tag)
+            self._tags.append(_new_tag)
 
 
 @internal
@@ -129,7 +159,7 @@ def add_new_id(
     assert len(_tags) > 0  # dev: entry needs at least one tag
 
     self.check_id_exists[_id] = True
-    self.ids.append(_id)
+    self._ids.append(_id)
 
     # Check if tags are correct and add them to tag > id mapping:
     for _tag in _tags:
@@ -187,21 +217,34 @@ def update_description(_id: uint256, _description: String[256]):
 
 
 @external
-def update_tags(_id: uint256, _tags: DynArray[String[64], 20]):
+def update_tags(_id: uint256, _new_tags: DynArray[String[64], 20]):
     """
     @notice Update tags for an existing _id
     @param _id Identifier to set the new description for
-    @param _tags New tags to set to
+    @param _new_tags New tags to set to
     """
     assert msg.sender == self.admin  # dev: admin-only function
     assert self.get_id_info[_id].addr != empty(address)  # dev: id is empty
 
+    # Add mapping if new tag is added:
+    _old_tags: DynArray[String[64], 20] = self.get_id_info[_id].tags
+    for _tag in _new_tags:
+        assert self.check_tag_exists[_tag]  # dev: unauthorised tag
+        key: bytes32 = keccak256(concat(uint2str(_id), _tag))
+        if not self.id_tag_mapping[key]:
+            self.id_tag_mapping[key] = True
+
+    # Remove mapping if tag was removed:
+    for _tag in _old_tags:
+        key: bytes32 = keccak256(concat(uint2str(_id), _tag))
+        if self.id_tag_mapping[key]:
+            self.id_tag_mapping[key] = False
+
     # Update tags:
-    self.get_id_info[_id].tags = _tags
+    self.get_id_info[_id].tags = _new_tags
 
     # Update metadata (version, update time):
     self._update_entry_metadata(_id)
-
 
 
 @external
@@ -263,7 +306,7 @@ def apply_transfer_ownership() -> bool:
          call to `commit_transfer_ownership`
     @return bool success
     """
-    assert msg.sender == self.admin  # dev: admin-only function
+    assert msg.sender in [self.admin, self.future_admin]  # dev: admin-only function
     assert self.transfer_ownership_deadline != 0  # dev: transfer not active
     assert block.timestamp >= self.transfer_ownership_deadline  # dev: now < deadline
 
@@ -288,3 +331,8 @@ def revert_transfer_ownership() -> bool:
     self.transfer_ownership_deadline = 0
 
     return True
+
+
+# TODO: Add remove_tags
+# TODO: Add update_id that consolidates all updates into a single method.
+# TODO: When removing an id, update id_tag_mapping
