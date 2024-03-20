@@ -301,6 +301,19 @@ def remove_tags(_tags_to_remove: DynArray[String[64], 20]):
             for _id in self._ids:
                 self.id_tag_mapping[keccak256(concat(uint2str(_id), _tag))] = False
 
+    # Update tags per id:
+    for _id in self._ids:
+        _id_tags: DynArray[String[64], 20] = self.get_id_info[_id].tags
+        _new_tags: DynArray[String[64], 20] = []
+
+        for _id_tag in _id_tags:
+            if self.check_tag_exists[_id_tag]:
+                _new_tags.append(_id_tag)
+        
+        self.get_id_info[_id].tags = _new_tags
+        self._update_entry_metadata(_id)
+
+
 # ------------------------------ Admin Methods -------------------------------
 
 
