@@ -16,7 +16,6 @@ event EntryModified:
     version: uint256
 
 event CommitNewAdmin:
-    deadline: indexed(uint256)
     admin: indexed(address)
 
 event NewAdmin:
@@ -32,7 +31,6 @@ struct AddressInfo:
 
 
 admin: public(address)
-transfer_ownership_deadline: public(uint256)
 future_admin: public(address)
 
 num_entries: public(uint256)
@@ -237,8 +235,7 @@ def update_tags(_id: uint256, _new_tags: DynArray[String[64], 20]):
     # Remove mapping if tag was removed:
     for _tag in _old_tags:
         key: bytes32 = keccak256(concat(uint2str(_id), _tag))
-        if self.id_tag_mapping[key]:
-            self.id_tag_mapping[key] = False
+        self.id_tag_mapping[key] = False
 
     # Update tags:
     self.get_id_info[_id].tags = _new_tags
@@ -259,15 +256,23 @@ def remove_id(_id: uint256) -> bool:
     assert msg.sender == self.admin  # dev: admin-only function
     assert self.get_id_info[_id].addr != empty(address)  # dev: inactive id
 
+    # Remove id > Tag mapping:
+    _tags: DynArray[String[64], 20] = self.get_id_info[_id].tags
+    for _tag in _tags:
+        key: bytes32 = keccak256(concat(uint2str(_id), _tag))
+        self.id_tag_mapping[key] = False
+
+    # Clear ID:
     self.get_id_info[_id].addr = empty(address)
     self.get_id_info[_id].last_modified = block.timestamp
     self.get_id_info[_id].description = ''
     self.get_id_info[_id].tags = []
     self.get_id_info[_id].version = 0
 
-    self.num_entries -= 1
-
     self.check_id_exists[_id] = False
+
+    # Reduce num entries:
+    self.num_entries -= 1
 
     # Emit 0 in version to notify removal of id:
     log EntryModified(_id, 0)
@@ -287,13 +292,9 @@ def commit_transfer_ownership(_new_admin: address) -> bool:
     @return bool success
     """
     assert msg.sender == self.admin  # dev: admin-only function
-    assert self.transfer_ownership_deadline == 0  # dev: transfer already active
-
-    deadline: uint256 = block.timestamp + 3*86400
-    self.transfer_ownership_deadline = deadline
     self.future_admin = _new_admin
 
-    log CommitNewAdmin(deadline, _new_admin)
+    log CommitNewAdmin(_new_admin)
 
     return True
 
@@ -302,17 +303,13 @@ def commit_transfer_ownership(_new_admin: address) -> bool:
 def apply_transfer_ownership() -> bool:
     """
     @notice Finalize a transfer of contract ownership
-    @dev May only be called by the current owner, three days after a
-         call to `commit_transfer_ownership`
+    @dev May only be called by the next owner
     @return bool success
     """
-    assert msg.sender in [self.admin, self.future_admin]  # dev: admin-only function
-    assert self.transfer_ownership_deadline != 0  # dev: transfer not active
-    assert block.timestamp >= self.transfer_ownership_deadline  # dev: now < deadline
+    assert msg.sender == self.future_admin  # dev: admin-only function
 
     new_admin: address = self.future_admin
     self.admin = new_admin
-    self.transfer_ownership_deadline = 0
 
     log NewAdmin(new_admin)
 
@@ -327,12 +324,10 @@ def revert_transfer_ownership() -> bool:
     @return bool success
     """
     assert msg.sender == self.admin  # dev: admin-only function
-
-    self.transfer_ownership_deadline = 0
+    self.future_admin = empty(address)
 
     return True
 
 
 # TODO: Add remove_tags
 # TODO: Add update_id that consolidates all updates into a single method.
-# TODO: When removing an id, update id_tag_mapping
