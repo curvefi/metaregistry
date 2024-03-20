@@ -8,3 +8,6 @@ __pycache__/
 venv/
 bvenv/
 .env
+.hypothesis/
+.gz
+.json.gz
