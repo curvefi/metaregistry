@@ -112,20 +112,6 @@ def get_addresses_for_tags(_tag: String[64]) -> DynArray[address, 100]:
 # -------------------------- State-Mutable Methods ---------------------------
 
 
-@external
-def add_new_tags(_new_tags: DynArray[String[64], 20]):
-    """
-    @notice Add new tag
-    @dev method allows a max number of entry of 20
-    @param _new_tags An array of types to add to the registry
-           e.g. ['StableSwap', 'CryptoSwap', ...] 
-    """
-    for _new_tag in _new_tags:
-        if not self.check_tag_exists[_new_tag]:
-            self.check_tag_exists[_new_tag] = True
-            self._tags.append(_new_tag)
-
-
 @internal
 def _update_entry_metadata(_id: uint256):
 
@@ -134,6 +120,20 @@ def _update_entry_metadata(_id: uint256):
     self.get_id_info[_id].last_modified = block.timestamp
 
     log EntryModified(_id, version)
+
+
+@external
+def add_new_tags(_new_tags: DynArray[String[64], 20]):
+    """
+    @notice Add new tags
+    @dev method allows a max number of entry of 20
+    @param _new_tags An array of types to add to the registry
+           e.g. ['StableSwap', 'CryptoSwap', ...] 
+    """
+    for _new_tag in _new_tags:
+        if not self.check_tag_exists[_new_tag]:
+            self.check_tag_exists[_new_tag] = True
+            self._tags.append(_new_tag)
 
 
 @external
@@ -280,6 +280,27 @@ def remove_id(_id: uint256) -> bool:
     return True
 
 
+@external
+def remove_tags(_tags_to_remove: DynArray[String[64], 20]):
+    """
+    @notice Remove tags and clear id > tag mappings.
+    @dev method allows a max number of entry of 20
+    @param _tags_to_remove An array of types to removed from the registry
+           e.g. ['StableSwap', 'CryptoSwap', ...] 
+    """
+
+    for _tag in _tags_to_remove:
+        
+        # Check if tag is valid
+        if self.check_tag_exists[_tag]:
+            
+            # Remove Tag
+            self.check_tag_exists[_tag] = False
+            
+            # Clear id > tag mapping:
+            for _id in self._ids:
+                self.id_tag_mapping[keccak256(concat(uint2str(_id), _tag))] = False
+
 # ------------------------------ Admin Methods -------------------------------
 
 
@@ -329,5 +350,5 @@ def revert_transfer_ownership() -> bool:
     return True
 
 
-# TODO: Add remove_tags
 # TODO: Add update_id that consolidates all updates into a single method.
+# TODO: Separate tags away from AddressInfo
