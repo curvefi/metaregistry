@@ -138,15 +138,15 @@ def add_new_tags(_new_tags: DynArray[String[64], 20]):
 
 @external
 def add_new_id(
-    _address: address, 
     _id: uint256,
+    _address: address, 
     _tags: DynArray[String[64], 20],
     _description: String[64],
 ):
     """
     @notice Enter a new registry item
-    @param _address Address assigned to the _id
     @param _id Address assigned to the input _id
+    @param _address Address assigned to the _id
     @param _tags tags defining the entry. e.g. ['StableSwap', 'Factory']
                  Entry can have a maximum of 20 tags. Tags need to be
                  added to the AddressProvider via `add_new_tags` before id can be added.
@@ -179,6 +179,50 @@ def add_new_id(
     self.num_entries += 1
 
     log NewEntry(_id, _address, _description)
+
+
+@external
+def update_id(
+    _id: uint256,
+    _new_address: address, 
+    _new_tags: DynArray[String[64], 20],
+    _new_description: String[64],
+):
+    """
+    @notice Update entries at an ID
+    @param _id Address assigned to the input _id
+    @param _new_address Address assigned to the _id
+    @param _new_tags tags defining the entry. e.g. ['StableSwap', 'Factory']
+                 Entry can have a maximum of 20 tags. Tags need to be
+                 added to the AddressProvider via `add_new_tags` before id can be added.
+    @param _new_description Human-readable description of the identifier
+    """
+    assert msg.sender == self.admin  # dev: admin-only function
+    assert self.check_id_exists[_id]  # dev: id does not exist
+    assert len(_new_tags) > 0  # dev: entry needs at least one tag
+
+    # Update entry at _id:
+    self.get_id_info[_id].addr = _new_address
+    self.get_id_info[_id].description = _new_description
+
+    # Update id > tag mapping
+    _old_tags: DynArray[String[64], 20] = self.get_id_info[_id].tags
+    for _tag in _new_tags:
+        assert self.check_tag_exists[_tag]  # dev: unauthorised tag
+        key: bytes32 = keccak256(concat(uint2str(_id), _tag))
+        if not self.id_tag_mapping[key]:
+            self.id_tag_mapping[key] = True
+
+    # Remove mapping if tag was removed:
+    for _tag in _old_tags:
+        key: bytes32 = keccak256(concat(uint2str(_id), _tag))
+        self.id_tag_mapping[key] = False
+
+    # Update tags:
+    self.get_id_info[_id].tags = _new_tags
+
+    # Update metadata (version, update time):
+    self._update_entry_metadata(_id)
 
 
 @external
@@ -289,6 +333,7 @@ def remove_tags(_tags_to_remove: DynArray[String[64], 20]):
            e.g. ['StableSwap', 'CryptoSwap', ...] 
     """
 
+    # Remove tags from mapping and invalidate each tag:
     for _tag in _tags_to_remove:
         
         # Check if tag is valid
@@ -363,5 +408,4 @@ def revert_transfer_ownership() -> bool:
     return True
 
 
-# TODO: Add update_id that consolidates all updates into a single method.
 # TODO: Separate tags away from AddressInfo
