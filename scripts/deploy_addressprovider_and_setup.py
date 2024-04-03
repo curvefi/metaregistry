@@ -1,18 +1,3 @@
-"""
-Sets up the metaregistry.
-
-Usage for fork mode:
-    scripts/setup_metaregistry.py
-    requires the RPC_ETHEREUM environment variable to be set
-Usage for prod mode:
-    scripts/setup_metaregistry.py --prod
-    requires the URL and ACCOUNT environment variables to be set
-"""
-import sys
-
-import boa
-from rich.console import Console as RichConsole
-
 # This is the layout as of deploying the new addressprovider.
 # The key is _id, the value is _description
 ADDRESS_PROVIDER_MAPPING = {
@@ -56,7 +41,7 @@ addresses = {
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",  # Twocrypto NG
         14: "0xCA8d0747B5573D69653C3aC22242e6341C36e4b4",
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
-        16: "0xc9332fdcb1c491dcc683bae86fe3cb70360738bc",  # call controllerFactory.amm(id) to get AMM address
+        16: "0xc9332fdcb1c491dcc683bae86fe3cb70360738bc",  # call controllerFactory.amm(id)
         17: "0xeA6876DDE9e3467564acBeE1Ed5bac88783205E0",  # same as (16)
     },
     "arbitrum": {
@@ -120,27 +105,11 @@ addresses = {
         14: "0xCA8d0747B5573D69653C3aC22242e6341C36e4b4",
         15: "0x69522fb5337663d3B4dFB0030b881c1A750Adb4f",
     },
-    "linea": {
-        11: "0xd125E7a0cEddF89c6473412d85835450897be6Dc",
-        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
-        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
-    },
-    "mantle": {
-        11: "0x0C9D8c7e486e822C29488Ff51BFf0167B4650953",
-        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
-        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
-    },
-    "scroll": {
-        11: "0xC1b393EfEF38140662b91441C6710Aa704973228",
-        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
-        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
-    },
-    "pzkevm": {
-        11: "0x76303e4fDcA0AbF28aB3ee42Ce086E6503431F1D",
-        12: "0xd2002373543Ce3527023C75e7518C274A51ce712",
-        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
-    },
     "bsc": {
+        2: "0x69522fb5337663d3B4dFB0030b881c1A750Adb4f",
+        3: "0xEfDE221f306152971D8e9f181bFe998447975810",
+        4: "0x98B4029CaBEf7Fd525A36B0BF8555EC1d42ec0B6",
+        6: "0xBd5fBd2FA58cB15228a9Abdac9ec994f79E3483C",
         11: "0x38f8D93406fA2d9924DcFcB67dB5B0521Fb20F7D",
         12: "0xd7E72f3615aa65b92A4DBdC211E296a35512988B",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
@@ -148,6 +117,12 @@ addresses = {
         15: "0xd6681e74eEA20d196c15038C580f721EF2aB6320",
     },
     "gnosis": {
+        0: "0x55e91365697eb8032f98290601847296ec847210",
+        1: "0xf1755aadb82dc7a45ab4e754f67412dc75576dc7",
+        2: "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D",
+        3: "0xd19baeadc667cf2015e395f2b08668ef120f41f5",
+        4: "0xB055EbbAcc8Eefc166c169e9Ce2886D0406aB49b",
+        5: "0x8a4694401be8f8fccbc542a3219af1591f87ce17",
         11: "0xb47988ad49dce8d909c6f9cf7b26caf04e1445c8",
         12: "0xbC0797015fcFc47d9C1856639CaE50D0e69FbEE8",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
@@ -155,6 +130,12 @@ addresses = {
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
     },
     "fantom": {
+        0: "0x0f854EA9F38ceA4B1c2FC79047E9D0134419D5d6",
+        1: "0x8cC6e2144906e81F496429A1590Ef5f86bb7558f",
+        2: "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D",
+        3: "0x686d67265703d1f124c45e33d47d794c566889ba",
+        4: "0x2B039565B2b7a1A9192D4847fbd33B25b836B950",
+        5: "0x4fb93D7d320E8A263F22f62C2059dFC2A8bCbC4c",
         11: "0x9AF14D26075f142eb3F292D5065EB3faa646167b",
         12: "0xe61Fb97Ef6eBFBa12B36Ffd7be785c1F5A2DE66b",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
@@ -162,6 +143,11 @@ addresses = {
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
     },
     "avax": {
+        0: "0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6",
+        1: "0xADf698e4d8Df08b3E2c79682891636eF00F6e205",
+        2: "0xBff334F8D5912AC5c4f2c590A2396d1C5d990123",
+        3: "0xb17b674D9c5CB2e441F8e196a2f048A81355d031",
+        4: "0x06534b0BF7Ff378F162d4F348390BDA53b15fA35",
         11: "0x3d6cB2F6DcF47CDd9C13E4e3beAe9af041d8796a",
         12: "0x1764ee18e8B3ccA4787249Ceb249356192594585",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
@@ -169,6 +155,10 @@ addresses = {
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
     },
     "aurora": {
+        0: "0x5b5cfe992adac0c9d48e05854b2d91c73a003858",
+        1: "0x0f9cb53ebe405d49a0bbdbd291a65ff571bc83e1",
+        2: "0x6600e98b71dabfd4a8cac03b302b0189adb86afb",
+        4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
         11: "0x3d6cB2F6DcF47CDd9C13E4e3beAe9af041d8796a",
         12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
@@ -176,6 +166,8 @@ addresses = {
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
     },
     "celo": {
+        3: "0x5277A0226d10392295E8D383E9724D6E416d6e6C",
+        4: "0x56bc95Ded2BEF162131905dfd600F2b9F1B380a4",
         11: "0x3d6cB2F6DcF47CDd9C13E4e3beAe9af041d8796a",
         12: "0x1764ee18e8B3ccA4787249Ceb249356192594585",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
@@ -183,10 +175,40 @@ addresses = {
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
     },
     "kava": {
+        0: "0xc1C49622b63B961ce1D352ecb7D8261Ab5556695",
+        1: "0x4244eB811D6e0Ef302326675207A95113dB4E1F8",
+        2: "0xF0d4c12A5768D806021F80a262B4d39d26C58b8D",
+        3: "0x40bc62805471eF53DdD5C5cF99ed3d9e5aa81b48",
+        4: "0x1f0e8445Ebe0D0F60A96A7cd5BB095533cb15B58",
         11: "0x3d6cB2F6DcF47CDd9C13E4e3beAe9af041d8796a",
         12: "0x1764ee18e8B3ccA4787249Ceb249356192594585",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
         14: "0xCA8d0747B5573D69653C3aC22242e6341C36e4b4",
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
+    },
+    # No UI:
+    "linea": {
+        4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
+        11: "0xd125E7a0cEddF89c6473412d85835450897be6Dc",
+        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
+        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
+    },
+    "mantle": {
+        4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
+        11: "0x0C9D8c7e486e822C29488Ff51BFf0167B4650953",
+        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
+        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
+    },
+    "scroll": {
+        4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
+        11: "0xC1b393EfEF38140662b91441C6710Aa704973228",
+        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
+        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
+    },
+    "pzkevm": {
+        4: "0x8b3EFBEfa6eD222077455d6f0DCdA3bF4f3F57A6",
+        11: "0x76303e4fDcA0AbF28aB3ee42Ce086E6503431F1D",
+        12: "0xd2002373543Ce3527023C75e7518C274A51ce712",
+        13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
     },
 }
