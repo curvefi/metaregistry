@@ -35,6 +35,7 @@ ADDRESS_PROVIDER_MAPPING = {
     16: "LLAMMA Factory crvUSD",
     17: "LLAMMA Factory OneWayLending",
     18: "Rate Provider",
+    # TODO: add DAO-related contracts, CRV token per chain, gauge factories, ...
 }
 
 # These are the addresses that will go into the addressprovider for each chain:
@@ -53,7 +54,7 @@ addresses = {
         11: "0x0c0e5f2fF0ff18a3be9b835635039256dC4B4963",  # Tricrypto NG
         12: "0x6A8cbed756804B16E05E741eDaBd5cB544AE21bf",  # Stableswap NG
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",  # Twocrypto NG
-        14: "0xCA8d0747B5573D69653C3aC22242e6341C36e4b4", 
+        14: "0xCA8d0747B5573D69653C3aC22242e6341C36e4b4",
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
         16: "0xc9332fdcb1c491dcc683bae86fe3cb70360738bc",  # call controllerFactory.amm(id) to get AMM address
         17: "0xeA6876DDE9e3467564acBeE1Ed5bac88783205E0",  # same as (16)

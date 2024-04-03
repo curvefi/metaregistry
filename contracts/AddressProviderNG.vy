@@ -92,7 +92,7 @@ def _update_entry_metadata(_id: uint256):
 @external
 def add_new_id(
     _id: uint256,
-    _address: address, 
+    _address: address,
     _description: String[64],
 ):
     """
@@ -124,7 +124,7 @@ def add_new_id(
 @external
 def update_id(
     _id: uint256,
-    _new_address: address, 
+    _new_address: address,
     _new_description: String[64],
 ):
     """
