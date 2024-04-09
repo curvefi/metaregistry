@@ -22,7 +22,7 @@
         12: StableswapNG Factory
         13: TwocryptoNG Factory
         14: Stableswap Calculations Contract
-        15: Cryptoswap calculations Contract
+        15: Cryptoswap Calculations Contract
         16: LLAMMA Factory crvUSD
         17: LLAMMA Factory OneWayLending
         18: Rate Provider
