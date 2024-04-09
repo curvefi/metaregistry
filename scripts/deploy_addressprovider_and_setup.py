@@ -1,8 +1,10 @@
-# Contract deployed at: https://etherscan.io/address/0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98
-# Contract not deployed at: Kava, Aurora, Mantle yet
+# flake8 no-qa E402
+# Contract deployed at: 0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98
+# Deployed at: Ethereum, Arbitrum, Optimism, Base, Bsc, Polygon,
+#              Fantom, Gnosis, Aurora, Celo, Mantle,
+#              Linea, Polygon zkEVM, Scroll, Fraxtal, Avalanche, Kava
 
 import os
-import sys
 
 import boa
 from boa.network import NetworkEnv
@@ -10,8 +12,8 @@ from eth_account import Account
 from eth_utils import keccak
 from rich.console import Console as RichConsole
 
-sys.path.append("./")
-
+# import sys
+# sys.path.append("./")
 from scripts.address_provider_constants import (
     ADDRESS_PROVIDER_MAPPING,
     addresses,
@@ -84,7 +86,7 @@ def main(network, fork):
 
 
 if __name__ == "__main__":
-    network = "ethereum"
+    network = "kava"
     fork = False
 
     main(network, fork)
