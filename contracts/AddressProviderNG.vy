@@ -1,10 +1,37 @@
-# @version 0.3.10
+# pragma version 0.3.10
+# pragma evm-version paris
 """
 @title CurveAddressProvider
 @author Curve.Fi
 @license Copyright (c) Curve.Fi, 2020-2023 - all rights reserved
 @notice An entrypoint contract for Curve's various registries
 @dev Allows adding arbitrary IDs instead of sequential IDs.
+     Mapping:
+        0: Stableswap Custom Pool Registry
+        1: PoolInfo Getters
+        2: Exchange Router
+        3: Stableswap Metapool Factory
+        4: Fee Distributor
+        5: Cryptoswap Custom Pool Registry
+        6: Twocrypto Factory
+        7: Metaregistry
+        8: Stableswap crvUSD Factory
+        9:
+        10:
+        11: TricryptoNG Factory
+        12: StableswapNG Factory
+        13: TwocryptoNG Factory
+        14: Stableswap Calculations Contract
+        15: Cryptoswap calculations Contract
+        16: LLAMMA Factory crvUSD
+        17: LLAMMA Factory OneWayLending
+        18: Rate Provider
+        19: CRV Token
+        20: Gauge Factory
+        21: Ownership Admin
+        22: Parameter Admin
+        23: Emergency Admin
+        24: CurveDAO Vault
 """
 
 event NewEntry:
@@ -43,8 +70,8 @@ get_id_info: public(HashMap[uint256, AddressInfo])
 
 
 @external
-def __init__(_admin: address):
-    self.admin = _admin
+def __init__():
+    self.admin  = tx.origin
 
 
 # ------------------------------ View Methods --------------------------------
@@ -89,19 +116,35 @@ def _update_entry_metadata(_id: uint256):
     log EntryModified(_id, version)
 
 
-@external
-def add_new_id(
+@internal
+def _remove_id(_id: uint256) -> bool:
+
+    assert self.check_id_exists[_id]  # dev: id does not exist
+
+    # Clear ID:
+    self.get_id_info[_id].addr = empty(address)
+    self.get_id_info[_id].last_modified = 0
+    self.get_id_info[_id].description = ''
+    self.get_id_info[_id].version = 0
+
+    self.check_id_exists[_id] = False
+
+    # Reduce num entries:
+    self.num_entries -= 1
+
+    # Emit 0 in version to notify removal of id:
+    log EntryRemoved(_id)
+
+    return True
+
+
+@internal
+def _add_new_id(
     _id: uint256,
     _address: address,
-    _description: String[64],
+    _description: String[64]
 ):
-    """
-    @notice Enter a new registry item
-    @param _id Address assigned to the input _id
-    @param _address Address assigned to the _id
-    @param _description Human-readable description of the identifier
-    """
-    assert msg.sender == self.admin  # dev: admin-only function
+
     assert not self.check_id_exists[_id]  # dev: id exists
 
     self.check_id_exists[_id] = True
@@ -119,6 +162,49 @@ def add_new_id(
     self.num_entries += 1
 
     log NewEntry(_id, _address, _description)
+
+
+@external
+def add_new_id(
+    _id: uint256,
+    _address: address,
+    _description: String[64],
+):
+    """
+    @notice Enter a new registry item
+    @param _id ID assigned to the address
+    @param _address Address assigned to the ID
+    @param _description Human-readable description of the ID
+    """
+    assert msg.sender == self.admin  # dev: admin-only function
+
+    self._add_new_id(_id, _address, _description)
+
+
+@external
+def add_new_ids(
+    _ids: DynArray[uint256, 25],
+    _addresses: DynArray[address, 25],
+    _descriptions: DynArray[String[64], 25],
+):
+    """
+    @notice Enter new registry items
+    @param _ids IDs assigned to addresses
+    @param _addresses Addresses assigned to corresponding IDs
+    @param _descriptions Human-readable description of each of the IDs
+    """
+    assert msg.sender == self.admin  # dev: admin-only function
+
+    # Check lengths
+    assert len(_ids) == len(_addresses)
+    assert len(_addresses) == len(_descriptions)
+
+    for i in range(len(_ids), bound=20):
+        self._add_new_id(
+            _ids[i],
+            _addresses[i],
+            _descriptions[i]
+        )
 
 
 @external
@@ -152,6 +238,7 @@ def update_address(_id: uint256, _address: address):
     @param _address Address to set
     """
     assert msg.sender == self.admin  # dev: admin-only function
+    assert self.check_id_exists[_id]  # dev: id does not exist
 
     # Update address:
     self.get_id_info[_id].addr = _address
@@ -168,7 +255,7 @@ def update_description(_id: uint256, _description: String[256]):
     @param _description New description to set
     """
     assert msg.sender == self.admin  # dev: admin-only function
-    assert self.get_id_info[_id].addr != empty(address)  # dev: id is empty
+    assert self.check_id_exists[_id]  # dev: id does not exist
 
     # Update description:
     self.get_id_info[_id].description = _description
@@ -181,27 +268,25 @@ def update_description(_id: uint256, _description: String[256]):
 def remove_id(_id: uint256) -> bool:
     """
     @notice Unset an existing identifier
-    @dev An identifier cannot ever be removed, it can only have the
-         address unset so that it returns empty(address)
     @param _id Identifier to unset
     @return bool success
     """
     assert msg.sender == self.admin  # dev: admin-only function
-    assert self.get_id_info[_id].addr != empty(address)  # dev: inactive id
 
-    # Clear ID:
-    self.get_id_info[_id].addr = empty(address)
-    self.get_id_info[_id].last_modified = 0
-    self.get_id_info[_id].description = ''
-    self.get_id_info[_id].version = 0
+    return self._remove_id(_id)
 
-    self.check_id_exists[_id] = False
 
-    # Reduce num entries:
-    self.num_entries -= 1
+@external
+def remove_ids(_ids: DynArray[uint256, 20]) -> bool:
+    """
+    @notice Unset existing identifiers
+    @param _id DynArray of identifier to unset
+    @return bool success
+    """
+    assert msg.sender == self.admin  # dev: admin-only function
 
-    # Emit 0 in version to notify removal of id:
-    log EntryRemoved(_id)
+    for _id in _ids:
+        assert self._remove_id(_id)
 
     return True
 
