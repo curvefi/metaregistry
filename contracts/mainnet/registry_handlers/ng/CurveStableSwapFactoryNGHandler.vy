@@ -83,12 +83,6 @@ def __init__(_registry_address: address, _base_pool_registry: address):
 # ---- internal methods ---- #
 @internal
 @view
-def _is_meta(_pool: address) -> bool:
-    return self.base_registry.is_meta(_pool)
-
-
-@internal
-@view
 def _get_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
     _coins: DynArray[address, MAX_METAREGISTRY_COINS] = self.base_registry.get_coins(_pool)
     _padded_coins: address[MAX_METAREGISTRY_COINS] = empty(address[MAX_METAREGISTRY_COINS])
@@ -114,28 +108,16 @@ def _get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 @internal
 @view
 def _get_n_coins(_pool: address) -> uint256:
-    if self._is_meta(_pool):
+    if self.base_registry.is_meta(_pool):
         return 2
     return self.base_registry.get_n_coins(_pool)
-
-
-@internal
-@view
-def _get_base_pool(_pool: address) -> address:
-    _coins: address[MAX_METAREGISTRY_COINS] = self._get_coins(_pool)
-    _base_pool: address = empty(address)
-    for coin in _coins:
-        _base_pool = self.base_pool_registry.get_base_pool_for_lp_token(coin)
-        if _base_pool != empty(address):
-            return _base_pool
-    return empty(address)
 
 
 @view
 @internal
 def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     base_coin_idx: uint256 = self._get_n_coins(_pool) - 1
-    base_pool: address = self._get_base_pool(_pool)
+    base_pool: address = self.base_registry.get_base_pool(_pool)
     base_total_supply: uint256 = ERC20(self.base_pool_registry.get_lp_token(base_pool)).totalSupply()
 
     ul_balance: uint256 = 0
@@ -272,7 +254,7 @@ def get_base_pool(_pool: address) -> address:
     @param _pool address of the pool
     @return base pool of the pool
     """
-    return self._get_base_pool(_pool)
+    return self.base_registry.get_base_pool(_pool)
 
 
 @view
@@ -295,7 +277,7 @@ def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, i
     # to fix this, we first check if it is a metapool, and if not then we return
     # False. If so, then we check if basepool lp token is one of the two coins,
     # in which case `is_underlying` would be False
-    if self._is_meta(_pool):
+    if self.base_registry.is_meta(_pool):
         base_pool_lp_token: address = self.base_registry.get_coins(_pool)[1]
         if base_pool_lp_token not in [_from, _to]:
             is_underlying = True
@@ -408,10 +390,12 @@ def get_n_underlying_coins(_pool: address) -> uint256:
         if coins[i] == empty(address):
             break
 
+        # TODO: accommodate ng base pools here:
         base_pool = self.base_pool_registry.get_base_pool_for_lp_token(coins[i])
         if base_pool == empty(address) and coins[i] != empty(address):
             num_coins += 1
         else:
+            # TODO: accommodate ng base pools here:
             num_coins += self.base_pool_registry.get_n_coins(base_pool)
 
     return num_coins
@@ -479,7 +463,7 @@ def get_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     @param _pool address of the pool
     @return underlying balances of the pool
     """
-    if not self._is_meta(_pool):
+    if not self.base_registry.is_meta(_pool):
         return self._get_balances(_pool)
     return self._get_meta_underlying_balances(_pool)
 
@@ -492,7 +476,7 @@ def get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
     @param _pool address of the pool
     @return underlying coins of the pool
     """
-    if not self._is_meta(_pool):
+    if not self.base_registry.is_meta(_pool):
         return self._get_coins(_pool)
     return self._get_underlying_coins(_pool)
 
@@ -509,7 +493,7 @@ def get_underlying_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     @param _pool Address of the pool
     @return underlying decimals of the pool
     """
-    if not self._is_meta(_pool):
+    if not self.base_registry.is_meta(_pool):
         return self._get_decimals(_pool)
     return self._pad_uint_dynarray(self.base_registry.get_underlying_decimals(_pool))
 
@@ -522,7 +506,7 @@ def is_meta(_pool: address) -> bool:
     @param _pool address of the pool
     @return True if the pool is a metapool
     """
-    return self._is_meta(_pool)
+    return self.base_registry.is_meta(_pool)
 
 
 @external
