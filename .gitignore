@@ -9,3 +9,8 @@ venv/
 bvenv/
 .env
 .hypothesis/
+<<<<<<< HEAD
+=======
+.gz
+.json.gz
+>>>>>>> main
