@@ -8,7 +8,6 @@ MAX_COINS: constant(uint256) = 8
 
 
 struct BasePool:
-    location: uint256
     lp_token: address
     n_coins: uint256
     is_v2: bool
@@ -56,7 +55,8 @@ admin: public(address)
 future_admin: public(address)
 
 manually_added_base_pool: HashMap[address, BasePool]
-manually_added_base_pool_list: address[10000]
+manually_added_base_pool_list: DynArray[address, 10000]
+is_active_manually_added_pool: HashMap[address, bool]
 manually_added_base_pool_for_lp_token: HashMap[address, address]
 manually_added_base_pool_count: uint256
 last_updated: public(uint256)  # last manual update!
@@ -121,13 +121,25 @@ def _get_base_pools() -> DynArray[address, 10000]:
 
     # manually added base pools are listed first:
     __base_pool_list: DynArray[address, 10000] = []
+    __manually_removed_pools: DynArray[address, 10000] = []
 
-    for i in range(self.manually_added_base_pool_count, bound=10000):
-        __base_pool_list.append(self.manually_added_base_pool_list[i])
+    for i in range(len(self.manually_added_base_pool_list), bound=10000):
+        _pool: address = self.manually_added_base_pool_list[i]
+        if self.is_active_manually_added_pool[_pool]:
+            __base_pool_list.append(self.manually_added_base_pool_list[i])
+        else:
+            __manually_removed_pools.append(_pool)
+
+    print(__base_pool_list)
+    print(__manually_removed_pools)
 
     for j in range(stableswap_ng_factory.base_pool_count(), bound=10000):
         stableswap_factory_ng_base_pool: address = stableswap_ng_factory.base_pool_list(j)
-        if stableswap_factory_ng_base_pool not in __base_pool_list:
+        if (
+            stableswap_factory_ng_base_pool not in __base_pool_list and
+            stableswap_factory_ng_base_pool not in __manually_removed_pools
+        ):
+            print(stableswap_factory_ng_base_pool)
             __base_pool_list.append(stableswap_factory_ng_base_pool)
 
     return __base_pool_list
@@ -136,7 +148,11 @@ def _get_base_pools() -> DynArray[address, 10000]:
 @internal
 @view
 def _base_pool_list(i: uint256) -> address:
-    return self._get_base_pools()[i]
+    base_pool_list: DynArray[address, 10000] = self._get_base_pools()
+    if i < len(base_pool_list):
+        return base_pool_list[i]
+    else:
+        return empty(address)
 
 
 @internal
@@ -156,8 +172,8 @@ def _get_base_pool_for_lp_token(_lp_token: address) -> address:
         return base_pool
 
     elif (
-        base_pool == empty(address) and 
-        self._pool_is_ng(_lp_token) and 
+        base_pool == empty(address) and
+        self._pool_is_ng(_lp_token) and
         self._pool_is_ng_basepool(_lp_token)
     ):
         return _lp_token
@@ -190,6 +206,19 @@ def _get_basepools_for_coin(_coin: address) -> DynArray[address, 1000]:
 
 @external
 @view
+def base_pool_list(i: uint256) -> address:
+    return self._base_pool_list(i)
+
+
+@external
+@view
+def base_pool_count() -> uint256:
+    return self._base_pool_count()
+
+
+
+@external
+@view
 def get_base_pool_for_lp_tokens(_lp_token: address) -> address:
     """
     @notice Gets pool address for lp token
@@ -209,19 +238,19 @@ def get_n_coins(_pool: address) -> uint256:
     """
 
     n_coins: uint256 = self.manually_added_base_pool[_pool].n_coins
-    
+
     if not n_coins == 0:
-        
+
         return n_coins
 
     elif (
-        n_coins == 0 and 
-        self._pool_is_ng(_pool) and 
+        n_coins == 0 and
+        self._pool_is_ng(_pool) and
         self._pool_is_ng_basepool(_pool)
     ):
-    
+
         return CurvePool(_pool).N_COINS()
-    
+
     else:  # pool is not registered, so register it first
 
         return 0
@@ -350,11 +379,11 @@ def is_lending(_pool: address) -> bool:
 
 @external
 def add_custom_base_pool(
-    _pool: address, 
-    _lp_token: address, 
-    _n_coins: uint256, 
-    _is_legacy: bool, 
-    _is_lending: bool, 
+    _pool: address,
+    _lp_token: address,
+    _n_coins: uint256,
+    _is_legacy: bool,
+    _is_lending: bool,
     _is_v2: bool
 ):
     """
@@ -370,8 +399,6 @@ def add_custom_base_pool(
     assert self.manually_added_base_pool[_pool].lp_token == empty(address)  # dev: pool exists
 
     # add pool to base_pool_list
-    manually_added_base_pool_count: uint256 = self.manually_added_base_pool_count
-    self.manually_added_base_pool[_pool].location = manually_added_base_pool_count
     self.manually_added_base_pool[_pool].lp_token = _lp_token
     self.manually_added_base_pool[_pool].n_coins = _n_coins
     self.manually_added_base_pool[_pool].is_v2 = _is_v2
@@ -381,9 +408,13 @@ def add_custom_base_pool(
     # for reverse lookup:
     self.manually_added_base_pool_for_lp_token[_lp_token] = _pool
 
+    # set base pool as active
+    self.is_active_manually_added_pool[_pool] = True
+
     self.last_updated = block.timestamp
-    self.manually_added_base_pool_list[manually_added_base_pool_count] = _pool
-    self.manually_added_base_pool_count = manually_added_base_pool_count + 1
+    if _pool not in self.manually_added_base_pool_list:
+        self.manually_added_base_pool_list.append(_pool)
+    self.manually_added_base_pool_count += 1
     log BasePoolAdded(_pool)
 
 
@@ -401,27 +432,15 @@ def remove_custom_base_pool(_pool: address):
     self.manually_added_base_pool_for_lp_token[self.manually_added_base_pool[_pool].lp_token] = empty(address)
     self.manually_added_base_pool[_pool].lp_token = empty(address)
     self.manually_added_base_pool[_pool].n_coins = 0
+    self.manually_added_base_pool[_pool].is_legacy = False
+    self.manually_added_base_pool[_pool].is_lending = False
+    self.manually_added_base_pool[_pool].is_v2 = False
 
-    # remove base_pool from base_pool_list
-    location: uint256 = self.manually_added_base_pool[_pool].location
-    length: uint256 = self.manually_added_base_pool_count - 1
-    assert location < length
+    # reduce count
+    self.manually_added_base_pool_count -= 1
 
-    # because self.base_pool_list is a static array,
-    # we can replace the last index with empty(address)
-    # and replace the first index with the base pool
-    # that was previously in the last index.
-    # we skip this step if location == last index
-    if location < length:
-        # replace _pool with final value in pool_list
-        addr: address = self.manually_added_base_pool_list[length]
-        assert addr != empty(address)
-        self.manually_added_base_pool_list[location] = addr
-        self.manually_added_base_pool[addr].location = location
-
-    # delete final pool_list value
-    self.manually_added_base_pool_list[length] = empty(address)
-    self.manually_added_base_pool_count = length
+    # remove from active manually-added base pool hashmap
+    self.is_active_manually_added_pool[_pool] = False
 
     self.last_updated = block.timestamp
     log BasePoolRemoved(_pool)
