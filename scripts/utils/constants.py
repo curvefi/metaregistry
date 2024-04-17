@@ -36,6 +36,22 @@ BASE_POOLS = {
         "is_lending": False,
         "is_v2": False,
     },
+    "fraxusdp": {
+        "pool": "0xaE34574AC03A15cd58A92DC79De7B1A0800F1CE3",
+        "lp_token": "0xFC2838a17D8e8B1D5456E0a351B0708a09211147",
+        "num_coins": 2,
+        "is_legacy": False,
+        "is_lending": False,
+        "is_v2": False,
+    },
+    "sbtcv2": {
+        "pool": "0xf253f83AcA21aAbD2A20553AE0BF7F65C755A07F",
+        "lp_token": "0x051d7e5609917Bd9b73f04BAc0DED8Dd46a74301",
+        "num_coins": 2,
+        "is_legacy": False,
+        "is_lending": False,
+        "is_v2": False,
+    },
 }
 
 CRYPTO_REGISTRY_POOLS = {
