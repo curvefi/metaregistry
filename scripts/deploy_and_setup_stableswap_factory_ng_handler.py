@@ -41,24 +41,10 @@ def main(network: str = "ethereum", fork: bool = True):
 
     # deploy basepool registry:
     registry = boa.load(
-        "contracts/mainnet/registries/BasePoolRegistryNG.vy",
+        "contracts/mainnet/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
         "0x6A8cbed756804B16E05E741eDaBd5cB544AE21bf",  # stableswap factory ng
     )
-    console.log(f"Deployed base pool registry to {registry.address}")
-
-    for _, data in BASE_POOLS.items():
-        registry.add_custom_base_pool(
-            data["pool"],
-            data["lp_token"],
-            data["num_coins"],
-            data["is_legacy"],
-            data["is_lending"],
-            data["is_v2"],
-        )
-
-        console.log(
-            f"Added base pool [blue]{data['pool']} to base pool registry."
-        )
+    console.log(f"Deployed Curve Stableswap Factory Handler to {registry.address}")
 
     breakpoint()
 

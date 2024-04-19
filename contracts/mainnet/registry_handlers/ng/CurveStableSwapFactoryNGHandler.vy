@@ -117,6 +117,8 @@ def _get_underlying_coins(_pool: address) -> address[MAX_METAREGISTRY_COINS]:
 def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
     base_coin_idx: uint256 = self.base_registry.get_n_coins(_pool) - 1
     base_pool: address = self.base_registry.get_base_pool(_pool)
+
+    # TODO: registry.get_underlying_balances('0x91553BAD9Fbc8bD69Ff5d5678Cbf7D514d00De0b') borks
     base_total_supply: uint256 = ERC20(self._get_base_pool_lp_token(base_pool)).totalSupply()
 
     ul_balance: uint256 = 0
