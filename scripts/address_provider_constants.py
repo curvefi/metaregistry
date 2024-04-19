@@ -26,6 +26,7 @@ ADDRESS_PROVIDER_MAPPING = {
     22: "Parameter Admin",
     23: "Emergency Admin",
     24: "CurveDAO Vault",  # Holds funds
+    25: "crvUSD Token",
 }
 
 # These are the addresses that will go into the addressprovider for each chain:
@@ -52,6 +53,7 @@ addresses = {
         21: "0x40907540d8a6C65c637785e8f8B742ae6b0b9968",  # CurveDAO Ownership Agent
         22: "0x4eeb3ba4f221ca16ed4a0cc7254e2e32df948c5f",  # CurveDAO Parameter Agent
         23: "0x00669DF67E4827FCc0E48A1838a8d5AB79281909",  # CurveDAO Emergency Agent
+        25: "0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E",  # crvUSD
     },
     "arbitrum": {
         0: "0x445FE580eF8d70FF569aB36e80c647af338db351",
@@ -72,6 +74,7 @@ addresses = {
         22: "0x5ccbB27FB594c5cF6aC0670bbcb360c0072F6839",
         23: "0x2CB6E1Adf22Af1A38d7C3370441743a123991EC3",
         24: "0x25877b9413Cc7832A6d142891b50bd53935feF82",
+        25: "0x498Bf2B1e120FeD3ad3D42EA2165E9b73f99C1e5",  # crvUSD
     },
     "optimism": {
         0: "0xC5cfaDA84E902aD92DD40194f0883ad49639b023",
@@ -91,6 +94,7 @@ addresses = {
         22: "0xE7F2B72E94d1c2497150c24EA8D65aFFf1027b9b",
         23: "0x9fF1ddE4BE9BbD891836863d227248047B3D881b",
         24: "0xD166EEdf272B860E991d331B71041799379185D5",
+        25: "0xC52D7F23a2e460248Db6eE192Cb23dD12bDDCbf6",  # crvUSD
     },
     "polygon": {
         0: "0x094d12e5b541784701FD8d65F11fc0598FBC6332",
@@ -110,6 +114,7 @@ addresses = {
         21: "0x8cB05bFEd65b522a7cF98d590F1711A9Db43af71",
         22: "0x3CF7c393519ea55D1E1F2c55a6395be63b1A9F9C",
         23: "0x9FD6E204e08867170ddE54a8374083fF592eBD3E",
+        25: "0xc4Ce1D6F5D98D65eE25Cf85e9F2E9DcFEe6Cb5d6",
     },
     "base": {
         2: "0xd6681e74eEA20d196c15038C580f721EF2aB6320",
@@ -127,6 +132,7 @@ addresses = {
         22: "0x7Ea4B72f04D8B02994F4EdB171Ce5F56eEdF457F",
         23: "0x95F0f720CAdDED982E6998b3390E6D3788c2CE5C",
         24: "0xA4c0eA0fb8eb652e11C8123E589197E18Ca78AA8",
+        25: "0x417Ac0e078398C154EdFadD9Ef675d30Be60Af93",  # crvUSD
     },
     "fraxtal": {
         2: "0x4f37A9d177470499A2dD084621020b023fcffc1F",
@@ -138,6 +144,7 @@ addresses = {
         15: "0x69522fb5337663d3B4dFB0030b881c1A750Adb4f",
         19: "0x331B9182088e2A7d6D3Fe4742AbA1fB231aEcc56",
         20: "0xeF672bD94913CB6f1d2812a6e18c1fFdEd8eFf5c",
+        25: "0xB102f7Efa0d5dE071A8D37B3548e1C7CB148Caf3",  # crvUSD
     },
     "bsc": {
         2: "0x69522fb5337663d3B4dFB0030b881c1A750Adb4f",
@@ -155,6 +162,7 @@ addresses = {
         22: "0x618a38a556B66FdDdcB5495Be412Df911D18eA1d",
         23: "0xC940CE179f1F1bdC1EA1c02A2d0481bfD84C3280",
         24: "0x44C927BacD65da570cB1F0A2F625367049525022",
+        25: "0xe2fb3F127f5450DeE44afe054385d74C392BdeF4",  # crvUSD
     },
     "gnosis": {
         0: "0x55e91365697eb8032f98290601847296ec847210",
@@ -170,6 +178,7 @@ addresses = {
         15: "0xA72C85C258A81761433B4e8da60505Fe3Dd551CC",
         19: "0x712b3d230f3c1c19db860d80619288b1f0bdd0bd",
         20: "0xabC000d88f23Bb45525E447528DBF656A9D55bf5",
+        25: "0xaBEf652195F98A91E490f047A5006B71c85f058d",  # crvUSD
     },
     "fantom": {
         0: "0x0f854EA9F38ceA4B1c2FC79047E9D0134419D5d6",
@@ -189,6 +198,7 @@ addresses = {
         22: "0x837814ba42c6f3B39f0A5060168F7027695DDAb1",
         23: "0x42113C6818ACb87ca3CaFDbBc6a6ae396f1548E6",
         24: "0x49C8De2D10C9A56DD9A59ab5Ca1216111276394C",
+        25: "0xD823D2a2B5AF77835e972A0D5B77f5F5A9a003A6",  # crvUSD
     },
     "avalanche": {
         0: "0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6",
@@ -206,6 +216,7 @@ addresses = {
         22: "0x33F9A2F3B85e7D4Ff4f9286a9a8525060100D855",
         23: "0x1309DB123020F0533aFAfaF11D26286d5871bEB0",
         24: "0xad422855ac8010f82F08696CA7750EfE061aa6D6",
+        25: "0xCb7c161602d04C4e8aF1832046EE08AAF96d855D",  # crvUSD
     },
     "aurora": {
         0: "0x5b5cfe992adac0c9d48e05854b2d91c73a003858",
@@ -242,6 +253,7 @@ addresses = {
         21: "0xeC6a886148B38C233B07cc6732142dccaBF1051D",
         22: "0x6e53131F68a034873b6bFA15502aF094Ef0c5854",
         23: "0xA177D2bd2BD723878bD95982c0855291953f74C9",
+        25: "0x98B4029CaBEf7Fd525A36B0BF8555EC1d42ec0B6",  # crvUSD
     },
     # No UI:
     "linea": {
@@ -255,10 +267,12 @@ addresses = {
         11: "0x0C9D8c7e486e822C29488Ff51BFf0167B4650953",
         12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
+        19: "0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9",  # CRV
         21: "0xfe87a6cdca1eeb90987c6a196a1c5f5c76f5f2b0",
         22: "0x024d362f7aa162d8591304016fd60a209efc527e",
         23: "0x4339b53cf7f6eec1a997ceea81165e45c1244429",
         24: "0x77A214bd4ee3650e5608339BBbE04b09f5546ECF",
+        25: "0xc8058960a9d7e7d81143bdba38d19e6824165932",  # crvUSD
     },
     "scroll": {
         4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
