@@ -43,6 +43,7 @@ interface CurvePool:
     def fee() -> uint256: view
     def admin_fee() -> uint256: view
     def offpeg_fee_multiplier() -> uint256: view
+    def coins(i: uint256) -> address: view
 
 interface ERC20:
     def balanceOf(_addr: address) -> uint256: view
@@ -118,8 +119,8 @@ def _get_meta_underlying_balances(_pool: address) -> uint256[MAX_METAREGISTRY_CO
     base_coin_idx: uint256 = self.base_registry.get_n_coins(_pool) - 1
     base_pool: address = self.base_registry.get_base_pool(_pool)
 
-    # TODO: registry.get_underlying_balances('0x91553BAD9Fbc8bD69Ff5d5678Cbf7D514d00De0b') borks
-    base_total_supply: uint256 = ERC20(self._get_base_pool_lp_token(base_pool)).totalSupply()
+    # base pool lp token is at index 1:
+    base_total_supply: uint256 = ERC20(CurvePool(_pool).coins(1)).totalSupply()
 
     ul_balance: uint256 = 0
     underlying_pct: uint256 = 0
