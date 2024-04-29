@@ -21,7 +21,7 @@ interface BaseRegistry:
 
 interface TricryptoNG:
     def adjustment_step() -> uint256: view
-    def admin_fee() -> uint256: view
+    def ADMIN_FEE() -> uint256: view
     def allowed_extra_profit() -> uint256: view
     def A() -> uint256: view
     def balances(i: uint256) -> uint256: view
@@ -103,15 +103,6 @@ def _get_decimals(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 
 @internal
 @view
-def _get_n_coins(_pool: address) -> uint256:
-
-    if (self.base_registry.get_coins(_pool)[0] != empty(address)):
-        return N_COINS
-    return 0
-
-
-@internal
-@view
 def _get_gauge_type(_gauge: address) -> int128:
 
     # try to get gauge type registered in gauge controller
@@ -140,7 +131,7 @@ def _get_gauge_type(_gauge: address) -> int128:
 @internal
 @view
 def _is_registered(_pool: address) -> bool:
-    return self._get_n_coins(_pool) > 0
+    return self._get_coins(_pool)[0] != empty(address)
 
 
 # ---- view methods (API) of the contract ---- #
@@ -177,7 +168,7 @@ def get_admin_balances(_pool: address) -> uint256[MAX_METAREGISTRY_COINS]:
 
     xcp_profit: uint256 = TricryptoNG(_pool).xcp_profit()
     xcp_profit_a: uint256 = TricryptoNG(_pool).xcp_profit_a()
-    admin_fee: uint256 = TricryptoNG(_pool).admin_fee()
+    admin_fee: uint256 = TricryptoNG(_pool).ADMIN_FEE()
     admin_balances: uint256[MAX_METAREGISTRY_COINS] = empty(uint256[MAX_METAREGISTRY_COINS])
 
     # admin balances are non zero if pool has made more than allowed profits:
@@ -282,7 +273,7 @@ def get_fees(_pool: address) -> uint256[10]:
     fees: uint256[10] = empty(uint256[10])
     pool_fees: uint256[4] = [
         TricryptoNG(_pool).fee(),
-        TricryptoNG(_pool).admin_fee(),
+        TricryptoNG(_pool).ADMIN_FEE(),
         TricryptoNG(_pool).mid_fee(),
         TricryptoNG(_pool).out_fee(),
     ]
@@ -327,7 +318,7 @@ def get_n_coins(_pool: address) -> uint256:
     @param _pool Address of the pool
     @return uint256 Number of coins
     """
-    return self._get_n_coins(_pool)
+    return 2
 
 
 @external
@@ -338,12 +329,8 @@ def get_n_underlying_coins(_pool: address) -> uint256:
     @param _pool Address of the pool
     @return uint256 Number of underlying coins
     """
-    _coins: address[MAX_METAREGISTRY_COINS] = self._get_coins(_pool)
+    return 2
 
-    for i in range(MAX_METAREGISTRY_COINS):
-        if _coins[i] == empty(address):
-            return i
-    raise
 
 @external
 @view
@@ -365,7 +352,7 @@ def get_pool_from_lp_token(_lp_token: address) -> address:
     @param _lp_token Address of the Liquidity Provider token
     @return Address of the pool
     """
-    if self._get_n_coins(_lp_token) > 0:
+    if self._is_registered(_lp_token):
         return _lp_token
     return empty(address)
 
@@ -463,7 +450,7 @@ def is_registered(_pool: address) -> bool:
     @param _pool The address of the pool
     @return A bool corresponding to whether the pool belongs or not
     """
-    return self._get_n_coins(_pool) > 0
+    return self._is_registered(_pool)
 
 
 @external
