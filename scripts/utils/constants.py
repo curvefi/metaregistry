@@ -1,8 +1,8 @@
 from os.path import abspath, dirname, join
 
-BASE_DIR = join(dirname(abspath(__file__)), "..")
+from eth.constants import ZERO_ADDRESS
 
-ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+BASE_DIR = join(dirname(abspath(__file__)), "..")
 
 ADDRESS_PROVIDER = "0x0000000022D53366457F9d5E68Ec105046FC4383"
 STABLE_REGISTRY_ADDRESS = "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5"
@@ -33,6 +33,22 @@ BASE_POOLS = {
         "lp_token": "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3",
         "num_coins": 3,
         "is_legacy": True,
+        "is_lending": False,
+        "is_v2": False,
+    },
+    "fraxusdp": {
+        "pool": "0xaE34574AC03A15cd58A92DC79De7B1A0800F1CE3",
+        "lp_token": "0xFC2838a17D8e8B1D5456E0a351B0708a09211147",
+        "num_coins": 2,
+        "is_legacy": False,
+        "is_lending": False,
+        "is_v2": False,
+    },
+    "sbtcv2": {
+        "pool": "0xf253f83AcA21aAbD2A20553AE0BF7F65C755A07F",
+        "lp_token": "0x051d7e5609917Bd9b73f04BAc0DED8Dd46a74301",
+        "num_coins": 2,
+        "is_legacy": False,
         "is_lending": False,
         "is_v2": False,
     },

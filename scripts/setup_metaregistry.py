@@ -13,14 +13,17 @@ import sys
 import boa
 from rich.console import Console as RichConsole
 
-from scripts.constants import (
+from scripts.deployment_utils import get_deployed_contract, setup_environment
+from scripts.utils.constants import (
     ADDRESS_PROVIDER,
     BASE_POOLS,
     CRYPTO_REGISTRY_POOLS,
 )
-from scripts.deployment_utils import get_deployed_contract, setup_environment
 
 RICH_CONSOLE = RichConsole(file=sys.stdout)
+
+# TODO: Metaregistry and Base Pool Registry no longer have a dependency AddressProvider's admin.
+# Adjust the code accordingly:
 
 
 def main():

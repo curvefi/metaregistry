@@ -1,6 +1,6 @@
 import boa
+from eth.constants import ZERO_ADDRESS
 
-from scripts.constants import ZERO_ADDRESS
 from tests.utils import deploy_contract
 
 

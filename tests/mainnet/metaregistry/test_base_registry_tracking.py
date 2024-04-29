@@ -1,4 +1,4 @@
-from scripts.constants import ZERO_ADDRESS
+from eth.constants import ZERO_ADDRESS
 
 
 def test_new_crypto_factory_pool(

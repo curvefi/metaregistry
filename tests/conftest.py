@@ -27,9 +27,13 @@ def _get_stable_registry_pools():
 @cache
 def _get_stable_factory_pools():
     logging.info("Retrieving stable factory pools")
-    return get_contract_pools(
+    factory_pools_mainnet = get_contract_pools(
         "StableFactory", "0xB9fC157394Af804a3578134A6585C0dc9cc990d4"
     )
+    factory_ng_pools_mainnet = get_contract_pools(
+        "StableFactoryNG", "0x6A8cbed756804B16E05E741eDaBd5cB544AE21bf"
+    )
+    return factory_pools_mainnet + factory_ng_pools_mainnet
 
 
 @cache
