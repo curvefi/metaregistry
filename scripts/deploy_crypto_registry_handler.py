@@ -21,7 +21,7 @@ def main():
     console = RichConsole()
     console.log("Deploying Crypto Registry Handler contract...")
     setup_environment(console)
-    boa.load("contracts/mainnet/registry_handlers/CryptoRegistryHandler.vy")
+    boa.load("contracts/registry_handlers/CryptoRegistryHandler.vy")
 
 
 if __name__ == "__main__":

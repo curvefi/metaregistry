@@ -34,23 +34,25 @@ def deploy_via_create2_factory(deployment_bytecode, salt, create2deployer):
     create2deployer.deploy(0, salt, deployment_bytecode)
 
 
-def main(network, fork):
+def main(network, fork, url=""):
     """
     Deploy the AddressProvider to the network.
     """
 
     console = RichConsole()
+    if not url:
+        url = fetch_url(network)
 
     if not fork:
         # Prodmode
         console.log("Running script in prod mode...")
-        boa.set_env(NetworkEnv(fetch_url(network)))
+        boa.set_env(NetworkEnv(url))
         boa.env.add_account(Account.from_key(os.environ["FIDDYDEPLOYER"]))
 
     else:
         # Forkmode
         console.log("Simulation Mode. Writing to mainnet-fork.")
-        boa.env.fork(url=fetch_url(network))
+        boa.env.fork(url=url)
         boa.env.eoa = FIDDY_DEPLOYER
 
     CREATE2DEPLOYER = boa.load_abi("abi/create2deployer.json").at(
@@ -82,11 +84,12 @@ def main(network, fork):
         if len(ids) > 20:
             raise
 
+    console.log("Adding new ids ...")
     address_provider.add_new_ids(ids, addresses_for_id, descriptions)
 
 
 if __name__ == "__main__":
-    network = "kava"
+    network = "xlayer"
     fork = False
 
-    main(network, fork)
+    main(network, fork, url="https://xlayerrpc.okx.com")

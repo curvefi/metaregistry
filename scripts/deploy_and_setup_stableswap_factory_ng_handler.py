@@ -30,7 +30,7 @@ def main(network: str = "ethereum", fork: bool = True):
 
     # deploy basepool registry:
     registry = boa.load(
-        "contracts/mainnet/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
+        "contracts/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
         "0x6A8cbed756804B16E05E741eDaBd5cB544AE21bf",  # stableswap factory ng
     )
     console.log(

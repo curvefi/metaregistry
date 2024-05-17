@@ -39,7 +39,7 @@ def stable_ng_factory_handler(
 ):
     with boa.env.prank(ng_owner):
         return boa.load(
-            "contracts/mainnet/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
+            "contracts/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
             stableswap_ng_factory.address,
             populated_base_pool_registry.address,
         )
@@ -49,7 +49,7 @@ def stable_ng_factory_handler(
 def twocrypto_ng_factory_handler(twocrypto_ng_factory, ng_owner):
     with boa.env.prank(ng_owner):
         return boa.load(
-            "contracts/mainnet/registry_handlers/ng/CurveTwocryptoFactoryHandler.vy",
+            "contracts/registry_handlers/ng/CurveTwocryptoFactoryHandler.vy",
             twocrypto_ng_factory.address,
         )
 
@@ -58,7 +58,7 @@ def twocrypto_ng_factory_handler(twocrypto_ng_factory, ng_owner):
 def tricrypto_ng_factory_handler(tricrypto_ng_factory, ng_owner):
     with boa.env.prank(ng_owner):
         return boa.load(
-            "contracts/mainnet/registry_handlers/ng/CurveTricryptoFactoryHandler.vy",
+            "contracts/registry_handlers/ng/CurveTricryptoFactoryHandler.vy",
             tricrypto_ng_factory.address,
         )
 
