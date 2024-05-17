@@ -37,7 +37,7 @@ def get_functions_from_source(name: str) -> set[str]:
     :param name: the name of the source file
     :return: the view functions from the source file
     """
-    deployer = boa.load_partial(f"contracts/mainnet/{name}.vy")
+    deployer = boa.load_partial(f"contracts/{name}.vy")
     meta_functions = get_view_functions(
         abi=build_abi_output(deployer.compiler_data)
     )

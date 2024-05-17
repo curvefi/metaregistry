@@ -30,11 +30,11 @@ def main(network: str = "ethereum", fork: bool = True):
 
     # deploy handlers:
     registry = boa.load(
-        "contracts/mainnet/registry_handlers/ng/CurveTwocryptoFactoryHandler.vy",
+        "contracts/registry_handlers/ng/CurveTwocryptoFactoryHandler.vy",
         "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
     )
     registry = boa.load(
-        "contracts/mainnet/registry_handlers/ng/CurveTricryptoFactoryHandler.vy",
+        "contracts/registry_handlers/ng/CurveTricryptoFactoryHandler.vy",
         "0x0c0e5f2fF0ff18a3be9b835635039256dC4B4963",
     )
     console.log(f"Deployed Factory Handlers.")

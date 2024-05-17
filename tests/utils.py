@@ -27,9 +27,7 @@ def deploy_contract(
     directory: str = ".",
     **kwargs,
 ) -> VyperContract:
-    file_name = path.join(
-        BASE_DIR, f"contracts/mainnet/{directory}/{contract}.vy"
-    )
+    file_name = path.join(BASE_DIR, f"contracts/{directory}/{contract}.vy")
     with boa.env.sender(sender):
         return boa.load(file_name, *args, **kwargs)
 

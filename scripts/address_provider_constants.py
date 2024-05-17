@@ -255,6 +255,22 @@ addresses = {
         23: "0xA177D2bd2BD723878bD95982c0855291953f74C9",
         25: "0x98B4029CaBEf7Fd525A36B0BF8555EC1d42ec0B6",  # crvUSD
     },
+    "xlayer": {
+        2: "0x4f37A9d177470499A2dD084621020b023fcffc1F",  # 2: "Exchange Router",
+        4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",  # 4: "Fee Distributor",
+        11: "0xd3B17f862956464ae4403cCF829CE69199856e1e",  # 11: "TricryptoNG Factory",
+        12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",  # 12: "StableswapNG Factory",
+        13: "0x0c59d36b23f809f8b6C7cb4c8C590a0AC103baEf",  # 13: "TwocryptoNG Factory",
+        14: "0x0fE38dCC905eC14F6099a83Ac5C93BF2601300CF",  # 14: "Stableswap Calculations Contract",
+        15: "0x69522fb5337663d3B4dFB0030b881c1A750Adb4f",  # 15: "Cryptoswap calculations Contract",
+        19: "0x3d5320821bfca19fb0b5428f2c79d63bd5246f89",  # 19: "CRV Token",
+        20: "0xeF672bD94913CB6f1d2812a6e18c1fFdEd8eFf5c",  # 20: "Gauge Factory",
+        21: "0x6628b9e7c0029cea234b382be17101648f32cd8f",  # 21: "Ownership Admin",
+        22: "0xccc4864762412f3273bf7ca9264295909504ebb5",  # 22: "Parameter Admin",
+        23: "0x9ffc6f671d88593aae56d9d34f2b40d7a56d467f",  # 23: "Emergency Admin",
+        24: "0x0848F3800F04b3ad4309A5f27814be7FC4740cB9",  # 24: "CurveDAO Vault",  # Holds funds
+        25: "0xdA8f4Eb4503ACF5dec5420523637bb5b33a846f6",  # 25: "crvUSD Token"
+    },
     # No UI:
     "linea": {
         4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
