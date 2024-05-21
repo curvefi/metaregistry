@@ -134,6 +134,31 @@ def _is_registered(_pool: address) -> bool:
     return self._get_coins(_pool)[0] != empty(address)
 
 
+@internal
+@view
+def _find_pool_for_coins(_from: address, _to: address, i: uint256) -> address:
+
+    success: bool = False
+    response: Bytes[32] = b""
+    success, response = raw_call(
+        self.base_registry.address,
+        concat(
+            method_id("find_pool_for_coins(address,address,uint256)"),
+            convert(_from, bytes32),
+            convert(_to, bytes32),
+            convert(i, bytes32)
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+
+    if success:
+        return convert(response, address)
+
+    return empty(address)
+
+
 # ---- view methods (API) of the contract ---- #
 @external
 @view
@@ -148,7 +173,7 @@ def find_pool_for_coins(_from: address, _to: address, i: uint256 = 0) -> address
     @param i Index of the pool to return
     @return Address of the pool
     """
-    return self.base_registry.find_pool_for_coins(_from, _to, i)
+    return self._find_pool_for_coins(_from, _to, i)
 
 
 @external
