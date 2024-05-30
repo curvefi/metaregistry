@@ -1,4 +1,5 @@
 titanoboa[forking-recommended] @ git+https://github.com/vyperlang/titanoboa@05ec84ad1decfe23cd4a3ffc588d567fd322a509
+git+https://github.com/DanielSchiavini/titanoboa-zksync.git
 black
 flake8
 isort
