@@ -279,16 +279,20 @@ addresses = {
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
     },
     "mantle": {
+        2: "0x69522fb5337663d3B4dFB0030b881c1A750Adb4f",  # curve router sidechain v1.0
         4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",
         11: "0x0C9D8c7e486e822C29488Ff51BFf0167B4650953",
         12: "0x5eeE3091f747E60a045a2E715a4c71e600e31F6E",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
-        19: "0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9",  # CRV
-        21: "0xfe87a6cdca1eeb90987c6a196a1c5f5c76f5f2b0",
-        22: "0x024d362f7aa162d8591304016fd60a209efc527e",
-        23: "0x4339b53cf7f6eec1a997ceea81165e45c1244429",
-        24: "0x77A214bd4ee3650e5608339BBbE04b09f5546ECF",
-        25: "0xc8058960a9d7e7d81143bdba38d19e6824165932",  # crvUSD
+        14: "0x0fE38dCC905eC14F6099a83Ac5C93BF2601300CF",  # StableCalc
+        15: "0xd6681e74eEA20d196c15038C580f721EF2aB6320",  # CryptoCalc
+        20: "0xeF672bD94913CB6f1d2812a6e18c1fFdEd8eFf5c",  # Child Gauge Factory
+        19: "0xE265FC71d45fd791c9ebf3EE0a53FBB220Eb8f75",  # CRV
+        21: "0xd9D5d94A3815ea8240a2dF91D0c3D0829927bB16",  # ownership admin
+        22: "0xD77ac12A13eD114105DaDfF30DFF90E74b885B7e",  # parameter admin
+        23: "0x4339b53cf7f6eec1a997ceea81165e45c1244429",  # Emergency admin
+        24: "0xA38dEBfadd6EE6211E4f14062b9Fb9AAe7Fef135",  # Vault
+        25: "0x0994206dfE8De6Ec6920FF4D779B0d950605Fb53",  # crvUSD
     },
     "scroll": {
         4: "0xf3A431008396df8A8b2DF492C913706BDB0874ef",

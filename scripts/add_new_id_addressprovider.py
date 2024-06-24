@@ -11,14 +11,10 @@ from boa.network import NetworkEnv
 from eth_account import Account
 from rich.console import Console as RichConsole
 
-# sys.path.append("./")
 from scripts.address_provider_constants import (
     ADDRESS_PROVIDER_MAPPING,
     addresses,
 )
-
-# import sys
-
 
 FIDDY_DEPLOYER = "0x2d12D0907A388811e3AA855A550F959501d303EE"
 ADDRESS_PROVIDER = "0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98"
@@ -64,16 +60,28 @@ def main(network, fork):
         address = addresses[network][id]
         description = ADDRESS_PROVIDER_MAPPING[id]
         existing_id = address_provider.get_id_info(id)
-        if existing_id[0].lower() != address.lower():
-            console.log(f"Adding {address} for {description} to id: {id} ...")
+
+        if (
+            existing_id[0].lower()
+            == "0x0000000000000000000000000000000000000000"
+        ):
+            console.log(f"New id {id} at {address} for {description}.")
             ids.append(id)
             addresses_for_id.append(address)
             descriptions.append(description)
 
+        elif existing_id[0].lower() != address.lower():
+            console.log(f"Updating id {id} for {description} with {address}.")
+            address_provider.update_id(id, address, description)
+
         if len(ids) > 20:
             raise
 
-    address_provider.add_new_ids(ids, addresses_for_id, descriptions)
+    if len(ids) > 0:
+        console.log("Adding new IDs to the Address Provider.")
+        address_provider.add_new_ids(ids, addresses_for_id, descriptions)
+
+    console.log("Done!")
 
 
 if __name__ == "__main__":
