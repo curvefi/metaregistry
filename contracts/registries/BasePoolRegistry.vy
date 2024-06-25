@@ -1,4 +1,5 @@
-#pragma version ^0.3.7
+# pragma version 0.3.10
+# pragma evm-version paris
 """
 @title Curve BasePool Registry
 @license MIT
@@ -222,7 +223,14 @@ def is_lending(_pool: address) -> bool:
 
 
 @external
-def add_base_pool(_pool: address, _lp_token: address, _n_coins: uint256, _is_legacy: bool, _is_lending: bool, _is_v2: bool):
+def add_base_pool(
+    _pool: address,
+    _lp_token: address,
+    _n_coins: uint256,
+    _is_legacy: bool,
+    _is_lending: bool,
+    _is_v2: bool
+):
     """
     @notice Add a base pool to the registry
     @param _pool Address of the base pool

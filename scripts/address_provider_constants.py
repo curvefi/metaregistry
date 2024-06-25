@@ -306,4 +306,20 @@ addresses = {
         12: "0xd2002373543Ce3527023C75e7518C274A51ce712",
         13: "0x98EE851a00abeE0d95D08cF4CA2BdCE32aeaAF7F",
     },
+    "zksync": {
+        2: "",  # 2: "Exchange Router",
+        4: "",  # 4: "Fee Distributor",
+        11: "0x5044112fDf6c8DCc788a669c17345cfDB06549fa",  # 11: "TricryptoNG Factory",
+        12: "0x375444aeDEb6C3db897f293E1DBa85D7422A6859",  # 12: "StableswapNG Factory",
+        13: "0x24992A09E2257AF325102Cefa1F09E80E9062d49",  # 13: "TwocryptoNG Factory",
+        14: "",  # 14: "Stableswap Calculations Contract",
+        15: "",  # 15: "Cryptoswap calculations Contract",
+        19: "",  # 19: "CRV Token",
+        20: "",  # 20: "Gauge Factory",
+        21: "",  # 21: "Ownership Admin",
+        22: "",  # 22: "Parameter Admin",
+        23: "",  # 23: "Emergency Admin",
+        24: "",  # 24: "CurveDAO Vault",  # Holds funds
+        25: "",  # 25: "crvUSD Token"
+    },
 }

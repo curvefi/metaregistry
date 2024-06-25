@@ -81,7 +81,7 @@ def __init__():
 def ids() -> DynArray[uint256, 1000]:
     """
     @notice returns IDs of active registry items in the AddressProvider.
-    @returns An array of IDs.
+    @return An array of IDs.
     """
     _ids: DynArray[uint256, 1000] = []
     for _id in self._ids:
@@ -280,7 +280,7 @@ def remove_id(_id: uint256) -> bool:
 def remove_ids(_ids: DynArray[uint256, 20]) -> bool:
     """
     @notice Unset existing identifiers
-    @param _id DynArray of identifier to unset
+    @param _ids DynArray of identifier to unset
     @return bool success
     """
     assert msg.sender == self.admin  # dev: admin-only function
