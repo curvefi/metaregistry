@@ -71,3 +71,8 @@ polygon:
   StableswapFactoryNGHandler: '0x9d3975070768580f755D405527862ee126d0eA08'
   TricryptoFactoryNGHandler: '0xf46D25696677898454dfDd644830C821243A1188'
   TwocryptoFactoryNGHandler: '0xb00e89eabd59cd3254c88e390103cf17e914f678'
+zksync:
+  Metaregistry: '0x48e4b27553e7643E10229ea3cba91c188dc524B1'
+  StableswapFactoryNGHandler: '0x4Cabf81fbf1F42531d55507F38Be77367481a8dF'
+  TricryptoFactoryNGHandler: '0xf3f38b1677553789A048FFf4A2CeedCDf063309e'
+  TwocryptoFactoryNGHandler: '0x0F3d82D719582BcaB662F434D77B089C86D05FAb'

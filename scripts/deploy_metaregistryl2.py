@@ -18,7 +18,11 @@ from scripts.utils.constants import FIDDY_DEPLOYER
 console = rich_console.Console()
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
-ADDRESS_PROVIDER = "0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98"
+ADDRESS_PROVIDER = (
+    "0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98"  # gets replaced for zksync
+)
+
+# if -1: no gauge type known just yet
 GAUGE_TYPE = {
     "arbitrum": 7,
     "optimism": 11,
@@ -37,6 +41,7 @@ GAUGE_TYPE = {
     "scroll": -1,
     "polygon-zkevm": -1,
     "xlayer": -1,
+    "zksync": -1,
 }
 
 
@@ -75,58 +80,23 @@ def store_deployed_contract(network, designation, deployment_address):
         yaml.dump(deployments, file)
 
 
-def deploy_and_cache_contracts(network, designation, contract_file, args):
+def deploy_and_cache_contracts(
+    network, designation, contract_file, args, fork=False
+):
     contract_address = check_contract_deployed(network, designation)
     if contract_address != ZERO_ADDRESS:
         return boa.load_partial(contract_file).at(contract_address)
 
     deployed_contract = boa.load(contract_file, *args)
-    store_deployed_contract(network, designation, deployed_contract.address)
+    if not fork:
+        store_deployed_contract(
+            network, designation, deployed_contract.address
+        )
 
     return deployed_contract
 
 
-def main(network, fork, url, deploy_ng_handlers):
-    assert "ethereum" not in network
-
-    if not url:
-        url = fetch_url(network)
-
-    if not fork:
-        # Prodmode
-        console.log("Running script in prod mode...")
-        boa.set_env(NetworkEnv(url))
-        boa.env.add_account(Account.from_key(os.environ["FIDDYDEPLOYER"]))
-
-    else:
-        # Forkmode
-        console.log("Simulation Mode. Writing to mainnet-fork.")
-        boa.env.fork(url=url)
-        boa.env.eoa = FIDDY_DEPLOYER
-
-    address_provider = boa.load_partial("contracts/AddressProviderNG.vy").at(
-        ADDRESS_PROVIDER
-    )
-    metaregistry_address = address_provider.get_address(7)
-
-    # deploy metaregistry
-    console.log("Deploying Metaregistry ...")
-    gauge_factory = address_provider.get_address(20)  # 20 is for Gauge Factory
-    gauge_type = GAUGE_TYPE[network]
-
-    if metaregistry_address == ZERO_ADDRESS:
-        metaregistry = deploy_and_cache_contracts(
-            network,
-            "Metaregistry",
-            "contracts/MetaregistryL2.vy",
-            [gauge_factory, gauge_type],
-        )
-        deploy_ng_handlers = True
-    else:
-        metaregistry = boa.load_partial("contracts/MetaRegistryL2.vy").at(
-            metaregistry_address
-        )
-
+def deploy_base_pool_registry(network, fork):
     # deploy base pool registry (even if there are no legacy base pools):
     console.log("Deploying base pool registry ...")
     base_pools = []
@@ -138,13 +108,10 @@ def main(network, fork, url, deploy_ng_handlers):
         "BasePoolRegistry",
         "contracts/registries/BasePoolRegistry.vy",
         [],
+        fork,
     )
 
-    registry_list = [
-        metaregistry.get_registry(i)
-        for i in range(metaregistry.registry_length())
-    ]
-
+    # will add new base pools if registry does not have it:
     if not len(base_pools) == base_pools_registry.base_pool_count():
         console.log("Adding base pools to the base pool registry ...")
         added_base_pools = [
@@ -155,6 +122,10 @@ def main(network, fork, url, deploy_ng_handlers):
             if not base_pool[0] in added_base_pools:
                 base_pools_registry.add_base_pool(*base_pool)
 
+    return base_pools_registry
+
+
+def legacy_deployment(address_provider, metaregistry, registry_list):
     # deploy stableswap registry and factory handlers
     stableswap_custom_pool_registry = address_provider.get_address(0)
     if stableswap_custom_pool_registry != ZERO_ADDRESS:
@@ -166,18 +137,23 @@ def main(network, fork, url, deploy_ng_handlers):
             "StableRegistryHandler",
             "contracts/registry_handlers/StableRegistryHandler.vy",
             [stableswap_custom_pool_registry],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
 
     stableswap_factory = address_provider.get_address(3)
     if stableswap_factory != ZERO_ADDRESS:
+        # we need the base pools registry for legacy deployments
+        base_pools_registry = deploy_base_pool_registry(network, fork)
+
         console.log("Adding stableswap factory to the Metaregistry ...")
         registry_handler = deploy_and_cache_contracts(
             network,
             "StableFactoryHandler",
             "contracts/registry_handlers/StableFactoryHandler.vy",
             [stableswap_factory, base_pools_registry.address],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
@@ -193,6 +169,7 @@ def main(network, fork, url, deploy_ng_handlers):
             "CryptoRegistryHandler",
             "contracts/registry_handlers/CryptoRegistryHandler.vy",
             [cryptoswap_custom_pool_registry],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
@@ -205,51 +182,114 @@ def main(network, fork, url, deploy_ng_handlers):
             "CryptoFactoryHandler",
             "contracts/registry_handlers/CryptoFactoryHandler.vy",
             [cryptoswap_factory, base_pools_registry.address],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
 
-    # since we bricked a few contracts:
-    if deploy_ng_handlers:
-        # set up tricrypto ng factory handler
-        console.log("Deploy Tricrypto Factory NG Handler ...")
-        tricrypto_ng_factory = address_provider.get_address(11)
+
+def ng_deployment(address_provider, metaregistry, registry_list):
+    # set up tricrypto ng factory handler
+    tricrypto_ng_factory = address_provider.get_address(11)
+    if tricrypto_ng_factory != ZERO_ADDRESS:
+        console.log("Adding Tricrypto Factory NG Handler ...")
         registry_handler = deploy_and_cache_contracts(
             network,
             "TricryptoFactoryNGHandler",
             "contracts/registry_handlers/ng/CurveTricryptoFactoryHandler.vy",
             [tricrypto_ng_factory],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
 
-        # set up stableswap ng factory handler
-        console.log("Deploy Stableswap Factory NG Handler ...")
-        stableswap_ng_factory = address_provider.get_address(12)
+    # set up stableswap ng factory handler
+    stableswap_ng_factory = address_provider.get_address(12)
+    if stableswap_ng_factory != ZERO_ADDRESS:
+        console.log("Adding Stableswap Factory NG Handler ...")
         registry_handler = deploy_and_cache_contracts(
             network,
             "StableswapFactoryNGHandler",
             "contracts/registry_handlers/ng/CurveStableSwapFactoryNGHandler.vy",
             [stableswap_ng_factory],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
 
-        # set up twocrypto ng factory handler
-        console.log("Deploy Twocrypto Factory NG Handler ...")
-        twocrypto_ng_factory = address_provider.get_address(13)
+    # set up twocrypto ng factory handler
+    twocrypto_ng_factory = address_provider.get_address(13)
+    if twocrypto_ng_factory != ZERO_ADDRESS:
+        console.log("Adding Twocrypto Factory NG Handler ...")
         registry_handler = deploy_and_cache_contracts(
             network,
             "TwocryptoFactoryNGHandler",
             "contracts/registry_handlers/ng/CurveTwocryptoFactoryHandler.vy",
             [twocrypto_ng_factory],
+            fork,
         )
         if registry_handler.address not in registry_list:
             metaregistry.add_registry_handler(registry_handler.address)
 
-        # add metaregistry to address provider
+
+def main(network, fork, url):
+    if network == "zksync":
+        if not fork:
+            boa_zksync.set_zksync_env(url)
+            console.log("Prodmode on zksync Era ...")
+        else:
+            boa_zksync.set_zksync_fork(url)
+            console.log("Forkmode on zksync Era ...")
+
+        boa.env.set_eoa(Account.from_key(os.environ["FIDDYDEPLOYER"]))
+
+    else:
+        if fork:
+            boa.env.fork(url)
+            console.log("Forkmode ...")
+            boa.env.eoa = FIDDY_DEPLOYER  # set eoa address here
+        else:
+            console.log("Prodmode ...")
+            boa.set_env(NetworkEnv(url))
+            boa.env.add_account(Account.from_key(os.environ["FIDDYDEPLOYER"]))
+
+    address_provider = boa.load_partial("contracts/AddressProviderNG.vy").at(
+        ADDRESS_PROVIDER
+    )
+    metaregistry_address = address_provider.get_address(7)
+
+    # deploy metaregistry or fetch if it doesnt exist:
+    console.log("Deploying Metaregistry ...")
+    gauge_factory = address_provider.get_address(20)  # 20 is for Gauge Factory
+    gauge_type = GAUGE_TYPE[network]
+
+    if metaregistry_address == ZERO_ADDRESS:
+        metaregistry = deploy_and_cache_contracts(
+            network,
+            "Metaregistry",
+            "contracts/MetaregistryL2.vy",
+            [gauge_factory, gauge_type],
+            fork,
+        )
+
+        # Add Metaregistry to AddressProvider
         console.log("Add Metaregistry to AddressProvider ...")
         address_provider.add_new_id(7, metaregistry.address, "Metaregistry")
+    else:
+        metaregistry = boa.load_partial("contracts/MetaRegistryL2.vy").at(
+            metaregistry_address
+        )
+
+    registry_list = [
+        metaregistry.get_registry(i)
+        for i in range(metaregistry.registry_length())
+    ]
+
+    # legacy registry handlers deployment:
+    legacy_deployment(address_provider, metaregistry, registry_list)
+
+    # ng registry handlers deployment:
+    ng_deployment(address_provider, metaregistry, registry_list)
 
     console.log(
         f"Deployment and integration of the Metaregistry on {network} completed."
@@ -257,9 +297,20 @@ def main(network, fork, url, deploy_ng_handlers):
 
 
 if __name__ == "__main__":
-    network = ""
+    network = "zksync"
     url = ""
     fork = False
-    deploy_ng_handlers = False
 
-    main(network, fork, url, deploy_ng_handlers)
+    if network == "zksync":
+        import boa_zksync
+
+        url = "https://mainnet.era.zksync.io"
+        ADDRESS_PROVIDER = "0x54A5a69e17Aa6eB89d77aa3828E38C9Eb4fF263D"
+    elif network == "fraxtal":
+        network_url = "https://rpc.frax.com"
+    elif network == "kava":
+        network_url = "https://rpc.ankr.com/kava_evm"
+    else:
+        network_url = fetch_url(network)
+
+    main(network, fork, url)
