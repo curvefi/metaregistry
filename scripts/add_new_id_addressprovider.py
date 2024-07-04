@@ -17,37 +17,41 @@ from scripts.address_provider_constants import (
 )
 
 FIDDY_DEPLOYER = "0x2d12D0907A388811e3AA855A550F959501d303EE"
-ADDRESS_PROVIDER = "0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98"
+ADDRESS_PROVIDER = (
+    "0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98"  # gets replaced for zksync
+)
 
 
 def fetch_url(network):
     return os.getenv("DRPC_URL") % (network, os.getenv("DRPC_KEY"))
 
 
-def main(network, fork):
+def main(network, fork, url):
     """
     Deploy the AddressProvider to the network.
     """
 
     console = RichConsole()
-    if network == "fraxtal":
-        network_url = "https://rpc.frax.com"
-    elif network == "kava":
-        network_url = "https://rpc.ankr.com/kava_evm"
-    else:
-        network_url = fetch_url(network)
 
-    if not fork:
-        # Prodmode
-        console.log("Running script in prod mode...")
-        boa.set_env(NetworkEnv(network_url))
-        boa.env.add_account(Account.from_key(os.environ["FIDDYDEPLOYER"]))
+    if network == "zksync":
+        if not fork:
+            boa_zksync.set_zksync_env(url)
+            console.log("Prodmode on zksync Era ...")
+        else:
+            boa_zksync.set_zksync_fork(url)
+            console.log("Forkmode on zksync Era ...")
+
+        boa.env.set_eoa(Account.from_key(os.environ["FIDDYDEPLOYER"]))
 
     else:
-        # Forkmode
-        console.log("Simulation Mode. Writing to mainnet-fork.")
-        boa.env.fork(url=network_url)
-        boa.env.eoa = FIDDY_DEPLOYER
+        if fork:
+            boa.env.fork(url)
+            console.log("Forkmode ...")
+            boa.env.eoa = FIDDY_DEPLOYER  # set eoa address here
+        else:
+            console.log("Prodmode ...")
+            boa.set_env(NetworkEnv(url))
+            boa.env.add_account(Account.from_key(os.environ["FIDDYDEPLOYER"]))
 
     address_provider_obj = boa.load_partial("contracts/AddressProviderNG.vy")
     address_provider = address_provider_obj.at(ADDRESS_PROVIDER)
@@ -60,6 +64,9 @@ def main(network, fork):
         address = addresses[network][id]
         description = ADDRESS_PROVIDER_MAPPING[id]
         existing_id = address_provider.get_id_info(id)
+
+        if not address:
+            continue
 
         if (
             existing_id[0].lower()
@@ -85,7 +92,20 @@ def main(network, fork):
 
 
 if __name__ == "__main__":
-    network = "mantle"
+    network = "zksync"
+    url = ""
     fork = False
 
-    main(network, fork)
+    if network == "zksync":
+        import boa_zksync
+
+        url = "https://mainnet.era.zksync.io"
+        ADDRESS_PROVIDER = "0x54A5a69e17Aa6eB89d77aa3828E38C9Eb4fF263D"
+    elif network == "fraxtal":
+        network_url = "https://rpc.frax.com"
+    elif network == "kava":
+        network_url = "https://rpc.ankr.com/kava_evm"
+    else:
+        network_url = fetch_url(network)
+
+    main(network, fork, url)

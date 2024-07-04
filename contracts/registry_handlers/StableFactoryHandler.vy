@@ -1,4 +1,5 @@
-#pragma version ^0.3.7
+# pragma version 0.3.10
+# pragma evm-version paris
 """
 @title Curve Registry Handler for v1 Factory (latest)
 @license MIT
