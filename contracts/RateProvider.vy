@@ -19,7 +19,8 @@ struct Quote:
     is_underlying: bool
     amount_out: uint256
     pool: address
-    pool_balances: DynArray[uint256, MAX_COINS]
+    source_token_pool_balance: uint256
+    dest_token_pool_balance: uint256
     pool_type: uint8  # 0 for stableswap, 1 for cryptoswap, 2 for LLAMMA.
 
 
@@ -32,8 +33,6 @@ interface Metaregistry:
     def find_pools_for_coins(source_coin: address, destination_coin: address) -> DynArray[address, 1000]: view
     def get_coin_indices(_pool: address, _from: address, _to: address) -> (int128, int128, bool): view
     def get_underlying_balances(_pool: address) -> uint256[MAX_COINS]: view
-    def get_n_underlying_coins(_pool: address) -> uint256: view
-    def get_underlying_decimals(_pool: address) -> uint256[MAX_COINS]: view
 
 
 ADDRESS_PROVIDER: public(immutable(AddressProvider))
@@ -75,69 +74,24 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
         balances: uint256[MAX_COINS] = metaregistry.get_underlying_balances(pool)
 
         # if pool is too small, dont post call and skip pool:
-        if balances[i] <= amount_in:
+        if 0 in balances or balances[i] <= amount_in:
             continue
 
-        # convert to Dynamic Arrays:
-        dyn_balances: DynArray[uint256, MAX_COINS] = []
-        for bal in balances:
-            if bal > 0:
-                dyn_balances.append(bal)
-
         # do a get_dy call and only save quote if call does not bork; use correct abi (in128 vs uint256)
-        success: bool = False
-        response: Bytes[32] = b""
-        if pool_type == 0 and is_underlying:
-            success, response = raw_call(
-            pool,
-            concat(
-                method_id(STABLESWAP_META_ABI),
-                convert(i, bytes32),
-                convert(j, bytes32),
-                convert(amount_in, bytes32),
-            ),
-            max_outsize=32,
-            revert_on_failure=False,
-            is_static_call=True
-        )
-        elif pool_type == 0 and not is_underlying:
-            success, response = raw_call(
-            pool,
-            concat(
-                method_id(STABLESWA_ABI),
-                convert(i, bytes32),
-                convert(j, bytes32),
-                convert(amount_in, bytes32),
-            ),
-            max_outsize=32,
-            revert_on_failure=False,
-            is_static_call=True
-        )
-        else:
-            success, response = raw_call(
-            pool,
-            concat(
-                method_id(CRYPTOSWAP_ABI),
-                convert(i, bytes32),
-                convert(j, bytes32),
-                convert(amount_in, bytes32),
-            ),
-            max_outsize=32,
-            revert_on_failure=False,
-            is_static_call=True
-        )
+        quote: uint256 = self._get_pool_quote(i, j, amount_in, pool, pool_type, is_underlying)
 
         # check if get_dy works and if so, append quote to dynarray
-        if success:
+        if quote > 0:
             quotes.append(
                 Quote(
                     {
                         source_token_index: convert(i, uint256),
                         dest_token_index: convert(j, uint256),
                         is_underlying: is_underlying,
-                        amount_out: convert(response, uint256),
+                        amount_out: quote,
                         pool: pool,
-                        pool_balances: dyn_balances,
+                        source_token_pool_balance: balances[i],
+                        dest_token_pool_balance: balances[j],
                         pool_type: pool_type
                     }
                 )
@@ -145,7 +99,6 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
 
     return quotes
 
-# Internal methods
 
 @internal
 @view
@@ -176,5 +129,66 @@ def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8:
     )
     if success:
         return 2
+
+    return 0
+
+
+@internal
+@view
+def _get_pool_quote(
+    i: int128,
+    j: int128, 
+    amount_in: uint256, 
+    pool: address, 
+    pool_type: uint8, 
+    is_underlying: bool
+) -> uint256:
+
+    success: bool = False
+    response: Bytes[32] = b""
+    if pool_type == 0 and is_underlying:
+
+        success, response = raw_call(
+        pool,
+        concat(
+            method_id(STABLESWAP_META_ABI),
+            convert(i, bytes32),
+            convert(j, bytes32),
+            convert(amount_in, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+    elif pool_type == 0 and not is_underlying:
+
+        success, response = raw_call(
+        pool,
+        concat(
+            method_id(STABLESWA_ABI),
+            convert(i, bytes32),
+            convert(j, bytes32),
+            convert(amount_in, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+    else:
+
+        success, response = raw_call(
+        pool,
+        concat(
+            method_id(CRYPTOSWAP_ABI),
+            convert(i, bytes32),
+            convert(j, bytes32),
+            convert(amount_in, bytes32),
+        ),
+        max_outsize=32,
+        revert_on_failure=False,
+        is_static_call=True
+    )
+    if success:
+        return convert(response, uint256)
 
     return 0
