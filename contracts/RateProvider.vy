@@ -2,37 +2,25 @@
 # pragma evm-version paris
 """
 @title CurveRateProvider
-@custom:version 1.1.0
+@custom:version 1.0.0
 @author Curve.Fi
 @license Copyright (c) Curve.Fi, 2020-2024 - all rights reserved
-@notice Provides quotes for coin pairs, iff coin pair is in a Curve AMM
-        that the Metaregistry recognises.
-@dev Rate contract calls metaregistry to fetch a list of coins for coin_a and coin_b via: metaregistry.find_pools_for_coins
-     Rate contract gets coin indices from metaregistry.get_coin_indices
-     If pool is stableswap (check if pool has gamma parameter], then step 2 returns is_underlying as True in the Tuple output.
-     The rate contract calls get_dy or get_dy_underlying for each pool and coin indices list.
-     The rate contract compiles this into a list of quotes.
+@notice Provides quotes for coin pairs, iff coin pair is in a Curve AMM that the Metaregistry recognises.
 """
 
-version: public(constant(String[8])) = "1.1.0"
+version: public(constant(String[8])) = "1.0.0"
 
 MAX_COINS: constant(uint256) = 8
 MAX_QUOTES: constant(uint256) = 100
 
 struct Quote:
-
     source_token_index: uint256
     dest_token_index: uint256
     is_underlying: bool
-
-    amount_out: address
-
+    amount_out: uint256
     pool: address
-
     pool_balances: DynArray[uint256, MAX_COINS]
-
-    # 0 for stableswap, 1 for cryptoswap, 2 for LLAMMA.
-    pool_type: uint8
+    pool_type: uint8  # 0 for stableswap, 1 for cryptoswap, 2 for LLAMMA.
 
 
 # Interfaces
@@ -50,7 +38,9 @@ interface Metaregistry:
 
 ADDRESS_PROVIDER: public(immutable(AddressProvider))
 METAREGISTRY_ID: constant(uint256) = 7
-
+STABLESWAP_META_ABI: constant(String[64]) = "get_dy_underlying(int128,int128,uint256)"
+STABLESWA_ABI: constant(String[64]) = "get_dy(int128,int128,uint256)"
+CRYPTOSWAP_ABI: constant(String[64]) = "get_dy(uint256,uint256,uint256)"
 
 @external
 def __init__(address_provider: address):
@@ -76,34 +66,58 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
         pool_type: uint8 = self._get_pool_type(pool, metaregistry)
 
         # get coin indices
-        i: uint256 = 0
-        j: uint256 = 0
-        is_underlying: uint256 = False
+        i: int128 = 0
+        j: int128 = 0
+        is_underlying: bool = False
         (i, j, is_underlying) = metaregistry.get_coin_indices(pool, source_token, destination_token)
 
         # get balances
         balances: uint256[MAX_COINS] = metaregistry.get_underlying_balances(pool)
 
         # if pool is too small, dont post call and skip pool:
-        if balances[source_token_index] <= amount_in:
+        if balances[i] <= amount_in:
             continue
+
+        # convert to Dynamic Arrays:
+        dyn_balances: DynArray[uint256, MAX_COINS] = []
+        for bal in balances:
+            if bal > 0:
+                dyn_balances.append(bal)
 
         # do a get_dy call and only save quote if call does not bork; use correct abi (in128 vs uint256)
         success: bool = False
         response: Bytes[32] = b""
-
-        method_abi: String[50] = ""
-        if pool_type == 0 and is_stableswap_metapool:
-            method_abi = "get_dy_underlying(int128,int128,uint256)"
-        elif pool_type == 0 and not is_underlying:
-            method_abi = "get_dy(int128,int128,uint256)"
-        else:
-            method_abi = "get_dy(uint256,uint256,uint256)"
-
-        success, response = raw_call(
+        if pool_type == 0 and is_underlying:
+            success, response = raw_call(
             pool,
             concat(
-                method_id(method_abi),
+                method_id(STABLESWAP_META_ABI),
+                convert(i, bytes32),
+                convert(j, bytes32),
+                convert(amount_in, bytes32),
+            ),
+            max_outsize=32,
+            revert_on_failure=False,
+            is_static_call=True
+        )
+        elif pool_type == 0 and not is_underlying:
+            success, response = raw_call(
+            pool,
+            concat(
+                method_id(STABLESWA_ABI),
+                convert(i, bytes32),
+                convert(j, bytes32),
+                convert(amount_in, bytes32),
+            ),
+            max_outsize=32,
+            revert_on_failure=False,
+            is_static_call=True
+        )
+        else:
+            success, response = raw_call(
+            pool,
+            concat(
+                method_id(CRYPTOSWAP_ABI),
                 convert(i, bytes32),
                 convert(j, bytes32),
                 convert(amount_in, bytes32),
@@ -118,12 +132,12 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
             quotes.append(
                 Quote(
                     {
-                        source_token_index: i,
-                        dest_token_index: j,
+                        source_token_index: convert(i, uint256),
+                        dest_token_index: convert(j, uint256),
                         is_underlying: is_underlying,
                         amount_out: convert(response, uint256),
                         pool: pool,
-                        pool_balances: balances,
+                        pool_balances: dyn_balances,
                         pool_type: pool_type
                     }
                 )
@@ -135,7 +149,7 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
 
 @internal
 @view
-def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8
+def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8:
     # 0 for stableswap, 1 for cryptoswap, 2 for LLAMMA.
 
     success: bool = False
@@ -144,7 +158,7 @@ def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8
     # check if cryptoswap
     success, response = raw_call(
         pool,
-        method_id("allowed_extra_profit"),
+        method_id("allowed_extra_profit()"),
         max_outsize=32,
         revert_on_failure=False,
         is_static_call=True
@@ -155,7 +169,7 @@ def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8
     # check if llamma
     success, response = raw_call(
         pool,
-        method_id("get_rate_mul"),
+        method_id("get_rate_mul()"),
         max_outsize=32,
         revert_on_failure=False,
         is_static_call=True
