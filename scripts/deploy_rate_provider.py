@@ -4,9 +4,7 @@ import os
 import sys
 
 import boa
-import yaml
 from boa.network import NetworkEnv
-from eth.constants import ZERO_ADDRESS
 from eth_account import Account
 from rich import console as rich_console
 
@@ -47,30 +45,39 @@ def main(network, fork, url):
     address_provider = boa.load_partial("contracts/AddressProviderNG.vy").at(
         ADDRESS_PROVIDER
     )
+
     console.log("Deploying rate provider ...")
     rate_provider = boa.load(
         "contracts/RateProvider.vy", address_provider.address
     )
+
     console.log("Adding rate provider to address provider")
-    address_provider.add_new_id(
-        18, rate_provider.address, "Spot Rate Provider"
-    )
+    if address_provider.get_address(18) == ZERO_ADDRESS:
+        address_provider.add_new_id(
+            18, rate_provider.address, "Spot Rate Provider"
+        )
+    elif address_provider.get_address(18) != rate_provider.address:
+        address_provider.update_address(18, rate_provider.address)
 
 
 if __name__ == "__main__":
-    network = "arbitrum"
+    network = "zksync"
     url = ""
     fork = False
 
     if network == "zksync":
         import boa_zksync
 
-        url = "https://mainnet.era.zksync.io"
+        network_url = "https://mainnet.era.zksync.io"
         ADDRESS_PROVIDER = "0x54A5a69e17Aa6eB89d77aa3828E38C9Eb4fF263D"
     elif network == "fraxtal":
         network_url = "https://rpc.frax.com"
     elif network == "kava":
         network_url = "https://rpc.ankr.com/kava_evm"
+    elif network == "xlayer":
+        network_url = "https://xlayerrpc.okx.com"
+    elif network == "mantle":
+        network_url = "https://rpc.mantle.xyz"
     else:
         network_url = fetch_url(network)
 

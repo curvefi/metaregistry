@@ -10,6 +10,8 @@
 
 version: public(constant(String[8])) = "1.0.0"
 
+from vyper.interfaces import ERC20Detailed
+
 MAX_COINS: constant(uint256) = 8
 MAX_QUOTES: constant(uint256) = 100
 
@@ -38,18 +40,67 @@ interface Metaregistry:
 ADDRESS_PROVIDER: public(immutable(AddressProvider))
 METAREGISTRY_ID: constant(uint256) = 7
 STABLESWAP_META_ABI: constant(String[64]) = "get_dy_underlying(int128,int128,uint256)"
-STABLESWA_ABI: constant(String[64]) = "get_dy(int128,int128,uint256)"
+STABLESWAP_ABI: constant(String[64]) = "get_dy(int128,int128,uint256)"
 CRYPTOSWAP_ABI: constant(String[64]) = "get_dy(uint256,uint256,uint256)"
 
 @external
 def __init__(address_provider: address):
     ADDRESS_PROVIDER = AddressProvider(address_provider)
 
-# Quote View method
 
 @external
 @view
 def get_quotes(source_token: address, destination_token: address, amount_in: uint256) -> DynArray[Quote, MAX_QUOTES]:
+    return self._get_quotes(source_token, destination_token, amount_in)
+
+
+@external
+@view
+def get_aggregated_rate(source_token: address, destination_token: address) -> uint256:
+
+    amount_in: uint256 = 10**convert(ERC20Detailed(source_token).decimals(), uint256)
+    quotes: DynArray[Quote, MAX_QUOTES] = self._get_quotes(source_token, destination_token, amount_in)
+
+    return self.weighted_average_quote(
+        convert(ERC20Detailed(source_token).decimals(), uint256),
+        convert(ERC20Detailed(destination_token).decimals(), uint256),
+        quotes,
+    )
+
+
+@internal
+@pure
+def weighted_average_quote(
+    source_token_decimals: uint256,
+    dest_token_decimals: uint256,
+    quotes: DynArray[Quote, MAX_QUOTES]
+) -> uint256:
+
+    num_quotes: uint256 = len(quotes)
+
+    # Calculate total balance with normalization
+    total_balance: uint256 = 0
+    for i in range(num_quotes, bound=MAX_QUOTES):
+        source_balance_normalized: uint256 = quotes[i].source_token_pool_balance * 10**(18 - source_token_decimals)
+        dest_balance_normalized: uint256 = quotes[i].dest_token_pool_balance * 10**(18 - dest_token_decimals)
+        total_balance += source_balance_normalized + dest_balance_normalized
+
+
+    # Calculate weighted sum with normalization
+    weighted_avg: uint256 = 0
+    for i in range(num_quotes, bound=MAX_QUOTES):
+        source_balance_normalized: uint256 = quotes[i].source_token_pool_balance * 10**(18 - source_token_decimals)
+        dest_balance_normalized: uint256 = quotes[i].dest_token_pool_balance * 10**(18 - dest_token_decimals)
+        pool_balance_normalized: uint256 = source_balance_normalized + dest_balance_normalized
+        weight: uint256 = (pool_balance_normalized * 10**18) / total_balance  # Use 18 decimal places for precision
+        weighted_avg += weight * quotes[i].amount_out / 10**18
+
+    return weighted_avg
+
+
+@internal
+@view
+def _get_quotes(source_token: address, destination_token: address, amount_in: uint256) -> DynArray[Quote, MAX_QUOTES]:
 
     quotes: DynArray[Quote, MAX_QUOTES] = []
     metaregistry: Metaregistry = Metaregistry(ADDRESS_PROVIDER.get_address(METAREGISTRY_ID))
@@ -72,16 +123,20 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
 
         # get balances
         balances: uint256[MAX_COINS] = metaregistry.get_underlying_balances(pool)
+        dyn_balances: DynArray[uint256, MAX_COINS] = []
+        for bal in balances:
+            if bal > 0:
+                dyn_balances.append(bal)
 
-        # if pool is too small, dont post call and skip pool:
-        if 0 in balances or balances[i] <= amount_in:
+        # skip if pool is too small
+        if 0 in dyn_balances:
             continue
 
         # do a get_dy call and only save quote if call does not bork; use correct abi (in128 vs uint256)
         quote: uint256 = self._get_pool_quote(i, j, amount_in, pool, pool_type, is_underlying)
 
         # check if get_dy works and if so, append quote to dynarray
-        if quote > 0:
+        if quote > 0 and len(quotes) < MAX_QUOTES:
             quotes.append(
                 Quote(
                     {
@@ -103,6 +158,7 @@ def get_quotes(source_token: address, destination_token: address, amount_in: uin
 @internal
 @view
 def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8:
+
     # 0 for stableswap, 1 for cryptoswap, 2 for LLAMMA.
 
     success: bool = False
@@ -137,49 +193,29 @@ def _get_pool_type(pool: address, metaregistry: Metaregistry) -> uint8:
 @view
 def _get_pool_quote(
     i: int128,
-    j: int128, 
-    amount_in: uint256, 
-    pool: address, 
-    pool_type: uint8, 
+    j: int128,
+    amount_in: uint256,
+    pool: address,
+    pool_type: uint8,
     is_underlying: bool
 ) -> uint256:
 
     success: bool = False
     response: Bytes[32] = b""
+    method_abi: Bytes[4] = b""
+
+    # choose the right abi:
     if pool_type == 0 and is_underlying:
-
-        success, response = raw_call(
-        pool,
-        concat(
-            method_id(STABLESWAP_META_ABI),
-            convert(i, bytes32),
-            convert(j, bytes32),
-            convert(amount_in, bytes32),
-        ),
-        max_outsize=32,
-        revert_on_failure=False,
-        is_static_call=True
-    )
+        method_abi = method_id(STABLESWAP_META_ABI)
     elif pool_type == 0 and not is_underlying:
-
-        success, response = raw_call(
-        pool,
-        concat(
-            method_id(STABLESWA_ABI),
-            convert(i, bytes32),
-            convert(j, bytes32),
-            convert(amount_in, bytes32),
-        ),
-        max_outsize=32,
-        revert_on_failure=False,
-        is_static_call=True
-    )
+        method_abi = method_id(STABLESWAP_ABI)
     else:
+        method_abi = method_id(CRYPTOSWAP_ABI)
 
-        success, response = raw_call(
+    success, response = raw_call(
         pool,
         concat(
-            method_id(CRYPTOSWAP_ABI),
+            method_abi,
             convert(i, bytes32),
             convert(j, bytes32),
             convert(amount_in, bytes32),
@@ -188,6 +224,7 @@ def _get_pool_quote(
         revert_on_failure=False,
         is_static_call=True
     )
+
     if success:
         return convert(response, uint256)
 
