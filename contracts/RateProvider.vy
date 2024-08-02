@@ -2,13 +2,13 @@
 # pragma evm-version paris
 """
 @title CurveRateProvider
-@custom:version 1.0.0
+@custom:version 1.0.1
 @author Curve.Fi
 @license Copyright (c) Curve.Fi, 2020-2024 - all rights reserved
 @notice Provides quotes for coin pairs, iff coin pair is in a Curve AMM that the Metaregistry recognises.
 """
 
-version: public(constant(String[8])) = "1.0.0"
+version: public(constant(String[8])) = "1.0.1"
 
 from vyper.interfaces import ERC20Detailed
 
