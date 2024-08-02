@@ -123,13 +123,8 @@ def _get_quotes(source_token: address, destination_token: address, amount_in: ui
 
         # get balances
         balances: uint256[MAX_COINS] = metaregistry.get_underlying_balances(pool)
-        dyn_balances: DynArray[uint256, MAX_COINS] = []
-        for bal in balances:
-            if bal > 0:
-                dyn_balances.append(bal)
-
-        # skip if pool is too small
-        if 0 in dyn_balances:
+        # skip if pool does not have enough of the required tokens
+        if balances[i] == 0 or balances[j] == 0:
             continue
 
         # do a get_dy call and only save quote if call does not bork; use correct abi (in128 vs uint256)
