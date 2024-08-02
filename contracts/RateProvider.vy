@@ -131,7 +131,7 @@ def _get_quotes(source_token: address, destination_token: address, amount_in: ui
         quote: uint256 = self._get_pool_quote(i, j, amount_in, pool, pool_type, is_underlying)
 
         # check if get_dy works and if so, append quote to dynarray
-        if quote > 0 and len(quotes) < MAX_QUOTES:
+        if quote > 0:
             quotes.append(
                 Quote(
                     {
@@ -146,6 +146,10 @@ def _get_quotes(source_token: address, destination_token: address, amount_in: ui
                     }
                 )
             )
+
+            # stop the loop if the dynarray is full
+            if len(quotes) == MAX_QUOTES:
+                break
 
     return quotes
 
