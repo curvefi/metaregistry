@@ -309,9 +309,9 @@ addresses = {
     "zksync": {
         2: "0x7C915390e109CA66934f1eB285854375D1B127FA",  # 2: "Exchange Router",
         4: "0xCb8799BFF48bb549F7B69Bb9BE60DbA7cd4F1BB7",  # 4: "Fee Distributor",
-        11: "0x5044112fDf6c8DCc788a669c17345cfDB06549fa",  # 11: "TricryptoNG Factory",
-        12: "0x375444aeDEb6C3db897f293E1DBa85D7422A6859",  # 12: "StableswapNG Factory",
-        13: "0x24992A09E2257AF325102Cefa1F09E80E9062d49",  # 13: "TwocryptoNG Factory",
+        11: "0x5d4174C40f1246dABe49693845442927d5929f0D",  # 11: "TricryptoNG Factory",
+        12: "0xFcAb5d04e8e031334D5e8D2C166B08daB0BE6CaE",  # 12: "StableswapNG Factory",
+        13: "0xf3a546AF64aFd6BB8292746BA66DB33aFAE72114",  # 13: "TwocryptoNG Factory",
         19: "0x5945932099f124194452a4c62d34bB37f16183B2",  # 19: "CRV Token",
         20: "",  # 20: "Gauge Factory",
         21: "",  # 21: "Ownership Admin",

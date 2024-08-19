@@ -1,4 +1,4 @@
-# AddressProvider deployed on zksync at: 0x54A5a69e17Aa6eB89d77aa3828E38C9Eb4fF263D
+# AddressProvider deployed on zksync at: 0x3934a3bB913E4a44316a89f5a83876B9C63e4F31
 
 import os
 
