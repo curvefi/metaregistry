@@ -11,6 +11,10 @@ from eth_account import Account
 from rich import console as rich_console
 
 sys.path.append("./")
+from scripts.address_provider_constants import (
+    ADDRESS_PROVIDER_MAPPING,
+    addresses,
+)
 from scripts.deploy_addressprovider_and_setup import fetch_url
 from scripts.legacy_base_pools import base_pools as BASE_POOLS
 from scripts.utils.constants import FIDDY_DEPLOYER
@@ -18,9 +22,6 @@ from scripts.utils.constants import FIDDY_DEPLOYER
 console = rich_console.Console()
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
-ADDRESS_PROVIDER = (
-    "0x5ffe7FB82894076ECB99A30D6A32e969e6e35E98"  # gets replaced for zksync
-)
 
 # if -1: no gauge type known just yet
 GAUGE_TYPE = {
@@ -52,10 +53,7 @@ def check_contract_deployed(network, designation):
     if deployments is None:
         deployments = {}
 
-    if (
-        network in deployments.keys()
-        and designation in deployments[network].keys()
-    ):
+    if network in deployments and deployments[network].get(designation):
         contract_address = deployments[network][designation]
         console.log(
             f"{designation} deployed already at {network}: {contract_address}"
@@ -84,7 +82,7 @@ def deploy_and_cache_contracts(
     network, designation, contract_file, args, fork=False
 ):
     contract_address = check_contract_deployed(network, designation)
-    if contract_address != ZERO_ADDRESS:
+    if contract_address and contract_address != ZERO_ADDRESS:
         return boa.load_partial(contract_file).at(contract_address)
 
     deployed_contract = boa.load(contract_file, *args)
@@ -234,6 +232,8 @@ def ng_deployment(address_provider, metaregistry, registry_list):
 
 def main(network, fork, url):
     if network == "zksync":
+        import boa_zksync
+
         if not fork:
             boa_zksync.set_zksync_env(url)
             console.log("Prodmode on zksync Era ...")
@@ -253,24 +253,79 @@ def main(network, fork, url):
             boa.set_env(NetworkEnv(url))
             boa.env.add_account(Account.from_key(os.environ["FIDDYDEPLOYER"]))
 
-    address_provider = boa.load_partial("contracts/AddressProviderNG.vy").at(
-        ADDRESS_PROVIDER
+    # deploy address provider:
+    address_provider = deploy_and_cache_contracts(
+        network,
+        "AddressProvider",
+        "contracts/AddressProviderNG.vy",
+        [],
+        fork,
     )
+
+    # deploy rate provider:
+    rate_provider = deploy_and_cache_contracts(
+        network,
+        "RateProvider",
+        "contracts/RateProvider.vy",
+        [address_provider.address],
+        fork,
+    )
+
+    console.log("Adding rate provider to address provider")
+    if address_provider.get_address(18) == ZERO_ADDRESS:
+        address_provider.add_new_id(
+            18, rate_provider.address, "Spot Rate Provider"
+        )
+    elif address_provider.get_address(18) != rate_provider.address:
+        address_provider.update_address(18, rate_provider.address)
+
+    # set up address provider:
+    ids = []
+    addresses_for_id = []
+    descriptions = []
+    for id in addresses[network].keys():
+        address = addresses[network][id]
+        description = ADDRESS_PROVIDER_MAPPING[id]
+        existing_id = address_provider.get_id_info(id)
+
+        if not address:
+            continue
+
+        if (
+            existing_id[0].lower()
+            == "0x0000000000000000000000000000000000000000"
+        ):
+            console.log(f"New id {id} at {address} for {description}.")
+            ids.append(id)
+            addresses_for_id.append(address)
+            descriptions.append(description)
+
+        elif existing_id[0].lower() != address.lower():
+            console.log(f"Updating id {id} for {description} with {address}.")
+            address_provider.update_id(id, address, description)
+
+        if len(ids) > 20:
+            raise
+
+    if len(ids) > 0:
+        console.log("Adding new IDs to the Address Provider.")
+        address_provider.add_new_ids(ids, addresses_for_id, descriptions)
+
+    # metaregistry deployment:
     metaregistry_address = address_provider.get_address(7)
 
     # deploy metaregistry or fetch if it doesnt exist:
     console.log("Deploying Metaregistry ...")
     gauge_factory = address_provider.get_address(20)  # 20 is for Gauge Factory
     gauge_type = GAUGE_TYPE[network]
-    
+
     deploy_mregistry = metaregistry_address == ZERO_ADDRESS
-    deploy_mregistry = False
 
     if deploy_mregistry:
         metaregistry = deploy_and_cache_contracts(
             network,
             "Metaregistry",
-            "contracts/MetaregistryL2.vy",
+            "contracts/MetaRegistryL2.vy",
             [gauge_factory, gauge_type],
             fork,
         )
@@ -301,18 +356,10 @@ def main(network, fork, url):
 
 if __name__ == "__main__":
     network = "zksync"
-    url = ""
+    url = {
+        "zksync": "https://mainnet.era.zksync.io",
+        "fraxtal": "https://rpc.frax.com",
+        "kava": "https://rpc.ankr.com/kava_evm",
+    }.get(network) or fetch_url(network)
     fork = False
-
-    if network == "zksync":
-        import boa_zksync
-        url = "https://mainnet.era.zksync.io"
-        ADDRESS_PROVIDER = "0x3934a3bB913E4a44316a89f5a83876B9C63e4F31"
-    elif network == "fraxtal":
-        network_url = "https://rpc.frax.com"
-    elif network == "kava":
-        network_url = "https://rpc.ankr.com/kava_evm"
-    else:
-        network_url = fetch_url(network)
-
     main(network, fork, url)

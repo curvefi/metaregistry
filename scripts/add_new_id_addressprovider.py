@@ -11,6 +11,9 @@ from boa.network import NetworkEnv
 from eth_account import Account
 from rich.console import Console as RichConsole
 
+import sys
+sys.path.append("./")
+
 from scripts.address_provider_constants import (
     ADDRESS_PROVIDER_MAPPING,
     addresses,
@@ -100,7 +103,7 @@ if __name__ == "__main__":
         import boa_zksync
 
         url = "https://mainnet.era.zksync.io"
-        ADDRESS_PROVIDER = "0x54A5a69e17Aa6eB89d77aa3828E38C9Eb4fF263D"
+        ADDRESS_PROVIDER = "0x3934a3bB913E4a44316a89f5a83876B9C63e4F31"
     elif network == "fraxtal":
         network_url = "https://rpc.frax.com"
     elif network == "kava":
