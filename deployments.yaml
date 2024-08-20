@@ -72,9 +72,9 @@ polygon:
   TricryptoFactoryNGHandler: '0xf46D25696677898454dfDd644830C821243A1188'
   TwocryptoFactoryNGHandler: '0xb00e89eabd59cd3254c88e390103cf17e914f678'
 zksync:
-  AddressProvider: '0xBF664Ac8e934230FC6A381702678cc29661d38D5'
+  AddressProvider: ''
   Metaregistry: ''
-  RateProvider: '0x9eB20D123F877f06c93CE82De4507B0911dFA783'
+  RateProvider: ''
   StableswapFactoryNGHandler: ''
   TricryptoFactoryNGHandler: ''
   TwocryptoFactoryNGHandler: ''
