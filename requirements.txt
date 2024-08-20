@@ -4,61 +4,69 @@
 #
 #    pip-compile
 #
+annotated-types==0.7.0
+    # via pydantic
 asttokens==2.4.1
     # via vyper
-attrs==23.1.0
+attrs==24.2.0
     # via hypothesis
-bitarray==2.8.3
+bitarray==2.9.2
     # via eth-account
-black==23.11.0
+black==24.8.0
     # via -r requirements.in
-build==1.0.3
+build==1.2.1
     # via pip-tools
 cached-property==1.5.2
     # via
     #   py-ecc
     #   py-evm
-cbor2==5.5.1
+cbor2==5.6.4
     # via vyper
-certifi==2023.11.17
+certifi==2024.7.4
     # via requests
 cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.3.2
     # via requests
+ckzg==1.0.2
+    # via
+    #   eth-account
+    #   py-evm
 click==8.1.7
     # via
     #   black
     #   pip-tools
-cytoolz==0.12.2
+coverage[toml]==7.6.1
+    # via pytest-cov
+cytoolz==0.12.3
     # via eth-utils
-distlib==0.3.7
+distlib==0.3.8
     # via virtualenv
-eth-abi==4.2.1
+eth-abi==5.1.0
     # via
     #   eth-account
     #   titanoboa
-eth-account==0.10.0
+eth-account==0.13.1
     # via titanoboa
-eth-bloom==3.0.0
+eth-bloom==3.0.1
     # via py-evm
-eth-hash[pycryptodome]==0.5.2
+eth-hash[pycryptodome]==0.7.0
     # via
     #   eth-bloom
     #   eth-utils
     #   trie
-eth-keyfile==0.6.1
+eth-keyfile==0.8.1
     # via eth-account
-eth-keys==0.4.0
+eth-keys==0.5.1
     # via
     #   eth-account
     #   eth-keyfile
     #   py-evm
-eth-rlp==0.3.0
+eth-rlp==2.1.0
     # via eth-account
 eth-stdlib==0.2.7
     # via titanoboa
-eth-typing==3.5.2
+eth-typing==5.0.0
     # via
     #   eth-abi
     #   eth-keys
@@ -66,7 +74,7 @@ eth-typing==3.5.2
     #   py-ecc
     #   py-evm
     #   titanoboa
-eth-utils==2.3.1
+eth-utils==5.0.0
     # via
     #   eth-abi
     #   eth-account
@@ -77,32 +85,33 @@ eth-utils==2.3.1
     #   py-evm
     #   rlp
     #   trie
-exceptiongroup==1.2.0
+exceptiongroup==1.2.2
     # via
     #   hypothesis
     #   pytest
-execnet==2.0.2
+execnet==2.1.1
     # via pytest-xdist
-filelock==3.13.1
+filelock==3.15.4
     # via virtualenv
-flake8==6.1.0
+flake8==7.1.1
     # via -r requirements.in
-hexbytes==0.3.1
+hexbytes==1.2.1
     # via
     #   eth-account
     #   eth-rlp
+    #   eth-utils
     #   trie
-hypothesis==6.90.0
+hypothesis==6.111.1
     # via titanoboa
-identify==2.5.32
+identify==2.6.0
     # via pre-commit
-idna==3.4
+idna==3.7
     # via requests
-importlib-metadata==6.8.0
+importlib-metadata==8.3.0
     # via vyper
 iniconfig==2.0.0
     # via pytest
-isort==5.12.0
+isort==5.13.2
     # via -r requirements.in
 lru-dict==1.3.0
     # via py-evm
@@ -113,11 +122,8 @@ mccabe==0.7.0
 mdurl==0.1.2
     # via markdown-it-py
 mypy-extensions==1.0.0
-    # via
-    #   black
-    #   py-ecc
-    #   py-evm
-nodeenv==1.8.0
+    # via black
+nodeenv==1.9.1
     # via pre-commit
 packaging==23.2
     # via
@@ -125,56 +131,65 @@ packaging==23.2
     #   build
     #   pytest
     #   vyper
-parsimonious==0.9.0
+parsimonious==0.10.0
     # via eth-abi
-pathspec==0.11.2
+pathspec==0.12.1
     # via black
-pip-tools==7.3.0
+pip-tools==7.4.1
     # via -r requirements.in
-platformdirs==4.0.0
+platformdirs==4.2.2
     # via
     #   black
     #   virtualenv
-pluggy==1.3.0
+pluggy==1.5.0
     # via pytest
-pre-commit==3.5.0
+pre-commit==3.8.0
     # via -r requirements.in
-py-ecc==6.0.0
+py-ecc==7.0.1
     # via py-evm
-py-evm==0.8.0b1
+py-evm==0.10.1b1
     # via titanoboa
-pycodestyle==2.11.1
+pycodestyle==2.12.1
     # via flake8
-pycryptodome==3.19.0
+pycryptodome==3.20.0
     # via
     #   eth-hash
     #   eth-keyfile
     #   eth-stdlib
     #   vyper
-pyflakes==3.1.0
+pydantic==2.8.2
+    # via eth-account
+pydantic-core==2.20.1
+    # via pydantic
+pyflakes==3.2.0
     # via flake8
-pygments==2.17.2
+pygments==2.18.0
     # via rich
-pyproject-hooks==1.0.0
-    # via build
-pytest==7.4.3
+pyproject-hooks==1.1.0
+    # via
+    #   build
+    #   pip-tools
+pytest==8.3.2
     # via
     #   -r requirements.in
+    #   pytest-cov
     #   pytest-xdist
     #   titanoboa
-pytest-xdist==3.5.0
-    # via -r requirements.in
-pyyaml==6.0.1
-    # via pre-commit
-regex==2023.10.3
-    # via parsimonious
-requests==2.31.0
+pytest-cov==5.0.0
     # via titanoboa
-rich==13.7.0
+pytest-xdist==3.6.1
+    # via -r requirements.in
+pyyaml==6.0.2
+    # via pre-commit
+regex==2024.7.24
+    # via parsimonious
+requests==2.32.3
+    # via titanoboa
+rich==13.7.1
     # via
     #   -r requirements.in
     #   titanoboa
-rlp==3.0.0
+rlp==4.0.1
     # via
     #   eth-account
     #   eth-rlp
@@ -188,36 +203,44 @@ sortedcontainers==2.4.0
     #   trie
 tabulate==0.9.0
     # via -r requirements.in
-titanoboa[forking-recommended] @ git+https://github.com/vyperlang/titanoboa@e85ab24
+titanoboa[forking-recommended]==0.1.10
+    # via
+    #   -r requirements.in
+    #   titanoboa-zksync
+titanoboa-zksync==0.1.1
     # via -r requirements.in
 tomli==2.0.1
     # via
     #   black
     #   build
+    #   coverage
     #   pip-tools
-    #   pyproject-hooks
     #   pytest
-toolz==0.12.0
+toolz==0.12.1
     # via cytoolz
-trie==2.2.0
+trie==3.0.1
     # via py-evm
-typing-extensions==4.8.0
+typing-extensions==4.12.2
     # via
     #   black
+    #   eth-rlp
     #   eth-typing
-ujson==5.8.0
+    #   pydantic
+    #   pydantic-core
+    #   titanoboa
+ujson==5.10.0
     # via titanoboa
-urllib3==2.1.0
+urllib3==2.2.2
     # via requests
-virtualenv==20.24.7
+virtualenv==20.26.3
     # via pre-commit
 vyper==0.3.10
     # via titanoboa
-wheel==0.41.3
+wheel==0.44.0
     # via
     #   pip-tools
     #   vyper
-zipp==3.17.0
+zipp==3.20.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
