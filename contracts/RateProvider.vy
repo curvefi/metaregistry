@@ -2,13 +2,13 @@
 # pragma evm-version paris
 """
 @title CurveRateProvider
-@custom:version 1.0.0
+@custom:version 1.0.1
 @author Curve.Fi
 @license Copyright (c) Curve.Fi, 2020-2024 - all rights reserved
 @notice Provides quotes for coin pairs, iff coin pair is in a Curve AMM that the Metaregistry recognises.
 """
 
-version: public(constant(String[8])) = "1.0.0"
+version: public(constant(String[8])) = "1.0.1"
 
 from vyper.interfaces import ERC20Detailed
 
@@ -123,20 +123,15 @@ def _get_quotes(source_token: address, destination_token: address, amount_in: ui
 
         # get balances
         balances: uint256[MAX_COINS] = metaregistry.get_underlying_balances(pool)
-        dyn_balances: DynArray[uint256, MAX_COINS] = []
-        for bal in balances:
-            if bal > 0:
-                dyn_balances.append(bal)
-
-        # skip if pool is too small
-        if 0 in dyn_balances:
+        # skip if pool does not have enough of the required tokens
+        if balances[i] == 0 or balances[j] == 0:
             continue
 
         # do a get_dy call and only save quote if call does not bork; use correct abi (in128 vs uint256)
         quote: uint256 = self._get_pool_quote(i, j, amount_in, pool, pool_type, is_underlying)
 
         # check if get_dy works and if so, append quote to dynarray
-        if quote > 0 and len(quotes) < MAX_QUOTES:
+        if quote > 0:
             quotes.append(
                 Quote(
                     {
@@ -151,6 +146,10 @@ def _get_quotes(source_token: address, destination_token: address, amount_in: ui
                     }
                 )
             )
+
+            # stop the loop if the dynarray is full
+            if len(quotes) == MAX_QUOTES:
+                break
 
     return quotes
 
