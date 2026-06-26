@@ -183,7 +183,7 @@ pyyaml==6.0.2
     # via pre-commit
 regex==2024.7.24
     # via parsimonious
-requests==2.32.3
+requests==2.33.0
     # via titanoboa
 rich==13.7.1
     # via
