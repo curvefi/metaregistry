@@ -228,7 +228,7 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   titanoboa
-ujson==5.10.0
+ujson==5.13.0
     # via titanoboa
 urllib3==2.2.2
     # via requests
