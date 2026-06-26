@@ -230,7 +230,7 @@ typing-extensions==4.12.2
     #   titanoboa
 ujson==5.10.0
     # via titanoboa
-urllib3==2.2.2
+urllib3==2.7.0
     # via requests
 virtualenv==20.26.3
     # via pre-commit
