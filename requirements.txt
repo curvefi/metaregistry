@@ -12,7 +12,7 @@ attrs==24.2.0
     # via hypothesis
 bitarray==2.9.2
     # via eth-account
-black==24.8.0
+black==26.3.1
     # via -r requirements.in
 build==1.2.1
     # via pip-tools
@@ -133,7 +133,7 @@ packaging==23.2
     #   vyper
 parsimonious==0.10.0
     # via eth-abi
-pathspec==0.12.1
+pathspec==1.1.1
     # via black
 pip-tools==7.4.1
     # via -r requirements.in
@@ -179,6 +179,8 @@ pytest-cov==5.0.0
     # via titanoboa
 pytest-xdist==3.6.1
     # via -r requirements.in
+pytokens==0.4.1
+    # via black
 pyyaml==6.0.2
     # via pre-commit
 regex==2024.7.24
